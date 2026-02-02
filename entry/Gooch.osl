@@ -1,0 +1,2 @@
+#define ENTRY_GOOCH shader
+#include "../GoochShader.osl"

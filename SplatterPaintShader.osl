@@ -1,0 +1,396 @@
+
+#ifdef ENTRY_SPLATTER_PAINT
+    #define  DEFAULT_SPLATTER_PAINT(x) = x
+#else
+    #define  DEFAULT_SPLATTER_PAINT(x)
+#endif
+
+#ifndef ENTRY_SPLATTER_PAINT
+	#define ENTRY_SPLATTER_PAINT void
+#endif
+
+#include "MetallicPaintShader.osl"
+#include "SplatterShader.osl"
+
+struct SplatterLayerParams {
+    point position;
+    int seed;
+    float jitter;
+    float scaleRadius;
+    float minRadius;
+    float maxRadius;
+    float unionSmoothness;
+
+    float spikeAmount;
+    float spikePeak;
+    float spikeFrequency;
+    float spikePerimeterSmoothness;
+    float spikeTrimWidth;
+
+    float basinHeight;
+    float basinCenter;
+    float basinSmoothness;
+
+    //paint
+    float splatterBumpStrength;
+    color primerColor;
+    
+    //base layer params
+    float baseWeight;
+    color baseColor;
+    float baseRoughness;
+    float baseIOR;
+    
+    //metallic/flake layer params
+    float flakeWeight;
+    color flakeReflectivity;
+    color flakeEdgeTint;
+    float flakeRoughness;
+};
+
+void splatter(SplatterLayerParams params, output float height, output float mask) {
+    splatter(
+        params.position,        
+        params.seed,
+        params.jitter,
+        params.scaleRadius,
+        params.minRadius,
+        params.maxRadius,
+        params.unionSmoothness,
+
+        params.spikeAmount,
+        params.spikePeak,
+        params.spikeFrequency,
+        params.spikePerimeterSmoothness,
+        params.spikeTrimWidth,
+
+        params.basinHeight,
+        params.basinCenter,
+        params.basinSmoothness,
+        height,
+        mask
+    );
+}
+
+SplatterLayerParams jitterSplatterParams(
+    SplatterLayerParams baseParams,
+    int sublayerIndex,
+    float jitterAmount
+) {
+    SplatterLayerParams jittered = baseParams;
+    
+    float rand1 = noise("hash", vector(baseParams.seed + sublayerIndex, 0, 0));
+    float rand2 = noise("hash", vector(baseParams.seed + sublayerIndex, 1, 0));
+    float rand3 = noise("hash", vector(baseParams.seed + sublayerIndex, 2, 0));
+    float rand4 = noise("hash", vector(baseParams.seed + sublayerIndex, 3, 0));
+    float rand5 = noise("hash", vector(baseParams.seed + sublayerIndex, 4, 0));
+    
+    // geometric properties
+    jittered.seed = baseParams.seed + sublayerIndex;
+    jittered.scaleRadius = baseParams.scaleRadius * (1.0 + (rand1 - 0.5) * jitterAmount * 0.2);
+    jittered.minRadius = baseParams.minRadius * (1.0 + (rand2 - 0.5) * jitterAmount * 0.3);
+    jittered.maxRadius = baseParams.maxRadius * (1.0 + (rand3 - 0.5) * jitterAmount * 0.3);
+    
+    // spike properties
+    jittered.spikeAmount = clamp(baseParams.spikeAmount + (rand4 - 0.5) * jitterAmount * 0.2, 0.0, 1.0);
+    jittered.spikePeak = baseParams.spikePeak * (1.0 + (rand5 - 0.5) * jitterAmount * 0.4);
+    
+    // basin properties
+    float rand6 = noise("hash", vector(baseParams.seed + sublayerIndex, 5, 0));
+    jittered.basinHeight = clamp(baseParams.basinHeight + (rand6 - 0.5) * jitterAmount * 0.15, 0.0, 1.0);
+    
+    // paint properties slightly
+    float rand7 = noise("hash", vector(baseParams.seed + sublayerIndex, 6, 0));
+    float rand8 = noise("hash", vector(baseParams.seed + sublayerIndex, 7, 0));
+    float rand9 = noise("hash", vector(baseParams.seed + sublayerIndex, 8, 0));
+    
+    jittered.baseRoughness = clamp(baseParams.baseRoughness + (rand7 - 0.5) * jitterAmount * 0.1, 0.0, 1.0);
+    jittered.flakeRoughness = clamp(baseParams.flakeRoughness + (rand8 - 0.5) * jitterAmount * 0.1, 0.0, 1.0);
+    
+    // Subtle color variation
+    color colorJitter = color(
+        (rand7 - 0.5) * jitterAmount * 0.05,
+        (rand8 - 0.5) * jitterAmount * 0.05,
+        (rand9 - 0.5) * jitterAmount * 0.05
+    );
+    jittered.baseColor = clamp(baseParams.baseColor + colorJitter, color(0), color(1));
+    jittered.flakeReflectivity = clamp(baseParams.flakeReflectivity + colorJitter, color(0), color(1));
+    jittered.flakeEdgeTint = clamp(baseParams.flakeEdgeTint + colorJitter, color(0), color(1));
+    
+    return jittered;
+}
+
+ENTRY_SPLATTER_PAINT SplatterPaint (
+    vector UV  DEFAULT_SPLATTER_PAINT(vector(u, v, 0)),
+
+	//Primer
+	float primerWeight  DEFAULT_SPLATTER_PAINT(1.0) [[ string page = "Primer", float min = 0.0, float max = 1.0 ]],
+	color primerColor  DEFAULT_SPLATTER_PAINT(color(1.0, 0.1, 0.1)) [[ string page = "Primer" ]],
+	float primerRoughness  DEFAULT_SPLATTER_PAINT(1.0) [[ string page = "Primer", float min = 0.0, float max = 1.0 ]],
+	
+	//Flake Pattern
+	int numSubLayers  DEFAULT_SPLATTER_PAINT(1) [[ string page = "Flake Pattern", string help = "Number of intermediate/metallic layers between primer and clearcoat. Number of patties in a burger", int min = 1 ]],
+	float flakeScale  DEFAULT_SPLATTER_PAINT(0.001) [[ string page = "Flake Pattern", float min = 0.0, float max = 200.0 ]],
+	float flakeDensity  DEFAULT_SPLATTER_PAINT(0.2) [[ string page = "Flake Pattern", float min = 0.0, float max = 1.0 ]],
+    float flakeRandomize  DEFAULT_SPLATTER_PAINT(0.2) [[ string page = "Flake Pattern", string help = "Dictates the randomness of the flake orientations (normals)", float min = 0.0, float max = 1.0 ]],
+	int flakeSeed  DEFAULT_SPLATTER_PAINT(1) [[ string page = "Flake Pattern", int min = 0, int max = 100 ]],
+
+	//Flakes 
+	float flakeWeight  DEFAULT_SPLATTER_PAINT(1.0) [[ string page = "Flakes", string help = "Visibility of the metallic flakes", float min = 0.0, float max = 1.0 ]],
+	color flakeReflectivity  DEFAULT_SPLATTER_PAINT(color(0.95, 0.95, 0.95)) [[ string page = "Flakes" ]],
+	color flakeEdgeTint  DEFAULT_SPLATTER_PAINT(color(1.0, 1.0, 1.0)) [[ string page = "Flakes" ]],
+	float flakeRoughness  DEFAULT_SPLATTER_PAINT(0.1) [[ string page = "Flakes", float min = 0.0, float max = 1.0 ]],
+	
+    //Base
+	float baseWeight  DEFAULT_SPLATTER_PAINT(0.5) [[ string page = "Base", string help = "Weight of the paint that is suspended in the same layer as the flakes", float min = 0.0, float max = 1.0 ]],
+	color baseColor  DEFAULT_SPLATTER_PAINT(color(1.0, 0.1, 0.1)) [[ string page = "Base", string help = "Flake Layer Color" ]],
+	float baseRoughness  DEFAULT_SPLATTER_PAINT(0.5) [[ string page = "Base", float min = 0.0, float max = 1.0 ]],
+	float baseIOR  DEFAULT_SPLATTER_PAINT(1.9) [[ string page = "Base", float min = 1.0, float max = 3.0 ]],
+
+	//Clearcoat
+	float clearcoatWeight  DEFAULT_SPLATTER_PAINT(1.0) [[ string page = "Clearcoat", float min = 0.0, float max = 1.0 ]],
+	float clearcoatAnisotropy  DEFAULT_SPLATTER_PAINT(0.0) [[ string page = "Clearcoat", float min = 0.0, float max = 1.0 ]],
+	float clearcoatRoughness  DEFAULT_SPLATTER_PAINT(0.05) [[ string page = "Clearcoat", float min = 0.0, float max = 1.0 ]],
+	float clearcoatRotation  DEFAULT_SPLATTER_PAINT(0.0) [[ string page = "Clearcoat", float min = 0.0, float max = 1.0 ]],
+	float clearcoatIOR  DEFAULT_SPLATTER_PAINT(1.4) [[ string page = "Clearcoat", float min = 1.0, float max = 3.0 ]],
+	float clearcoatExponent  DEFAULT_SPLATTER_PAINT(5) [[ string page = "Clearcoat", float min = 0.0, float max = 10.0 ]],
+
+    color layer1 = color(1),
+    color layer2 = color(0.5),
+    color layer3 = color(0.2),
+
+	output closure color Cout  DEFAULT_SPLATTER_PAINT(0)
+) {
+    point pos = UV / flakeScale;
+
+	//Primer 
+	color finalPrimerColor = primerColor; // fallback
+
+	//Metallic Flake and Base Layers
+	closure color baseLayer = 0;
+	float cumulativeHeight = 0.0;
+
+
+
+    SplatterLayerParams splatterLayer1 = {
+        UV * 12,
+        flakeSeed, //int seed
+        2.0, // float jitter
+        0.65, // float scaleRadius
+        0.005, // float minRadius
+        0.15, // float maxRadius
+        8.0, // float unionSmoothness
+
+        //splatter spikes control
+        0.9, // float spikeAmount
+        12.0, // float spikePeak
+        48.0, // float spikeFrequency
+        0.01, // float spikePerimeterSmoothness
+        0.0, //float spikeTrimWidth
+
+        0.95, // float basinHeight
+        0.3, // float basinCenter
+        0.075, // float basinSmoothness 
+
+        0.075, //float splatterBumpStrength 
+        layer1, // color primerColor
+        
+        // base layer params
+        1.0, // float baseWeight,
+        layer1, // color baseColor,
+        0.3, // float baseRoughness,
+        1.4, // float baseIOR,
+        
+        // metallic/flake layer params
+        1.0, // float flakeWeight,
+        layer1, // color flakeReflectivity,
+        layer1, // color flakeEdgeTint,
+        0.1 // float flakeRoughness
+    };
+
+    SplatterLayerParams splatterLayer2 = {
+        UV * 36,
+        (splatterLayer1.seed * numSubLayers) + 1, // int seed
+        2.0, // float jitter
+        0.8, // float scaleRadius
+        0.005, // float minRadius
+        0.3, // float maxRadius
+        8.0, // float unionSmoothness
+
+        //splatter spikes control
+        0.9, // float spikeAmount
+        8, // float spikePeak
+        36, // float spikeFrequency
+        0.01, // float spikePerimeterSmoothness
+        0.02, //float spikeTrimWidth
+
+        0.95, // float basinHeight
+        0.3, // float basinCenter
+        0.075, // float basinSmoothness 
+
+        0.075, //float splatterBumpStrength 
+        layer2, // color primerColor
+        
+        // base layer params
+        1.0, // float baseWeight,
+        layer2, // color baseColor,
+        0.3, // float baseRoughness,
+        1.4, // float baseIOR,
+        
+        // metallic/flake layer params
+        1.0, // float flakeWeight,
+        layer2, // color flakeReflectivity,
+        layer2, // color flakeEdgeTint,
+        0.1 // float flakeRoughness
+    };
+
+    SplatterLayerParams splatterLayer3 = {
+        UV * 36,
+        (splatterLayer2.seed * numSubLayers) + 1, // int seed
+        2.0, // float jitter
+        0.8, // float scaleRadius
+        0.005, // float minRadius
+        0.3, // float maxRadius
+        8.0, // float unionSmoothness
+
+        //splatter spikes control
+        0.9, // float spikeAmount
+        8, // float spikePeak
+        36, // float spikeFrequency
+        0.01, // float spikePerimeterSmoothness
+        0.02, //float spikeTrimWidth
+
+        0.95, // float basinHeight
+        0.3, // float basinCenter
+        0.075, // float basinSmoothness 
+
+        0.075, //float splatterBumpStrength 
+        layer3, // color primerColor
+        
+        // base layer params
+        1.0, // float baseWeight,
+        layer3, // color baseColor,
+        0.3, // float baseRoughness,
+        1.4, // float baseIOR,
+        
+        // metallic/flake layer params
+        1.0, // float flakeWeight,
+        layer3, // color flakeReflectivity,
+        layer3, // color flakeEdgeTint,
+        0.1 // float flakeRoughness
+    };
+
+    int numPrimaryLayers = 3;
+    SplatterLayerParams splatterLayers[3] = { splatterLayer3, splatterLayer2, splatterLayer1 };
+
+	for (int i = 0; i < numPrimaryLayers; i++) {
+
+        SplatterLayerParams primaryParams = splatterLayers[i];
+        closure color primaryLayerStack = 0;
+        int firstSubLayer = 1;
+
+        for (int j = 0; j < numSubLayers; j++) {
+
+            SplatterLayerParams subParams = jitterSplatterParams(primaryParams, j, 1.0);
+
+            float splatterHeight;
+            float splatterMask;
+
+            splatter(
+                subParams,
+                splatterHeight,
+                splatterMask
+            );
+
+            float rehash;
+            float outAlpha;
+            normal outNormal;
+            int seed = subParams.seed;
+            cumulativeHeight += splatterHeight;
+
+            point Pbump = P + normalize(Ng) * cumulativeHeight * subParams.splatterBumpStrength;
+            normal splatterNormal = normalize(calculatenormal(Pbump));
+            N = splatterNormal;
+
+            generateFlakes(pos, seed, flakeDensity, rehash, outAlpha, outNormal);
+            normal finalNormal = mix(splatterNormal, outNormal, flakeRandomize);
+
+            closure color addFlakes;
+            float finalMask = splatterHeight + 1e-6;
+            
+            // Track primer color from topmost layer that has splatter
+            if (finalMask > 1e-6) {
+                finalPrimerColor = subParams.primerColor;
+            }
+
+            if (outAlpha > 0.5) {
+                color flakeIOR, flakeExtinction;
+                artistic_ior(subParams.flakeReflectivity, subParams.flakeEdgeTint, flakeIOR, flakeExtinction);
+                
+                addFlakes = finalMask * subParams.flakeWeight * conductor_bsdf(
+                    finalNormal, 0,
+                    subParams.flakeRoughness, // roughness_x 
+                    subParams.flakeRoughness, // roughness_y 
+                    flakeIOR, // ior 
+                    flakeExtinction, // extinction 
+                    "ggx"
+                );
+            } else {
+                addFlakes = finalMask * subParams.baseWeight * dielectric_bsdf(
+                    splatterNormal, 0,
+                    subParams.baseColor, // reflection_tint,  
+                    0, // transmission_tint, 
+                    subParams.baseRoughness, // roughness_x, 
+                    subParams.baseRoughness, // roughness_y,  
+                    subParams.baseIOR, // ior 
+                    "ggx"
+                );
+            }
+
+            if (firstSubLayer) {
+                primaryLayerStack = addFlakes;
+                firstSubLayer = 0;
+            } else {
+                primaryLayerStack = layer(addFlakes, primaryLayerStack);
+            }
+        }
+
+        if (i == 0) {
+            baseLayer = primaryLayerStack;
+        } else {
+            baseLayer = layer(primaryLayerStack, baseLayer);
+        }
+	}
+
+	closure color primerLayer = primerWeight * burley_diffuse_bsdf(Ng, finalPrimerColor, primerRoughness);
+	closure color baseAndPrimerLayer = layer(baseLayer, primerLayer);
+
+	vector T = vector(cos(2 * M_PI * clearcoatRotation), sin(2 * M_PI * clearcoatRotation), 0);
+
+	//Clearcoat
+	closure color clearcoatBase = generalized_schlick_bsdf(
+		N, T,
+		color(1.0), // reflection_tint
+		color(0.0), // transmission_tint
+		clearcoatRoughness, // roughness_y
+		clearcoatRoughness * (1.0 - clearcoatAnisotropy), // roughness_x
+		color(0.04), // f0
+		color(1,1,1), // f90
+		clearcoatExponent, // exponent
+		"ggx" // distribution
+	);
+
+	closure color clearcoatTop = dielectric_bsdf(
+		N, T,
+		color(1.0), // reflection_tint
+		color(0.0), // transmission_tint
+		clearcoatRoughness, // roughness_y
+		clearcoatRoughness * (1.0 - clearcoatAnisotropy), // roughness_x
+		clearcoatIOR, // IOR
+		"ggx"
+	);
+
+	closure color clearcoat = clearcoatWeight * layer(clearcoatTop, clearcoatBase);
+
+	Cout = layer(clearcoat, baseAndPrimerLayer);
+}

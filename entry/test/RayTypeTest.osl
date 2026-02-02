@@ -1,0 +1,34 @@
+shader RayTypeTest(
+    output closure color Cout = 0,
+    output color outColor = 0
+) {
+    if (raytype("camera")) {
+        outColor = color(1, 0, 0);         // red for camera rays
+    }
+    else if (raytype("shadow")) {
+        outColor = color(0, 1, 0);         // green for shadow rays
+    }
+    else if (raytype("diffuse_reflect")) {
+        outColor = color(0, 0, 1);         // blue for diffuse reflection
+    }
+    else if (raytype("specular_reflect")) {
+        outColor = color(1, 1, 0);         // yellow for specular reflection
+    }
+    else if (raytype("diffuse_transmit")) {
+        outColor = color(1, 0, 1);         // magenta for diffuse transmission
+    }
+    else if (raytype("specular_transmit")) {
+        outColor = color(0, 1, 1);         // cyan for specular transmission
+    }
+    else if (raytype("volume_scatter")) {
+        outColor = color(0.5, 0.5, 0.5);   // gray for volume scattering
+    }
+    else if (raytype("subsurface")) {
+        outColor = color(1, 0.5, 0);       // orange for subsurface rays
+    }
+    else {
+        outColor = color(0.2, 0.2, 0.2);   // fallback color
+    }
+
+    Cout = diffuse(N) * outColor;
+}

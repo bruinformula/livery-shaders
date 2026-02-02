@@ -1,0 +1,60 @@
+
+
+#ifdef ENTRY_TANGENT_FIELD
+    #define  DEFAULT_TANGENT_FIELD(x) = x
+#else
+    #define  DEFAULT_TANGENT_FIELD(x)
+#endif
+
+#ifndef ENTRY_TANGENT_FIELD
+	#define ENTRY_TANGENT_FIELD void
+#endif
+
+ENTRY_TANGENT_FIELD TangentField (
+    float inputRotation  DEFAULT_TANGENT_FIELD(0) [[ string label = "Input Rotation", string help = "A single float value to rotate the shading tangent. Takes precedence over inputVector."]],
+    vector inputVector  DEFAULT_TANGENT_FIELD(vector(0.5)) [[ string label = "Input Vector", string help = "Red and green channels read as x and y coordinates of a 2d vector. Ignored if inputRotation is connected." ]],
+    float rotationOffset  DEFAULT_TANGENT_FIELD(0) [[ string label = "Rotation Offset", string help = "A global rotation offset in degrees." ]],
+    float rotationRange  DEFAULT_TANGENT_FIELD(1.0) [[ string label = "Rotation Range", string help = "Scales the rotation range. 1.0 equates 0 to 360 degrees." ]],
+    int centeredVectors  DEFAULT_TANGENT_FIELD(0) [[ string label = "Centered Vectors", string help = "Centers the gradient values of the vector map. Ignored when inputRotation is used.", string widget = "checkBox" ]],
+
+    output vector resultXYZ  DEFAULT_TANGENT_FIELD(0) [[ string label = "Result XYZ", string help = "The final tangent vector that should be connected to the Bxdf's Shading Tangent input." ]]
+) {
+    float rotationAngle = 0;
+
+    if (inputRotation != 0 || isconnected(inputRotation)) {
+        rotationAngle = inputRotation;
+    } else {
+        float vecX = inputVector.x;
+        float vecY = inputVector.y;
+
+        if (centeredVectors) {
+            vecX = vecX * 2.0 - 1.0;
+            vecY = vecY * 2.0 - 1.0;
+        }
+
+        rotationAngle = atan2(vecY, vecX) / (2.0 * M_PI);
+
+        if (rotationAngle < 0.0) {
+            rotationAngle += 1.0;
+        }
+    }
+
+    rotationAngle *= rotationRange;
+
+    rotationAngle += rotationOffset / 360.0;
+
+    float angleRadians = rotationAngle * 2.0 * M_PI;
+    
+    vector T = Dx(P);  // tangent 
+    vector B = Dy(P);  // bitangent 
+    
+    vector Nn = normalize(N);
+    T = normalize(T - Nn * dot(T, Nn));
+    B = normalize(B - Nn * dot(B, Nn));
+    
+    float cosAngle = cos(angleRadians);
+    float sinAngle = sin(angleRadians);
+    
+    resultXYZ = cosAngle * T + sinAngle * B;
+    resultXYZ = normalize(resultXYZ);
+}

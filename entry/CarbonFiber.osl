@@ -1,0 +1,2 @@
+#define ENTRY_CARBON_FIBER shader
+#include "../CarbonFiberShader.osl"

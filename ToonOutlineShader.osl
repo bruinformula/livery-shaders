@@ -1,0 +1,108 @@
+
+#ifdef ENTRY_TOON_OUTLINE
+    #define  DEFAULT_TOON_OUTLINE(x) = x
+#else
+    #define  DEFAULT_TOON_OUTLINE(x)
+#endif
+
+#ifndef ENTRY_TOON_OUTLINE
+	#define ENTRY_TOON_OUTLINE void
+#endif
+
+// retrieves name, hit point and normal of a probe ray
+int probeForOutline( vector rayDir, 
+                     point rayOrigin, 
+                     output string hitGeomName,
+                     output point hitPoint, 
+                     output normal hitNormal 
+) {
+    int hit = trace(rayOrigin, rayDir);   
+
+    if (hit) {
+        getmessage("trace","geom:name", hitGeomName);
+
+        getmessage("trace", "P", hitPoint);
+        hitPoint = transform("world", hitPoint);
+
+        getmessage("trace", "N", hitNormal);
+        hitNormal = normalize(transform("world", hitNormal));
+    }
+
+    return hit;
+
+}
+
+
+ENTRY_TOON_OUTLINE ToonOutline(
+    float width  DEFAULT_TOON_OUTLINE(0.01),
+    float distanceThreadshold  DEFAULT_TOON_OUTLINE(1.1),
+    float normalThreadshold  DEFAULT_TOON_OUTLINE(0.1),
+    float noiseScale  DEFAULT_TOON_OUTLINE(0),
+    float noiseAmount  DEFAULT_TOON_OUTLINE(0),
+    output float outAlpha  DEFAULT_TOON_OUTLINE(0),
+    output closure color Cout  DEFAULT_TOON_OUTLINE(0)
+) {
+
+    for(int i = -1; i <= 1; i++){
+        float noisedWidth = width * noise("perlin", P * noiseScale) * noiseAmount;
+
+        float eps = 1e-4;
+
+        point rayOrigin1  = P + N * eps;
+        point rayOrigin2 = P + N * (eps + width);
+
+        vector rayDir = normalize(-I);
+
+        string name1 = "nogeo";
+        string name2;
+
+        point hitPoint1;
+        point hitPoint2;
+
+        normal hitNormal1;
+        normal hitNormal2;
+
+        int hit1 = probeForOutline(rayDir, rayOrigin1, name1, hitPoint1, hitNormal1);
+        if(!hit1) {
+            outAlpha = 1;
+            break;
+        }
+
+        int hit2 = probeForOutline(rayDir, rayOrigin2, name2, hitPoint2, hitNormal2);
+        if(!hit2) {
+            outAlpha = 1;
+            break;
+        }
+
+        int meetsNameCriteria = (name1 != name2);
+        int meetsDistanceCriteria = dot(hitPoint1, hitPoint2) < (1 - distanceThreadshold);
+        int meetsNormalCriteria = dot(hitNormal1, hitNormal2) < (1.0 - normalThreadshold);
+
+        //if the normals are different enough, or the distance is large enough, or the names are different enough, we have an outline
+        if (meetsDistanceCriteria || meetsNormalCriteria || meetsNameCriteria) {
+            outAlpha = 1;
+            break;
+        }
+        
+    }
+
+    if (outAlpha > 0) {
+        Cout = outAlpha * emission();
+    } else {
+        Cout = transparent();
+    }
+
+}
+
+/* 
+
+ENTRY_TOON Toon(
+    color Color = 1,
+    float Angle = 50,
+    output color Cout = 0
+) {
+    float angle = cos(radians(Angle));
+    if(abs(dot(-I,N)) > angle) Cout = Color;
+}
+
+*/

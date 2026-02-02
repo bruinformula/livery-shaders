@@ -1,0 +1,12 @@
+surface emitter(
+    float power = 1 [[ string description = "Total power of the light", float UImin = 0 ]],
+    color Cs = 1 [[ string description = "Base color", float UImin = 0, float UImax = 1 ]],
+    output closure color Cout = 0
+) {
+    float emissionStrength = power / (M_PI * surfacearea());
+    color emissionColor = emissionStrength * Cs;
+    setmessage("emission_color", emissionColor);
+    setmessage("emission_strength", emissionStrength);
+
+    Cout = emissionColor * emission();
+}

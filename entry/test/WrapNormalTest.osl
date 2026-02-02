@@ -1,0 +1,30 @@
+
+
+normal getBumpedNormal( vector centerColor, 
+                        vector uColor, 
+                        vector vColor
+) {
+	vector worldTangent = normalize(dPdu);
+	vector worldBitangent = normalize(dPdv);
+	vector worldNormal = normalize(N);
+	
+    vector average = vector(0.3333333);
+    float center = dot(average, centerColor);
+    float ddu = center - dot(average, uColor);
+    float ddv = center - dot(average, vColor);
+		
+    return normalize(ddu * worldTangent + ddv * worldBitangent + worldNormal);
+}
+
+shader TestWrap (
+    vector centerColor = 0, 
+    vector uColor = 0, 
+    vector vColor = 0,
+    output normal bumpNormal = 1,
+    output closure color Cout = 0
+) {
+
+    bumpNormal = getBumpedNormal(centerColor, uColor, vColor);
+    Ci = diffuse(bumpNormal);
+
+}

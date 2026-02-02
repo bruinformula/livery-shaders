@@ -1,0 +1,2 @@
+#define ENTRY_TANGENT_FIELD shader
+#include "../TangentFieldShader.osl"

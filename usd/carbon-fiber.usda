@@ -1,0 +1,35 @@
+#usda 1.0 
+
+
+over Xform "Mk11"
+{
+    over Scope "mtl"
+    {
+        over Scope "lib"
+        {
+            def Material "CarbonFiber" 
+            {
+                token outputs:arnold:surface.connect = </Mk11/mtl/lib/CarbonFiber/CarbonFiberOSLShader.outputs:Cout>
+
+                def Shader "CarbonFiberOSLShader"
+                {
+                    uniform token info:id = "arnold:CarbonFiberShader"
+
+                    vector3f inputs:fiberScale = (64, 32, 0)
+                    float inputs:fiberNormalStrength = 1.0
+
+                    float inputs:fiberBumpStrength = 0.1
+                    float inputs:fiberStrandBoost = 1.5
+                    float inputs:fiberSpecularWeight = 0.8
+
+                    color3f inputs:resinTint = (0.3, 0.3, 0.27)
+                    float inputs:clearcoatWeight = 1.0
+                    float inputs:resinRoughness = 0.05
+                    float inputs:resinIOR = 1.4
+                    float inputs:resinExponent = 5
+                    color3f outputs:Cout
+                }
+            } 
+        }
+    }
+}

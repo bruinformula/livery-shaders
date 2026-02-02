@@ -1,0 +1,2 @@
+#define ENTRY_METALLIC_PAINT shader
+#include "../MetallicPaintShader.osl"
