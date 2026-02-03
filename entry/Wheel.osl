@@ -1,2 +1,0 @@
-#define ENTRY_WHEEL shader
-#include "../WheelShader.osl"

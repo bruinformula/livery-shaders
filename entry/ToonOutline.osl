@@ -1,2 +1,0 @@
-#define ENTRY_TOON_OUTLINE shader
-#include "../ToonOutlineShader.osl"

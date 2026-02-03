@@ -1,2 +1,0 @@
-#define ENTRY_HALFTONE_DOTS shader
-#include "../HalftoneDotsShader.osl"

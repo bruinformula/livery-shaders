@@ -1,2 +1,0 @@
-#define ENTRY_SIMPLE_SPLATTER shader
-#include "../SimpleSplatterShader.osl"

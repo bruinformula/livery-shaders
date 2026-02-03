@@ -1,2 +1,0 @@
-#define ENTRY_DIRT shader
-#include "../DirtShader.osl"

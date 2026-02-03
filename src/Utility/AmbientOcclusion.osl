@@ -1,0 +1,58 @@
+
+#ifndef ENTRY_AMBIENT_OCCLUSION
+    #define DEFAULT_AMBIENT_OCCLUSION(x) = x
+    #define ENTRY_AMBIENT_OCCLUSION shader
+#else
+    #define DEFAULT_AMBIENT_OCCLUSION(x)
+#endif
+
+ENTRY_AMBIENT_OCCLUSION AmbientOcclusion(
+    color inColor  DEFAULT_AMBIENT_OCCLUSION(1),
+    color hitColor  DEFAULT_AMBIENT_OCCLUSION(0),
+    closure color closureIn  DEFAULT_AMBIENT_OCCLUSION(0),
+    closure color closureHit  DEFAULT_AMBIENT_OCCLUSION(0),
+    float aoAngle  DEFAULT_AMBIENT_OCCLUSION(0.95),
+    float maxDistance  DEFAULT_AMBIENT_OCCLUSION(25.0),
+    vector bumpNormal  DEFAULT_AMBIENT_OCCLUSION(0),
+    output color outColor  DEFAULT_AMBIENT_OCCLUSION(color(1, 0, 0)),
+    output closure color closureOut  DEFAULT_AMBIENT_OCCLUSION(0)
+) {
+    int isRayTypeDiffuse = raytype("diffuse");
+    
+    if (isRayTypeDiffuse) {
+        //closure color NullClosure = 0.0;
+        outColor = inColor;
+        closureOut = closureIn;
+    } else {
+        // compute  vector to trace Ray = random * N
+        vector bruitvector = vector ( 0.0 , 0.0 , 0.0 );
+        vector VectorAO = N + bumpNormal + (0.001 * noise("perlin", P*10000.0 ));
+
+        if ( aoAngle != 0.0 ){
+            bruitvector = aoAngle * ( 1.0- 2.0 * noise("cell", VectorAO*10000.0 ) );
+            VectorAO +=  bruitvector;
+        }
+
+        // trace Ray for AO
+        float hitDistance = 1.0;
+        float mixage = 1.0;
+        vector DirTrace = normalize(VectorAO);
+        
+        int traceHit = trace(P, DirTrace, "maxdist" , maxDistance );
+
+        if (traceHit) {
+            int hitTrace = getmessage("trace", "hitdist", hitDistance);
+
+            mixage = clamp((hitDistance / maxDistance), 0.0, 1.0);
+
+            // make a gradient between the 2 colors to have smoother (and better quality) AO.
+            outColor = mix(hitColor, inColor, mixage );
+            closureOut = (closureIn * mixage)  + closureHit * (1.0 - mixage );
+           
+        } else {
+            // else, return black
+            outColor = inColor;
+            closureOut = closureIn;
+        }
+    }
+}

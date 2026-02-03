@@ -1,0 +1,32 @@
+
+#ifndef ENTRY_GOOCH
+    #define  DEFAULT_GOOCH(x) = x
+    #define ENTRY_GOOCH shader
+#else
+    #define  DEFAULT_GOOCH(x)
+#endif
+
+ENTRY_GOOCH Gooch(
+    color warmColor = color(0.8, 0.8, 0.7),
+    color coolColor = color(0.3, 0.3, 0.8),
+    float specular_intensity = 1.0,
+    float shininess = 64.0,
+    output color result = 0
+) {
+    normal Nn = normalize(N);
+    vector V = normalize(-I);
+    
+    // the main light direction
+    vector L = normalize(vector(1, 1, 1));
+    
+    float NdotL = dot(Nn, L);
+    float t = (NdotL + 1.0) * 0.5;
+    
+    color diffuseLayer = mix(coolColor, warmColor, t);
+    
+    vector H = normalize(L + V);
+    float NdotH = max(0.0, dot(Nn, H));
+    float specular = pow(NdotH, shininess) * specular_intensity;
+    
+    result = diffuseLayer + color(specular);
+}

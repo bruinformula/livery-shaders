@@ -1,2 +1,0 @@
-#define ENTRY_SPLATTER_PAINT shader
-#include "../SplatterPaintShader.osl"

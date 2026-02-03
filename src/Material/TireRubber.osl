@@ -1,0 +1,79 @@
+#ifndef ENTRY_TIRE_RUBBER
+    #define DEFAULT_TIRE_RUBBER(x) = x
+	#define ENTRY_TIRE_RUBBER shader
+#else
+    #define DEFAULT_TIRE_RUBBER(x)
+#endif
+
+#include "Utility/MTX.h"
+
+ENTRY_TIRE_RUBBER TireRubber (
+
+    vector UV = vector(u, v, 0),
+    int useUV = 0 [[ string help = "Defaults to P otherwise", string widget = "checkBox" ]],
+
+	float baseWeight = 1.0 [[ string page = "Base", float min = 0.0, float max = 1.0 ]],
+	color baseColor = color(0.023) [[ string page = "Base" ]],
+	float baseRoughness = 0.7 [[ string page = "Base", float min = 0.0, float max = 1.0 ]],
+    
+    float specularScale = 1.0 [[ string page = "Specular", float min = 0.0, float max = 10.0 ]],
+
+    float specularWeight = 0.5 [[ string page = "Specular", float min = 0.0, float max = 1.0 ]],
+    float specularRoughness = 0.7 [[ string page = "Specular", float min = 0.0, float max = 1.0 ]],
+    float specularIOR = 1.5 [[ string page = "Specular", float min = 1.0, float max = 3.0 ]],
+
+    output closure color Cout = 0
+) {
+
+    point position = transform("object", useUV ? UV : P);
+
+
+    point scaledPos = position * specularScale;
+    
+    vector f1 = noise("snoise", scaledPos);
+
+    float value1 = mx_fbm(
+        f1, // position
+        10, // octaves
+        0.8, // lacunarity
+        1.0, // diminish
+        "snoise"
+    );
+
+    vector f2 = mx_fbm(
+        scaledPos, // position
+        8, // octaves
+        2.0, // lacunarity
+        0.5, // diminish
+        "snoise"
+    );
+
+    float value2 = noise("snoise", f2) * 0.05 + 0.95;
+    float mixed = mix(value1, 1, value2);
+
+    //other 
+
+    vector baseNoise = 1.5 * mx_fbm(
+        position * 10, // position
+        3, // octaves
+        1, // lacunarity
+        0, // diminish
+        "snoise"
+    );
+
+    closure color base = baseWeight * oren_nayar_diffuse_bsdf(N, baseColor, baseRoughness);
+
+    closure color specular = specularWeight * dielectric_bsdf(
+        N, 0,
+        color(1), // reflection_tint,  
+        color(0.0), // transmission_tint, 
+        mixed * specularRoughness, // roughness_x, 
+        mixed * specularRoughness, // roughness_y,  
+        specularIOR, // ior 
+        "ggx"
+    );
+
+    //Cout = base;
+    Cout = layer(specular, base);
+    //Cout = emission() * color(worley);
+}

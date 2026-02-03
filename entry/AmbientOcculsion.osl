@@ -1,2 +1,0 @@
-#define ENTRY_AMBIENT_OCCLUSION shader
-#include "../AmbientOcclusionShader.osl"

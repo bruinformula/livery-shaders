@@ -1,0 +1,12 @@
+#include "../../BumpToRoughness.osl"
+
+
+float wireframe(string edge_type, float line_width) { return wireframe(edge_type, line_width, 1); }
+float wireframe(string edge_type) { return wireframe(edge_type, 1.0, 1); }
+float wireframe() { return wireframe("polygons", 1.0, 1); }
+
+shader KuwaharaFilterTest(
+    output closure color Cout = 0
+) {
+    Cout = diffuse(N) * wireframe("polygons", 0.5, 0);
+}
