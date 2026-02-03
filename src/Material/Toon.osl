@@ -53,7 +53,7 @@ ENTRY_TOON ToonShader(
 
     // Lighting
     vector lightDirection DEFAULT_TOON(vector(0, 0, -0.6))  [[ string page = "Lighting" ]],
-    color lightColor DEFAULT_TOON(color(0.968215, 0.968215, 0.968215))  [[ string page = "Lighting" ]],
+    color lightColor DEFAULT_TOON(color(1.0))  [[ string page = "Lighting" ]],
     color ambientColor DEFAULT_TOON(0.1)  [[ string page = "Lighting" ]],
 
     // Diffuse
@@ -61,7 +61,7 @@ ENTRY_TOON ToonShader(
 
     // Specular 
     color specularColor DEFAULT_TOON(color(1))  [[ string page = "Specular" ]],
-    float specularSmoothness DEFAULT_TOON(0.1)  [[ string page = "Specular", float min = 0.0, float max = 0.1 ]],
+    float specularSmoothness DEFAULT_TOON(0.5)  [[ string page = "Specular", float min = 0.0, float max = 0.1 ]],
     float specularGlossiness DEFAULT_TOON(4.0)  [[ string page = "Specular", float min = 1.0, float max = 256.0 ]],
     float specularLow DEFAULT_TOON(0.005)  [[ string page = "Specular", float min = 0.0, float max = 0.1 ]],
 

@@ -10,14 +10,12 @@ from typing import List, Optional
 RED = '\033[91m'
 RESET = '\033[0m'
 
-
 def print_error(message: str):
     print(f"{RED}{message}{RESET}", file=sys.stderr)
 
 
 def find_osl_files(src_dir: Path) -> List[Path]:
     return list(src_dir.rglob("*.osl"))
-
 
 def compile_osl_file(
     osl_file: Path,
