@@ -1,3 +1,3 @@
-# Bruin Livery Shaders Library
+# Bruin Formula Shaders Library
 
-A collection of OSL shaders for cars.
+A collection of OSL shaders for cars and CAD.

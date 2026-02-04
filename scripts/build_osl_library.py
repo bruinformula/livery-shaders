@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
+import oslquery
+
 # color codes
 RED = '\033[91m'
 RESET = '\033[0m'
@@ -16,6 +18,71 @@ def print_error(message: str):
 
 def find_osl_files(src_dir: Path) -> List[Path]:
     return list(src_dir.rglob("*.osl"))
+
+
+def print_oso_param(p, indent="    ") :
+    if p.isstruct:
+        # If the parameter is a struct, then p.structname will be the name
+        # of the struct, and p.fields will be a list of fields.
+        # The master struct itself will have no data. The individual fields
+        # are separate parameters the follow with names like "name.field",
+        # for each field.
+        print (indent, "struct {} {} with fields {} ...".format(p.structname, p.name, p.fields))
+    elif p.isclosure:
+        # If the parameter is a closure, it's special
+        print (indent, "{}closure color {} = {}".format(
+                    "output " if p.isoutput else "",
+                    p.name, p.value))
+    else:
+        # All other parameter types. Note how we check for output-ness, the
+        # type is an OpenImageIO::TypeDesc but it can print like a string,
+        # if the type is a string we surround it with single quotes to make
+        # it clear. Aggregate types will have their `value` print correctly
+        # as tuples.
+        try:
+            type_str = str(p.type)
+            is_string = type_str == "string"
+            print (indent, "{}{} {} = {}".format(
+                        "output " if p.isoutput else "",
+                        type_str, p.name,
+                        "'{}'".format(p.value) if is_string else p.value))
+        except TypeError:
+            # If type conversion fails, just print name without type
+            print (indent, "{}{} = {}".format(
+                        "output " if p.isoutput else "",
+                        p.name, p.value))
+    if p.spacename:
+        print (indent, "    space:", p.spacename)
+    # Metadata are themselves another tuple of Parameter objects hanging off
+    # the parameter. We can iterate over them just like we iterated over the
+    # shader params.
+    for m in p.metadata :
+        print_oso_param(m, indent+"    meta: ")
+
+def query_oso_file(
+    oso_file: Path
+):
+    try:
+        q = oslquery.OSLQuery(str(oso_file))
+        print("Shader: ", q.shadertype(), q.shadername())
+
+        # We can iterate over any shader-wide metadata as q.metadata
+        for m in q.metadata:
+            print_oso_param(m, "  meta: ")
+
+        # Iterating over the query object itself is iterating over the
+        # parameters to the shader:
+        print("  Parameters:")
+        for i in range(len(q)):
+            print_oso_param(q[i])
+
+        for p in q:
+            print_oso_param(p)
+    except Exception as e:
+        # If querying fails, just silently continue - compilation succeeded
+        pass
+
+
 
 def compile_osl_file(
     osl_file: Path,
@@ -71,6 +138,12 @@ def compile_osl_file(
         
         if not quiet:
             print(f"  -> {output_file}")
+
+        try:
+            query_oso_file(output_file)
+        except Exception as query_error:
+            if verbose and not quiet:
+                print_error(f"WARNING: Could not query OSO file: {query_error}")
         
         return True
     
@@ -110,7 +183,7 @@ Examples:
     parser.add_argument(
         "--src",
         type=str,
-        default="src",
+        default="shaders/src",
         help="Source directory containing .osl files (default: src)"
     )
     
@@ -132,7 +205,7 @@ Examples:
         "-I",
         action="append",
         dest="include_paths",
-        default=["include"],
+        default=["shaders/include"],
         help="Add path to #include search path"
     )
 
