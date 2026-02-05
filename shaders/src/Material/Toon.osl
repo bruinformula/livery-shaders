@@ -51,76 +51,76 @@ void ToonOutline(
 
 ENTRY_TOON ToonShader(
     // Base
-    color baseColor DEFAULT_TOON(color(0.4))  [[ string page = "Base" ]],
-    float opacity DEFAULT_TOON(1.0)  [[ string page = "Base", float uiMin = 0.0, float uiMax = 1.0 ]],
+    color baseColor DEFAULT_TOON(color(0.4))  [[ string uifolder = "Base" ]],
+    float opacity DEFAULT_TOON(1.0)  [[ string uifolder = "Base", float uimin = 0.0, float uimax = 1.0 ]],
 
     // Lighting
-    vector lightDirection DEFAULT_TOON(vector(0, 0, -0.6))  [[ string page = "Lighting" ]],
-    color lightColor DEFAULT_TOON(color(1.0))  [[ string page = "Lighting" ]],
-    color ambientColor DEFAULT_TOON(0.1)  [[ string page = "Lighting" ]],
+    vector lightDirection DEFAULT_TOON(vector(0, 0, -0.6))  [[ string uifolder = "Lighting" ]],
+    color lightColor DEFAULT_TOON(color(1.0))  [[ string uifolder = "Lighting" ]],
+    color ambientColor DEFAULT_TOON(0.1)  [[ string uifolder = "Lighting" ]],
 
     // Diffuse
-    float diffuseSmoothness DEFAULT_TOON(0.5)  [[ string page = "Diffuse", float uiMin = 0.0, float uiMax = 0.1 ]],
+    float diffuseSmoothness DEFAULT_TOON(0.5)  [[ string uifolder = "Diffuse", float uimin = 0.0, float uimax = 0.1 ]],
 
     // Specular 
-    color specularColor DEFAULT_TOON(color(1))  [[ string page = "Specular" ]],
-    float specularSmoothness DEFAULT_TOON(0.5)  [[ string page = "Specular", float uiMin = 0.0, float uiMax = 0.1 ]],
-    float specularGlossiness DEFAULT_TOON(4.0)  [[ string page = "Specular", float uiMin = 1.0, float uiMax = 256.0 ]],
-    float specularLow DEFAULT_TOON(0.005)  [[ string page = "Specular", float uiMin = 0.0, float uiMax = 0.1 ]],
+    color specularColor DEFAULT_TOON(color(1))  [[ string uifolder = "Specular" ]],
+    float specularSmoothness DEFAULT_TOON(0.5)  [[ string uifolder = "Specular", float uimin = 0.0, float uimax = 0.1 ]],
+    float specularGlossiness DEFAULT_TOON(4.0)  [[ string uifolder = "Specular", float uimin = 1.0, float uimax = 256.0 ]],
+    float specularLow DEFAULT_TOON(0.005)  [[ string uifolder = "Specular", float uimin = 0.0, float uimax = 0.1 ]],
 
     // Mid Specular + Rim
-    color rimColor DEFAULT_TOON(color(0.5)) [[ string page = "Mid Specular" ]],
-    float rimAmount DEFAULT_TOON(0.7) [[ string page = "Mid Specular", float uiMin = 0.0, float uiMax = 1.0 ]],
-    float rimThreshold DEFAULT_TOON(0.1) [[ string page = "Mid Specular", float uiMin = 0.0, float uiMax = 1.0 ]],
-    float rimSpread DEFAULT_TOON(0.1) [[ string page = "Mid Specular", float uiMin = 0.0, float uiMax = 0.1 ]],
+    color rimColor DEFAULT_TOON(color(0.5)) [[ string uifolder = "Mid Specular" ]],
+    float rimAmount DEFAULT_TOON(0.7) [[ string uifolder = "Mid Specular", float uimin = 0.0, float uimax = 1.0 ]],
+    float rimThreshold DEFAULT_TOON(0.1) [[ string uifolder = "Mid Specular", float uimin = 0.0, float uimax = 1.0 ]],
+    float rimSpread DEFAULT_TOON(0.1) [[ string uifolder = "Mid Specular", float uimin = 0.0, float uimax = 0.1 ]],
 
-    color midSpecularColor DEFAULT_TOON(color(1))  [[ string page = "Mid Specular" ]],
-    float midSpecularCenter DEFAULT_TOON(0.7) [[ string page = "Mid Specular", float uiMin = 0.0, float uiMax = 1.0 ]],
-    float midSpecularWidth DEFAULT_TOON(0.2) [[ string page = "Mid Specular", float uiMin = 0.0, float uiMax = 1.0 ]],
-    float midSpecularIntensity DEFAULT_TOON(0.5) [[ string page = "Mid Specular", float uiMin = 0.0, float uiMax = 1.0 ]],
+    color midSpecularColor DEFAULT_TOON(color(1))  [[ string uifolder = "Mid Specular" ]],
+    float midSpecularCenter DEFAULT_TOON(0.7) [[ string uifolder = "Mid Specular", float uimin = 0.0, float uimax = 1.0 ]],
+    float midSpecularWidth DEFAULT_TOON(0.2) [[ string uifolder = "Mid Specular", float uimin = 0.0, float uimax = 1.0 ]],
+    float midSpecularIntensity DEFAULT_TOON(0.5) [[ string uifolder = "Mid Specular", float uimin = 0.0, float uimax = 1.0 ]],
 
     // Halftone Parameters
 
     // Ambient Occlusion
-    float aoAngle DEFAULT_TOON(0.35)  [[ string page = "AO", float uiMin = 0.0, float uiMax = 1.57 ]],
-    float aoMaxDistance DEFAULT_TOON(1.0)  [[ string page = "AO", float uiMin = 0.0 ]],
-    color aoColorIn DEFAULT_TOON(color(1.0))  [[ string page = "AO" ]],
-    color aoHitColor DEFAULT_TOON(color(0.5))  [[ string page = "AO" ]],
+    float aoAngle DEFAULT_TOON(0.35)  [[ string uifolder = "AO", float uimin = 0.0, float uimax = 1.57 ]],
+    float aoMaxDistance DEFAULT_TOON(1.0)  [[ string uifolder = "AO", float uimin = 0.0 ]],
+    color aoColorIn DEFAULT_TOON(color(1.0))  [[ string uifolder = "AO" ]],
+    color aoHitColor DEFAULT_TOON(color(0.5))  [[ string uifolder = "AO" ]],
 
     // Halftone AO
-    vector aoDotScale DEFAULT_TOON(vector(0,4,0))  [[ string page = "Halftone AO" ]],
-    float aoDotAngle DEFAULT_TOON(45.0)  [[ string page = "Halftone AO" ]],
-    float aoDotFuzz DEFAULT_TOON(0.0)  [[ string page = "Halftone AO" ]],
-    color aoDotsColor DEFAULT_TOON(color(0.0))  [[ string page = "Halftone AO" ]],
-    color aoBackgroundColor DEFAULT_TOON(color(1.0))  [[ string page = "Halftone AO" ]],
+    vector aoDotScale DEFAULT_TOON(vector(0,4,0))  [[ string uifolder = "Halftone AO" ]],
+    float aoDotAngle DEFAULT_TOON(45.0)  [[ string uifolder = "Halftone AO" ]],
+    float aoDotFuzz DEFAULT_TOON(0.0)  [[ string uifolder = "Halftone AO" ]],
+    color aoDotsColor DEFAULT_TOON(color(0.0))  [[ string uifolder = "Halftone AO" ]],
+    color aoBackgroundColor DEFAULT_TOON(color(1.0))  [[ string uifolder = "Halftone AO" ]],
 
     // Halftone Diffuse
-    vector diffuseDotScale DEFAULT_TOON(vector(0,4,0))  [[ string page = "Halftone Diffuse" ]],
-    float diffuseDotAngle DEFAULT_TOON(45.0)  [[ string page = "Halftone Diffuse" ]],
-    float diffuseDotFuzz DEFAULT_TOON(0.0)  [[ string page = "Halftone Diffuse" ]],
-    color diffuseDotsColor DEFAULT_TOON(color(0.0))  [[ string page = "Halftone Diffuse" ]],
-    color diffuseBackgroundColor DEFAULT_TOON(color(1.0))  [[ string page = "Halftone Diffuse" ]],
+    vector diffuseDotScale DEFAULT_TOON(vector(0,4,0))  [[ string uifolder = "Halftone Diffuse" ]],
+    float diffuseDotAngle DEFAULT_TOON(45.0)  [[ string uifolder = "Halftone Diffuse" ]],
+    float diffuseDotFuzz DEFAULT_TOON(0.0)  [[ string uifolder = "Halftone Diffuse" ]],
+    color diffuseDotsColor DEFAULT_TOON(color(0.0))  [[ string uifolder = "Halftone Diffuse" ]],
+    color diffuseBackgroundColor DEFAULT_TOON(color(1.0))  [[ string uifolder = "Halftone Diffuse" ]],
 
     // Halftone Specular
-    vector specularDotScale DEFAULT_TOON(vector(3))  [[ string page = "Halftone Specular" ]],
-    float specularDotAngle DEFAULT_TOON(45.0)  [[ string page = "Halftone Specular" ]],
-    float specularDotFuzz DEFAULT_TOON(0.0)  [[ string page = "Halftone Specular" ]],
-    color specularDotsColor DEFAULT_TOON(color(0.0))  [[ string page = "Halftone Specular" ]],
-    color specularBackgroundColor DEFAULT_TOON(color(1.0))  [[ string page = "Halftone Specular" ]],
+    vector specularDotScale DEFAULT_TOON(vector(3))  [[ string uifolder = "Halftone Specular" ]],
+    float specularDotAngle DEFAULT_TOON(45.0)  [[ string uifolder = "Halftone Specular" ]],
+    float specularDotFuzz DEFAULT_TOON(0.0)  [[ string uifolder = "Halftone Specular" ]],
+    color specularDotsColor DEFAULT_TOON(color(0.0))  [[ string uifolder = "Halftone Specular" ]],
+    color specularBackgroundColor DEFAULT_TOON(color(1.0))  [[ string uifolder = "Halftone Specular" ]],
 
     // Halftone Mid Specular 
-    vector midSpecularDotScale DEFAULT_TOON(vector(4))  [[ string page = "Halftone Specular" ]],
-    float midSpecularDotAngle DEFAULT_TOON(45.0)  [[ string page = "Halftone Specular" ]],
-    float midSpecularDotFuzz DEFAULT_TOON(0.0)  [[ string page = "Halftone Specular" ]],
-    color midSpecularDotsColor DEFAULT_TOON(color(0.0))  [[ string page = "Halftone Specular" ]],
-    color midSpecularBackgroundColor DEFAULT_TOON(color(1.0))  [[ string page = "Halftone Specular" ]],
+    vector midSpecularDotScale DEFAULT_TOON(vector(4))  [[ string uifolder = "Halftone Specular" ]],
+    float midSpecularDotAngle DEFAULT_TOON(45.0)  [[ string uifolder = "Halftone Specular" ]],
+    float midSpecularDotFuzz DEFAULT_TOON(0.0)  [[ string uifolder = "Halftone Specular" ]],
+    color midSpecularDotsColor DEFAULT_TOON(color(0.0))  [[ string uifolder = "Halftone Specular" ]],
+    color midSpecularBackgroundColor DEFAULT_TOON(color(1.0))  [[ string uifolder = "Halftone Specular" ]],
 
     // Outline
-    float outlineWidth DEFAULT_TOON(0.005)  [[ string page = "Outline", float uiMin = 0.0 ]],
-    float outlineDistanceThreshold DEFAULT_TOON(1.1)  [[ string page = "Outline", float uiMin = 0.0 ]],
-    float outlineNormalThreshold DEFAULT_TOON(0.1)  [[ string page = "Outline", float uiMin = 0.0 ]],
+    float outlineWidth DEFAULT_TOON(0.005)  [[ string uifolder = "Outline", float uimin = 0.0 ]],
+    float outlineDistanceThreshold DEFAULT_TOON(1.1)  [[ string uifolder = "Outline", float uimin = 0.0 ]],
+    float outlineNormalThreshold DEFAULT_TOON(0.1)  [[ string uifolder = "Outline", float uimin = 0.0 ]],
 
-    float emissionWeight DEFAULT_TOON(1.0)  [[ string page = "Output", float uiMin = 0.0, float uiMax = 1.0 ]],
+    float emissionWeight DEFAULT_TOON(1.0)  [[ string uifolder = "Output", float uimin = 0.0, float uimax = 1.0 ]],
     
     // Output
     output color outColor = 0,

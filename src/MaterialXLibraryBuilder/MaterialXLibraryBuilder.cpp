@@ -169,6 +169,144 @@ public:
     bool writeSourceToDisk = true;
 };
 
+std::string parseOSLParameterValue(const osl::OSLQuery::Parameter& param) {
+    std::string result = "";
+
+    // Handle array types
+    if (param.type.arraylen > 0 || param.type.is_array()) { // is_array() for unsized arrays
+        if (param.type.elementtype() == osl::TypeDesc::INT) {
+            // Integer array
+            if (!param.idefault.empty()) {
+                result = std::to_string(param.idefault[0]);
+                for (size_t i = 1; i < std::min((size_t)param.type.arraylen, param.idefault.size()); ++i) {
+                    result += ", " + std::to_string(param.idefault[i]);
+                }
+            }
+        } else if (param.type.elementtype() == osl::TypeDesc::FLOAT) {
+            // Float array
+            if (!param.fdefault.empty()) {
+                result = std::to_string(param.fdefault[0]);
+                for (size_t i = 1; i < std::min((size_t)param.type.arraylen, param.fdefault.size()); ++i) {
+                    result += ", " + std::to_string(param.fdefault[i]);
+                }
+            }
+        } else if (param.type.elementtype() == osl::TypeDesc::STRING) {
+            // String array
+            if (!param.sdefault.empty()) {
+                result = "\"" + std::string(param.sdefault[0].c_str()) + "\"";
+                for (size_t i = 1; i < std::min((size_t)param.type.arraylen, param.sdefault.size()); ++i) {
+                    result += ", \"" + std::string(param.sdefault[i].c_str()) + "\"";
+                }
+            }
+        } else if (param.type.elementtype().aggregate == osl::TypeDesc::VEC3) {
+            // Vector3/Color3/Normal3/Point3
+            size_t elementsPerVec = 3;
+            size_t numVecs = param.type.arraylen > 0 ? param.type.arraylen : (param.fdefault.size() / elementsPerVec);
+            if (param.fdefault.size() >= elementsPerVec) {
+                for (size_t vec = 0; vec < numVecs && (vec * elementsPerVec + 2) < param.fdefault.size(); ++vec) {
+                    if (vec > 0) result += " ";
+                    result += std::to_string(param.fdefault[vec * elementsPerVec]) + "," +
+                              std::to_string(param.fdefault[vec * elementsPerVec + 1]) + "," +
+                              std::to_string(param.fdefault[vec * elementsPerVec + 2]);
+                }
+            }
+        }
+    }
+    // Handle scalar types
+    else if (param.type == osl::TypeDesc::STRING) {
+        result = param.sdefault.empty() ? "" : param.sdefault[0].c_str();
+    } else if (param.type == osl::TypeDesc::INT) {
+        result = param.idefault.empty() ? "0" : std::to_string(param.idefault[0]);
+    } else if (param.type == osl::TypeDesc::FLOAT) {
+        result = param.fdefault.empty() ? "0.0" : std::to_string(param.fdefault[0]);
+    } 
+    // Handle vector types
+    else if (param.type.aggregate == osl::TypeDesc::VEC3 &&
+               (param.type.vecsemantics == osl::TypeDesc::COLOR ||
+                param.type.vecsemantics == osl::TypeDesc::POINT ||
+                param.type.vecsemantics == osl::TypeDesc::VECTOR ||
+                param.type.vecsemantics == osl::TypeDesc::NORMAL)) {
+        if (param.fdefault.size() >= 3) {
+            result = std::to_string(param.fdefault[0]) + ", " +
+                     std::to_string(param.fdefault[1]) + ", " +
+                     std::to_string(param.fdefault[2]);
+        }
+    }
+    // Handle matrix types
+    else if (param.type.aggregate == osl::TypeDesc::MATRIX44) {
+        if (param.fdefault.size() >= 16) {
+            result = "";
+            for (int i = 0; i < 16; ++i) {
+                if (i > 0) result += ", ";
+                result += std::to_string(param.fdefault[i]);
+            }
+        }
+    } else if (param.type.aggregate == osl::TypeDesc::MATRIX33) {
+        if (param.fdefault.size() >= 9) {
+            result = "";
+            for (int i = 0; i < 9; ++i) {
+                if (i > 0) result += ", ";
+                result += std::to_string(param.fdefault[i]);
+            }
+        }
+    }
+
+    return result;
+}
+
+std::string parseOSLParameterType(const osl::OSLQuery::Parameter& param) {
+    const osl::TypeDesc& oslType = param.type;
+
+    // Handle scalar types
+    if (oslType == osl::TypeDesc::STRING) {
+        return "string";
+    } else if (oslType == osl::TypeDesc::INT) {
+        return "integer";
+    } else if (oslType == osl::TypeDesc::FLOAT) {
+        return "float";
+    }
+    
+    // Handle vector types
+    if (oslType.aggregate == osl::TypeDesc::VEC3) {
+        if (oslType.vecsemantics == osl::TypeDesc::COLOR) {
+            return "color3";
+        } else if (oslType.vecsemantics == osl::TypeDesc::POINT ||
+                   oslType.vecsemantics == osl::TypeDesc::VECTOR ||
+                   oslType.vecsemantics == osl::TypeDesc::NORMAL) {
+            return "vector3";
+        }
+    }
+    
+    // Handle matrix types
+    if (oslType.aggregate == osl::TypeDesc::MATRIX44) {
+        return "matrix44";
+    } else if (oslType.aggregate == osl::TypeDesc::MATRIX33) {
+        return "matrix33";
+    }
+    
+    // Handle array types 
+    if (oslType.arraylen > 0 || oslType.is_array()) {
+        if (oslType.elementtype() == osl::TypeDesc::INT) {
+            return "integerarray";
+        } else if (oslType.elementtype() == osl::TypeDesc::FLOAT) {
+            return "floatarray";
+        } else if (oslType.elementtype() == osl::TypeDesc::STRING) {
+            return "stringarray";
+        } else if (oslType.elementtype().aggregate == osl::TypeDesc::VEC3) {
+            if (oslType.elementtype().vecsemantics == osl::TypeDesc::COLOR) {
+                return "color3array";
+            } else if (oslType.elementtype().vecsemantics == osl::TypeDesc::POINT ||
+                       oslType.elementtype().vecsemantics == osl::TypeDesc::VECTOR ||
+                       oslType.elementtype().vecsemantics == osl::TypeDesc::NORMAL) {
+                return "vector3array";
+            }
+        }
+    }
+    
+    // Fallback to the OSL type name
+    return oslType.c_str();
+}
+
 bool compileOSL(
     const std::string& oslSourceCode, 
     const std::string& oslFileName, 
@@ -227,14 +365,30 @@ bool compileOSL(
     }
 
     for (auto param = osoQuery.begin(); param != osoQuery.end(); ++param) {
-        std::string paramName = toSnakeCase(param->name.c_str());
-        std::string paramType = toSnakeCase(param->type.c_str());
+        std::string paramName = param->name.c_str();
+        std::string paramType = param->isclosure ? "BSDF" : parseOSLParameterType(*param);
 
+        mx::ElementPtr element;
         if (param->isoutput) {
-            mx::OutputPtr output = nodeDef->addOutput(paramName, paramType);
+            element = nodeDef->addOutput(paramName, paramType);
         } else {
-            mx::InputPtr input = nodeDef->addInput(paramName, paramType);
+            element = nodeDef->addInput(paramName, paramType);
         }
+
+        //Add Defaults 
+        std::string defaultValue = parseOSLParameterValue(*param);
+
+        element->setAttribute("value", defaultValue);
+
+        //Add Metadata
+        for (auto metadata = param->metadata.begin(); metadata != param->metadata.end(); ++metadata) {
+            std::string attrib = metadata->name.c_str();
+
+            std::string value = parseOSLParameterValue(*metadata);
+            
+            element->setAttribute(attrib, value);
+        }
+
     }
 
     std::string validationErrors;
@@ -286,8 +440,8 @@ int main(int argc, char* const argv[]) {
 
     InputArgs inputArgs;
     for (size_t i = 0; i < tokens.size(); i++) {
-        const std::string& token = tokens[i];
-        const std::string& nextToken = i + 1 < tokens.size() ? tokens[i + 1] : mx::EMPTY_STRING;
+        const std::string_view& token = tokens[i];
+        const std::string_view& nextToken = i + 1 < tokens.size() ? tokens[i + 1] : mx::EMPTY_STRING;
         InputArgs::ParseResult parseResult = inputArgs.parse(token, nextToken);
 
         if (parseResult == InputArgs::EXIT) {

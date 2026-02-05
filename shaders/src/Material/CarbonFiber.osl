@@ -135,20 +135,20 @@ normal getBumpedNormal( vector centerColor,
 ENTRY_CARBON_FIBER CarbonFiber (
     point UV  DEFAULT_CARBON_FIBER(point(u, v, 0)),
 
-    vector fiberScale  DEFAULT_CARBON_FIBER(vector(64, 32, 0)) [[ string description = "Scale axis of the carbon fiber pattern", float uiMin = 0 ]],
-    float fiberZGamma  DEFAULT_CARBON_FIBER(1.5) [[ string description = "Controls the sharpness of the fiber strands", float uiMin = 0.1, float uiMax = 4.0 ]],
+    vector fiberScale  DEFAULT_CARBON_FIBER(vector(64, 32, 0)) [[ string doc = "Scale axis of the carbon fiber pattern", float uimin = 0 ]],
+    float fiberZGamma  DEFAULT_CARBON_FIBER(1.5) [[ string doc = "Controls the sharpness of the fiber strands", float uimin = 0.1, float uimax = 4.0 ]],
 
-    float fiberBumpStrength  DEFAULT_CARBON_FIBER(0.1) [[ string description = "Strength of the bump effect", float uiMin = 0, float uiMax = 1 ]],
-    float fiberStrandBoost  DEFAULT_CARBON_FIBER(1.5) [[ string description = "Boost the bump of the fiber strands", float uiMin = 0, float uiMax = 3 ]],
-    float fiberSpecularWeight  DEFAULT_CARBON_FIBER(0.8) [[ string description = "specular Amount of the carbon Fiber weaves", float uiMin = 0, float uiMax = 1 ]],
+    float fiberBumpStrength  DEFAULT_CARBON_FIBER(0.1) [[ string doc = "Strength of the bump effect", float uimin = 0, float uimax = 1 ]],
+    float fiberStrandBoost  DEFAULT_CARBON_FIBER(1.5) [[ string doc = "Boost the bump of the fiber strands", float uimin = 0, float uimax = 3 ]],
+    float fiberSpecularWeight  DEFAULT_CARBON_FIBER(0.8) [[ string doc = "specular Amount of the carbon Fiber weaves", float uimin = 0, float uimax = 1 ]],
 
-    color resinTint  DEFAULT_CARBON_FIBER(color(0.3, 0.3, 0.27)) [[ string description = "Tint color of the resin" ]],
-	float resinWeight  DEFAULT_CARBON_FIBER(1.0) [[ string page = "Clearcoat", float uiMin = 0.0, float uiMax = 1.0 ]],
-	float resinAnisotropy  DEFAULT_CARBON_FIBER(0.0) [[ string page = "Clearcoat", float uiMin = 0.0, float uiMax = 1.0 ]],
-	float resinRoughness  DEFAULT_CARBON_FIBER(0.05)[[ string page = "Clearcoat", float uiMin = 0.0, float uiMax = 1.0 ]],
-	float resinRotation  DEFAULT_CARBON_FIBER(0.0) [[ string page = "Clearcoat", float uiMin = 0.0, float uiMax = 1.0 ]],
-	float resinIOR  DEFAULT_CARBON_FIBER(1.4) [[ string page = "Clearcoat", float uiMin = 1.0, float uiMax = 3.0 ]],
-	float resinExponent  DEFAULT_CARBON_FIBER(5) [[ string page = "Clearcoat", float uiMin = 0.0, float uiMax = 10.0 ]],
+    color resinTint  DEFAULT_CARBON_FIBER(color(0.3, 0.3, 0.27)) [[ string doc = "Tint color of the resin" ]],
+	float resinWeight  DEFAULT_CARBON_FIBER(1.0) [[ string uifolder = "Clearcoat", float uimin = 0.0, float uimax = 1.0 ]],
+	float resinAnisotropy  DEFAULT_CARBON_FIBER(0.0) [[ string uifolder = "Clearcoat", float uimin = 0.0, float uimax = 1.0 ]],
+	float resinRoughness  DEFAULT_CARBON_FIBER(0.05)[[ string uifolder = "Clearcoat", float uimin = 0.0, float uimax = 1.0 ]],
+	float resinRotation  DEFAULT_CARBON_FIBER(0.0) [[ string uifolder = "Clearcoat", float uimin = 0.0, float uimax = 1.0 ]],
+	float resinIOR  DEFAULT_CARBON_FIBER(1.4) [[ string uifolder = "Clearcoat", float uimin = 1.0, float uimax = 3.0 ]],
+	float resinExponent  DEFAULT_CARBON_FIBER(5) [[ string uifolder = "Clearcoat", float uimin = 0.0, float uimax = 10.0 ]],
 
     output closure color Cout  DEFAULT_CARBON_FIBER(0),
     output normal outTangent = 0

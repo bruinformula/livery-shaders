@@ -14,17 +14,17 @@
 ENTRY_TIRE_RUBBER TireRubber (
 
     vector UV = vector(u, v, 0),
-    int useUV = 0 [[ string description = "Defaults to P otherwise", string widget = "checkBox" ]],
+    int useUV = 0 [[ string doc = "Defaults to P otherwise", string widget = "checkBox" ]],
 
-	float baseWeight = 1.0 [[ string page = "Base", float uiMin = 0.0, float uiMax = 1.0 ]],
-	color baseColor = color(0.023) [[ string page = "Base" ]],
-	float baseRoughness = 0.7 [[ string page = "Base", float uiMin = 0.0, float uiMax = 1.0 ]],
+	float baseWeight = 1.0 [[ string uifolder = "Base", float uimin = 0.0, float uimax = 1.0 ]],
+	color baseColor = color(0.023) [[ string uifolder = "Base" ]],
+	float baseRoughness = 0.7 [[ string uifolder = "Base", float uimin = 0.0, float uimax = 1.0 ]],
     
-    float specularScale = 1.0 [[ string page = "Specular", float uiMin = 0.0, float uiMax = 10.0 ]],
+    float specularScale = 1.0 [[ string uifolder = "Specular", float uimin = 0.0, float uimax = 10.0 ]],
 
-    float specularWeight = 0.5 [[ string page = "Specular", float uiMin = 0.0, float uiMax = 1.0 ]],
-    float specularRoughness = 0.7 [[ string page = "Specular", float uiMin = 0.0, float uiMax = 1.0 ]],
-    float specularIOR = 1.5 [[ string page = "Specular", float uiMin = 1.0, float uiMax = 3.0 ]],
+    float specularWeight = 0.5 [[ string uifolder = "Specular", float uimin = 0.0, float uimax = 1.0 ]],
+    float specularRoughness = 0.7 [[ string uifolder = "Specular", float uimin = 0.0, float uimax = 1.0 ]],
+    float specularIOR = 1.5 [[ string uifolder = "Specular", float uimin = 1.0, float uimax = 3.0 ]],
 
     output closure color Cout = 0
 ) {
