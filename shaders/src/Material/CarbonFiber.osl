@@ -135,7 +135,7 @@ normal getBumpedNormal( vector centerColor,
 ENTRY_CARBON_FIBER CarbonFiber (
     point UV  DEFAULT_CARBON_FIBER(point(u, v, 0)),
 
-    vector fiberScale  DEFAULT_CARBON_FIBER(vector(64, 32, 0)) [[ string doc = "Scale axis of the carbon fiber pattern", float uimin = 0 ]],
+    vector fiberScale  DEFAULT_CARBON_FIBER(vector(64, 32, 0)) [[ string doc = "Scale axis of the carbon fiber pattern", vector uimin = vector(64, 32, 0) ]],
     float fiberZGamma  DEFAULT_CARBON_FIBER(1.5) [[ string doc = "Controls the sharpness of the fiber strands", float uimin = 0.1, float uimax = 4.0 ]],
 
     float fiberBumpStrength  DEFAULT_CARBON_FIBER(0.1) [[ string doc = "Strength of the bump effect", float uimin = 0, float uimax = 1 ]],

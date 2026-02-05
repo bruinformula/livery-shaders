@@ -20,8 +20,8 @@ ENTRY_CAMERA_PROJECTOR CameraProjector (
     vector up           DEFAULT_CAMERA_PROJECTOR(vector(0, 0, 1)),
 
     // Projection controls
-    float overScan      DEFAULT_CAMERA_PROJECTOR(0.0) [[ string label = "OverScan (percent)" ]],
-    int backface        DEFAULT_CAMERA_PROJECTOR(0)   [[ string label = "Project on Back" ]],
+    float overScan      DEFAULT_CAMERA_PROJECTOR(0.0) [[ string uiname = "OverScan (percent)" ]],
+    int backface        DEFAULT_CAMERA_PROJECTOR(0)   [[ string uiname = "Project on Back" ]],
 
     // Texture
     string filename     DEFAULT_CAMERA_PROJECTOR("uv-grid.png"),

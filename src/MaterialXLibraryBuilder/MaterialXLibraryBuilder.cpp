@@ -123,6 +123,36 @@ std::string toSnakeCase(const std::string& input) {
     return out;
 }
 
+constexpr uint32_t hashString(std::string_view s) {
+        uint32_t h = 2166136261u;
+        for (char c : s)
+            h = (h ^ c) * 16777619u;
+        return h;
+    }
+
+std::string unescapeString(const std::string& input) {
+    std::string result;
+    result.reserve(input.size());
+    
+    for (size_t i = 0; i < input.size(); ++i) {
+        if (input[i] == '\\' && i + 1 < input.size()) {
+            switch (input[i + 1]) {
+                case 'n': result += '\n'; i++; break;
+                case 't': result += '\t'; i++; break;
+                case 'r': result += '\r'; i++; break;
+                case '\\': result += '\\'; i++; break;
+                case '"': result += '"'; i++; break;
+                case '\'': result += '\''; i++; break;
+                default: result += input[i]; break;
+            }
+        } else {
+            result += input[i];
+        }
+    }
+    
+    return result;
+}
+
 class ExceptionCompileError : public mx::Exception {
 public:
     ExceptionCompileError(const std::string& msg, const mx::StringVec& errorLog = mx::StringVec()) :
@@ -161,6 +191,16 @@ public:
     mx::FilePath oslCompilerPath;
     mx::FileSearchPath oslIncludePath;
     bool writeSourceToDisk = true;
+};
+
+class MaterialXDefinitionOptions {
+public:
+    MaterialXDefinitionOptions() = default;
+    ~MaterialXDefinitionOptions() = default;
+
+    bool unknownAttributeWarning = false;
+    bool typeMismatchWarning = true;
+    bool implicitAssignmentWarning = true;
 };
 
 enum class MaterialXType {
@@ -252,9 +292,9 @@ std::string parseOSLParameterValue(
         } else if (param.type.elementtype() == osl::TypeDesc::STRING) {
             // String array
             if (!param.sdefault.empty()) {
-                result = "\"" + std::string(param.sdefault[0].c_str()) + "\"";
+                result = unescapeString(param.sdefault[0].c_str());
                 for (size_t i = 1; i < std::min((size_t)param.type.arraylen, param.sdefault.size()); ++i) {
-                    result += ", \"" + std::string(param.sdefault[i].c_str()) + "\"";
+                    result += ", " + unescapeString(param.sdefault[i].c_str());
                 }
             }
         } else if (param.type.elementtype().aggregate == osl::TypeDesc::VEC3) {
@@ -263,7 +303,7 @@ std::string parseOSLParameterValue(
             size_t numVecs = param.type.arraylen > 0 ? param.type.arraylen : (param.fdefault.size() / elementsPerVec);
             if (param.fdefault.size() >= elementsPerVec) {
                 for (size_t vec = 0; vec < numVecs && (vec * elementsPerVec + 2) < param.fdefault.size(); ++vec) {
-                    if (vec > 0) result += " ";
+                    if (vec > 0) result += ", ";
                     result += std::to_string(param.fdefault[vec * elementsPerVec]) + "," +
                               std::to_string(param.fdefault[vec * elementsPerVec + 1]) + "," +
                               std::to_string(param.fdefault[vec * elementsPerVec + 2]);
@@ -273,7 +313,7 @@ std::string parseOSLParameterValue(
     }
     // Handle scalar types
     else if (param.type == osl::TypeDesc::STRING) {
-        result = param.sdefault.empty() ? "" : param.sdefault[0].c_str();
+        result = param.sdefault.empty() ? "" : unescapeString(param.sdefault[0].c_str());
     } else if (param.type == osl::TypeDesc::INT) {
         result = param.idefault.empty() ? "0" : std::to_string(param.idefault[0]);
     } else if (param.type == osl::TypeDesc::FLOAT) {
@@ -377,7 +417,6 @@ std::string parseOSLParameterType(const osl::OSLQuery::Parameter& param) {
     return materialXTypeToString(type, structName);
 }
 
-
 bool compileOSLToBytecode(
     const std::string& oslSourceCode, 
     const std::string& oslFileName, 
@@ -429,7 +468,8 @@ bool createMaterialXDefinitions(
     mx::DocumentPtr& nodeDefMtlxDoc,
     mx::DocumentPtr& implMtlxDoc,
     mx::DocumentPtr& typeDefMtlxDoc,
-    const mx::FilePath& outputDir
+    const mx::FilePath& outputDir,
+    MaterialXDefinitionOptions& mtlxDefinitionOptions
 ) {
     mx::FilePath oslFilePath = outputDir / oslFileName;
     oslFilePath.removeExtension();
@@ -505,12 +545,119 @@ bool createMaterialXDefinitions(
         element->setAttribute("value", defaultValue);
 
         //Add Metadata
-        for (auto metadata = param->metadata.begin(); metadata != param->metadata.end(); ++metadata) {
-            std::string attrib = metadata->name.c_str();
 
-            std::string value = parseOSLParameterValue(*metadata);
+        for (auto metadata = param->metadata.begin(); metadata != param->metadata.end(); ++metadata) {
+
+            std::string attributeName = metadata->name.c_str();
+            std::string attributeType = parseOSLParameterType(*metadata);
+            std::string attributeValue = parseOSLParameterValue(*metadata);
             
-            element->setAttribute(attrib, value);
+            // Unescape string attributes
+            if (attributeType == "string") {
+                attributeValue = unescapeString(attributeValue);
+            }
+
+            switch (hashString(attributeName)) {
+                case hashString("name"):  { // name is just the name in the shader
+                    if (!mtlxDefinitionOptions.implicitAssignmentWarning) break;
+                    std::cout << "name is determined by the name of the shader function signature. Skipping" << std::endl;
+                    continue; // skip setting this attribute
+                }
+                case hashString("type"): {
+                    if (!mtlxDefinitionOptions.implicitAssignmentWarning) break;
+                    std::cout << "type is determined from the OSL parameter type and cannot be overridden by metadata. Skipping." << std::endl;
+                    continue; // skip setting this attribute
+                }
+                case hashString("value"): {
+                    if (!mtlxDefinitionOptions.implicitAssignmentWarning) break;
+                    std::cout << "value is determined from the OSL parameter type and cannot be overridden by metadata. Skipping." << std::endl;
+                    continue; // skip setting this attribute
+                }
+                case hashString("uniform"): {
+                    if (!mtlxDefinitionOptions.typeMismatchWarning) break;
+                    if (attributeType != "integer") {
+                        std::cerr << "Warning: uniform attribute must be boolean (integer), got " << attributeType << " for parameter " << paramName << std::endl;
+                    }
+                    break;
+                }
+                case hashString("defaultgeomprop"): {
+                    if (!mtlxDefinitionOptions.typeMismatchWarning) break;
+                    if (paramType != "vector3") {
+                        std::cerr << "Warning: defaultgeomprop can only be used with vector3 inputs, parameter " << paramName << " is " << paramType << std::endl;
+                    }
+                    break;
+                }
+                case hashString("enum"): {
+                    if (!mtlxDefinitionOptions.typeMismatchWarning) break;
+                    if (attributeType != "stringarray") {
+                        std::cerr << "Warning: enum attribute should be stringarray type, got " << attributeType << " for parameter " << paramName << std::endl;
+                    }
+                    break;
+                }
+                case hashString("enumvalues"): {
+                    if (!mtlxDefinitionOptions.typeMismatchWarning) break;
+                    std::string expectedType = paramType + "array";
+                    if (attributeType != expectedType) {
+                        std::cerr << "Warning: enumvalues should be " << expectedType << " type, got " << attributeType << " for parameter " << paramName << std::endl;
+                    }
+                    break;
+                }
+                case hashString("colorspace"): {
+                    if (!mtlxDefinitionOptions.typeMismatchWarning) break;
+                    if (paramType != "color3") {
+                        std::cerr << "Warning: colorspace can only be used with color3inputs, parameter " << paramName << " is " << paramType << std::endl;
+                    }
+                    break;
+                }
+                case hashString("unittype"): {
+                   if (!mtlxDefinitionOptions.typeMismatchWarning) break;
+                    if (paramType != "float" && paramType != "vector3" && paramType != "filename") { // TODO: need to ensure filename
+                        std::cerr << "Warning: unittype can only be used with float, vector, or filename inputs, parameter " << paramName << " is " << paramType << std::endl;
+                    }
+                    break;
+                }
+                case hashString("uiname"): {
+                    if (!mtlxDefinitionOptions.typeMismatchWarning) break;
+                    if (attributeType != "string") {
+                        std::cerr << "Warning: uiname should be string type, got " << attributeType << " for parameter " << paramName << std::endl;
+                    }
+                    break;
+                }
+                case hashString("uifolder"): {
+                    if (!mtlxDefinitionOptions.typeMismatchWarning) break;
+                    if (attributeType != "string") {
+                        std::cerr << "Warning: uifolder should be string type, got " << attributeType << " for parameter " << paramName << std::endl;
+                    }
+                    break;
+                }
+                case hashString("uimin"):
+                case hashString("uimax"):
+                case hashString("uisoftmin"):
+                case hashString("uisoftmax"):
+                case hashString("uistep"): {
+                    if (!mtlxDefinitionOptions.typeMismatchWarning) break;
+                    if (paramType != "integer" && paramType != "float" && paramType != "color3" && paramType != "vector3") {
+                        std::cerr << "Warning: " << attributeName << " can only be used with integer, float, color3, or vector3 inputs, parameter " << paramName << " is " << paramType << std::endl;
+                    } else if (attributeType != paramType) {
+                        std::cerr << "Warning: " << attributeName << " must be the same type as the parameter. Expected " << paramType << ", got " << attributeType << " for parameter " << paramName << std::endl;
+                    }
+                    break;
+                }
+                case hashString("unit"): 
+                case hashString("doc"): 
+                case hashString("hint"): {
+                    break;
+                }
+                default: {
+                    if (!mtlxDefinitionOptions.unknownAttributeWarning) break;
+                    std::cout << "Warning: Unknown attribute '" << attributeName << "' for parameter " << paramName << std::endl;
+                    
+                    break;
+                }
+            }
+
+            // Assuming the verification passed the attribute will be added
+            element->setAttribute(attributeName, attributeValue);
         }
 
     }
@@ -611,6 +758,8 @@ int main(int argc, char* const argv[]) {
     options.oslIncludePath = oslRendererIncludePaths;
     options.writeSourceToDisk = false;
 
+    MaterialXDefinitionOptions mtlxDefinitionOptions;
+
     mx::DocumentPtr implMtlxDoc = mx::createDocument();
     mx::DocumentPtr typeDefMtlxDoc = mx::createDocument();
     mx::DocumentPtr nodeDefMtlxDoc = mx::createDocument();
@@ -632,12 +781,11 @@ int main(int argc, char* const argv[]) {
             std::string oslFileContent = buffer.str();
             oslFileInput.close();
 
-            //compileOSL(oslFileContent, oslFileName.string(), nodeDefMtlxDoc, implMtlxDoc, typeDefMtlxDoc, outputDir, options);
             osl::OSLQuery osoQuery;
             
             compileOSLToBytecode(oslFileContent, oslFileName, outputDir, options, osoQuery);
     
-            createMaterialXDefinitions(osoQuery, oslFileName, nodeDefMtlxDoc, implMtlxDoc, typeDefMtlxDoc, outputDir);
+            createMaterialXDefinitions(osoQuery, oslFileName, nodeDefMtlxDoc, implMtlxDoc, typeDefMtlxDoc, outputDir, mtlxDefinitionOptions);
         } catch (const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;
         }

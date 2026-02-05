@@ -123,12 +123,11 @@ ENTRY_METALLIC_PAINT MetallicPaintShader (
 	float primerRoughness  DEFAULT_METALLIC_PAINT(1.0) [[ string uifolder = "Primer", float uimin = 0.0, float uimax = 1.0 ]],
 	
 	//Flake Pattern
-	int numMetallicLayers  DEFAULT_METALLIC_PAINT(6) [[ string uifolder = "Flake Pattern", string doc = "Number of intermediate/metallic layers between primer and clearcoat. Number of patties in a burger", int min = 1 ]],
+	int numMetallicLayers  DEFAULT_METALLIC_PAINT(6) [[ string uifolder = "Flake Pattern", string doc = "Number of intermediate/metallic layers between primer and clearcoat. Number of patties in a burger", int uimin = 1 ]],
 	float flakeScale  DEFAULT_METALLIC_PAINT(0.001) [[ string uifolder = "Flake Pattern", float uimin = 0.0, float uimax = 200.0 ]],
 	float flakeDensity  DEFAULT_METALLIC_PAINT(0.2) [[ string uifolder = "Flake Pattern", float uimin = 0.0, float uimax = 1.0 ]],
     float flakeRandomize  DEFAULT_METALLIC_PAINT(0.2) [[ string uifolder = "Flake Pattern", string doc = "Dictates the randomness of the flake orientations (normals)", float uimin = 0.0, float uimax = 1.0 ]],
-	int flakeSeed  DEFAULT_METALLIC_PAINT(1) [[ string uifolder = "Flake Pattern", int min = 0, int max = 100 ]],
-
+	int flakeSeed  DEFAULT_METALLIC_PAINT(1) [[ string uifolder = "Flake Pattern", int uimin = 0, int uimax = 100 ]],
 	//Flakes 
 	float flakeWeight  DEFAULT_METALLIC_PAINT(1.0) [[ string uifolder = "Flakes", string doc = "Visibility of the metallic flakes", float uimin = 0.0, float uimax = 1.0 ]],
 	color flakeReflectivity  DEFAULT_METALLIC_PAINT(color(0.95, 0.95, 0.95)) [[ string uifolder = "Flakes" ]],
