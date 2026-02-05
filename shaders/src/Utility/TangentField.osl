@@ -1,4 +1,6 @@
-
+#ifdef NO_ENTRY 
+    #define ENTRY_TANGENT_FIELD void 
+#endif
 
 #ifndef ENTRY_TANGENT_FIELD
     #define  DEFAULT_TANGENT_FIELD(x) = x
@@ -8,13 +10,13 @@
 #endif
 
 ENTRY_TANGENT_FIELD TangentField (
-    float inputRotation  DEFAULT_TANGENT_FIELD(0) [[ string label = "Input Rotation", string help = "A single float value to rotate the shading tangent. Takes precedence over inputVector."]],
-    vector inputVector  DEFAULT_TANGENT_FIELD(vector(0.5)) [[ string label = "Input Vector", string help = "Red and green channels read as x and y coordinates of a 2d vector. Ignored if inputRotation is connected." ]],
-    float rotationOffset  DEFAULT_TANGENT_FIELD(0) [[ string label = "Rotation Offset", string help = "A global rotation offset in degrees." ]],
-    float rotationRange  DEFAULT_TANGENT_FIELD(1.0) [[ string label = "Rotation Range", string help = "Scales the rotation range. 1.0 equates 0 to 360 degrees." ]],
-    int centeredVectors  DEFAULT_TANGENT_FIELD(0) [[ string label = "Centered Vectors", string help = "Centers the gradient values of the vector map. Ignored when inputRotation is used.", string widget = "checkBox" ]],
+    float inputRotation  DEFAULT_TANGENT_FIELD(0) [[ string label = "Input Rotation", string description = "A single float value to rotate the shading tangent. Takes precedence over inputVector."]],
+    vector inputVector  DEFAULT_TANGENT_FIELD(vector(0.5)) [[ string label = "Input Vector", string description = "Red and green channels read as x and y coordinates of a 2d vector. Ignored if inputRotation is connected." ]],
+    float rotationOffset  DEFAULT_TANGENT_FIELD(0) [[ string label = "Rotation Offset", string description = "A global rotation offset in degrees." ]],
+    float rotationRange  DEFAULT_TANGENT_FIELD(1.0) [[ string label = "Rotation Range", string description = "Scales the rotation range. 1.0 equates 0 to 360 degrees." ]],
+    int centeredVectors  DEFAULT_TANGENT_FIELD(0) [[ string label = "Centered Vectors", string description = "Centers the gradient values of the vector map. Ignored when inputRotation is used.", string widget = "checkBox" ]],
 
-    output vector resultXYZ  DEFAULT_TANGENT_FIELD(0) [[ string label = "Result XYZ", string help = "The final tangent vector that should be connected to the Bxdf's Shading Tangent input." ]]
+    output vector resultXYZ  DEFAULT_TANGENT_FIELD(0) [[ string label = "Result XYZ", string description = "The final tangent vector that should be connected to the Bxdf's Shading Tangent input." ]]
 ) {
     float rotationAngle = 0;
 

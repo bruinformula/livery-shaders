@@ -1,3 +1,7 @@
+#ifdef NO_ENTRY 
+    #define ENTRY_WHEEL void 
+#endif
+
 #ifndef ENTRY_WHEEL
     #define  DEFAULT_WHEEL(x) = x
     #define ENTRY_WHEEL shader
@@ -11,12 +15,12 @@
 ENTRY_WHEEL Wheel(
 
     vector UV  DEFAULT_WHEEL(vector(u, v, 0)),
-    int useUV  DEFAULT_WHEEL(0) [[ string help = "Defaults to P otherwise", string widget = "checkBox" ]],
+    int useUV  DEFAULT_WHEEL(0) [[ string description = "Defaults to P otherwise", string widget = "checkBox" ]],
 
     float scale  DEFAULT_WHEEL(1.0),
 
-    float metallicDarkness  DEFAULT_WHEEL(0.95) [[ string page = "Metallic", float min = 0.0, float max = 1.0 ]],
-    float metallicRoughness  DEFAULT_WHEEL(1.0) [[ string page = "Metallic", float min = 0.0, float max = 1.0 ]],
+    float metallicDarkness  DEFAULT_WHEEL(0.95) [[ string page = "Metallic", float uiMin = 0.0, float uiMax = 1.0 ]],
+    float metallicRoughness  DEFAULT_WHEEL(1.0) [[ string page = "Metallic", float uiMin = 0.0, float uiMax = 1.0 ]],
 
     output float hmmPattern  DEFAULT_WHEEL(0.0),
     output closure color Cout  DEFAULT_WHEEL(0)

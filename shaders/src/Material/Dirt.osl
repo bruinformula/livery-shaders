@@ -1,3 +1,6 @@
+#ifdef NO_ENTRY 
+    #define ENTRY_DIRT void 
+#endif
 
 #ifndef ENTRY_DIRT
     #define DEFAULT_DIRT(x) = x

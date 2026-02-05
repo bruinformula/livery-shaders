@@ -1,3 +1,6 @@
+#ifdef NO_ENTRY 
+    #define ENTRY_TOON_OUTLINE void 
+#endif
 
 #ifndef ENTRY_TOON_OUTLINE
     #define  DEFAULT_TOON_OUTLINE(x) = x

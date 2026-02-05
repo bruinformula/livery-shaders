@@ -1,3 +1,6 @@
+#ifdef NO_ENTRY 
+    #define ENTRY_AMBIENT_OCCLUSION void 
+#endif
 
 #ifndef ENTRY_AMBIENT_OCCLUSION
     #define DEFAULT_AMBIENT_OCCLUSION(x) = x

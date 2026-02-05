@@ -1,3 +1,6 @@
+#ifdef NO_ENTRY 
+    #define ENTRY_SPLATTER void 
+#endif
 
 #ifndef ENTRY_SPLATTER
     #define DEFAULT_SPLATTER(x) = x
@@ -38,18 +41,18 @@ ENTRY_SPLATTER splatter(
     float scaleRadius  DEFAULT_SPLATTER(1.0) [[ string page = "Pattern" ]],
     float minRadius  DEFAULT_SPLATTER(0.1) [[ string page = "Pattern" ]],
     float maxRadius  DEFAULT_SPLATTER(0.4) [[ string page = "Pattern" ]],
-    float unionSmoothness  DEFAULT_SPLATTER(8.0) [[ string page = "Pattern", string help = "Controls the smoothness between overlapping drops" ]],
+    float unionSmoothness  DEFAULT_SPLATTER(8.0) [[ string page = "Pattern", string description = "Controls the smoothness between overlapping drops" ]],
 
     //splatter spikes control
-    float spikeAmount  DEFAULT_SPLATTER(0.95) [[ string page = "Spikes", string help = "Controls the intensity of the spikes on the splatter", float min = 0.0, float max = 1.0 ]],
-    float spikePeak  DEFAULT_SPLATTER(24.0) [[ string page = "Spikes", string help = "Controls the height of the peak spikes", float min = 1.0 ]],
-    float spikeFrequency  DEFAULT_SPLATTER(12.0)  [[ string page = "Spikes", string help = "Higher values increase the number of spikes", float min = 0.0 ]],
-    float spikePerimeterSmoothness  DEFAULT_SPLATTER(0.01) [[ string page = "Spikes", float min = 0.0, float max = 1.0 ]],
-    float spikeTrimWidth DEFAULT_SPLATTER(0.1) [[ string page = "Spikes", string help = "Width of the ramp zone at angle boundaries to smooth the seam", float min = 0.0, float max = 0.5 ]],
+    float spikeAmount  DEFAULT_SPLATTER(0.95) [[ string page = "Spikes", string description = "Controls the intensity of the spikes on the splatter", float uiMin = 0.0, float uiMax = 1.0 ]],
+    float spikePeak  DEFAULT_SPLATTER(24.0) [[ string page = "Spikes", string description = "Controls the height of the peak spikes", float uiMin = 1.0 ]],
+    float spikeFrequency  DEFAULT_SPLATTER(12.0)  [[ string page = "Spikes", string description = "Higher values increase the number of spikes", float uiMin = 0.0 ]],
+    float spikePerimeterSmoothness  DEFAULT_SPLATTER(0.01) [[ string page = "Spikes", float uiMin = 0.0, float uiMax = 1.0 ]],
+    float spikeTrimWidth DEFAULT_SPLATTER(0.1) [[ string page = "Spikes", string description = "Width of the ramp zone at angle boundaries to smooth the seam", float uiMin = 0.0, float uiMax = 0.5 ]],
 
-    float basinHeight DEFAULT_SPLATTER(0.6) [[ string page = "Basin", string help = "Base height of the splatter basin", float min = 0.0, float max = 1.0 ]],
-    float basinCenter DEFAULT_SPLATTER(0.5) [[ string page = "Basin", string help = "The the inflection point where the basin rises to a parameter", float min = 0.0, float max = 1.0 ]],
-    float basinSmoothness DEFAULT_SPLATTER(0.5) [[ string page = "Basin", string help = "The the inflection point where the basin rises to a parameter", float min = 0.0, float max = 1.0 ]],
+    float basinHeight DEFAULT_SPLATTER(0.6) [[ string page = "Basin", string description = "Base height of the splatter basin", float uiMin = 0.0, float uiMax = 1.0 ]],
+    float basinCenter DEFAULT_SPLATTER(0.5) [[ string page = "Basin", string description = "The the inflection point where the basin rises to a parameter", float uiMin = 0.0, float uiMax = 1.0 ]],
+    float basinSmoothness DEFAULT_SPLATTER(0.5) [[ string page = "Basin", string description = "The the inflection point where the basin rises to a parameter", float uiMin = 0.0, float uiMax = 1.0 ]],
 
     output float height  DEFAULT_SPLATTER(0.0),
     output float mask  DEFAULT_SPLATTER(0.0)

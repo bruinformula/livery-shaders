@@ -1,3 +1,7 @@
+#ifdef NO_ENTRY 
+    #define ENTRY_CAMERA_PROJECTOR void 
+#endif
+
 #ifndef ENTRY_CAMERA_PROJECTOR
     #define DEFAULT_CAMERA_PROJECTOR(x) = x
     #define ENTRY_CAMERA_PROJECTOR shader

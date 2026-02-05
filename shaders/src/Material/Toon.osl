@@ -1,4 +1,7 @@
-
+#ifdef NO_ENTRY 
+    #define ENTRY_TOON void 
+#endif
+    
 #ifndef ENTRY_TOON
     #define DEFAULT_TOON(x) = x
     #define ENTRY_TOON shader
@@ -49,7 +52,7 @@ void ToonOutline(
 ENTRY_TOON ToonShader(
     // Base
     color baseColor DEFAULT_TOON(color(0.4))  [[ string page = "Base" ]],
-    float opacity DEFAULT_TOON(1.0)  [[ string page = "Base", float min = 0.0, float max = 1.0 ]],
+    float opacity DEFAULT_TOON(1.0)  [[ string page = "Base", float uiMin = 0.0, float uiMax = 1.0 ]],
 
     // Lighting
     vector lightDirection DEFAULT_TOON(vector(0, 0, -0.6))  [[ string page = "Lighting" ]],
@@ -57,30 +60,30 @@ ENTRY_TOON ToonShader(
     color ambientColor DEFAULT_TOON(0.1)  [[ string page = "Lighting" ]],
 
     // Diffuse
-    float diffuseSmoothness DEFAULT_TOON(0.5)  [[ string page = "Diffuse", float min = 0.0, float max = 0.1 ]],
+    float diffuseSmoothness DEFAULT_TOON(0.5)  [[ string page = "Diffuse", float uiMin = 0.0, float uiMax = 0.1 ]],
 
     // Specular 
     color specularColor DEFAULT_TOON(color(1))  [[ string page = "Specular" ]],
-    float specularSmoothness DEFAULT_TOON(0.5)  [[ string page = "Specular", float min = 0.0, float max = 0.1 ]],
-    float specularGlossiness DEFAULT_TOON(4.0)  [[ string page = "Specular", float min = 1.0, float max = 256.0 ]],
-    float specularLow DEFAULT_TOON(0.005)  [[ string page = "Specular", float min = 0.0, float max = 0.1 ]],
+    float specularSmoothness DEFAULT_TOON(0.5)  [[ string page = "Specular", float uiMin = 0.0, float uiMax = 0.1 ]],
+    float specularGlossiness DEFAULT_TOON(4.0)  [[ string page = "Specular", float uiMin = 1.0, float uiMax = 256.0 ]],
+    float specularLow DEFAULT_TOON(0.005)  [[ string page = "Specular", float uiMin = 0.0, float uiMax = 0.1 ]],
 
     // Mid Specular + Rim
     color rimColor DEFAULT_TOON(color(0.5)) [[ string page = "Mid Specular" ]],
-    float rimAmount DEFAULT_TOON(0.7) [[ string page = "Mid Specular", float min = 0.0, float max = 1.0 ]],
-    float rimThreshold DEFAULT_TOON(0.1) [[ string page = "Mid Specular", float min = 0.0, float max = 1.0 ]],
-    float rimSpread DEFAULT_TOON(0.1) [[ string page = "Mid Specular", float min = 0.0, float max = 0.1 ]],
+    float rimAmount DEFAULT_TOON(0.7) [[ string page = "Mid Specular", float uiMin = 0.0, float uiMax = 1.0 ]],
+    float rimThreshold DEFAULT_TOON(0.1) [[ string page = "Mid Specular", float uiMin = 0.0, float uiMax = 1.0 ]],
+    float rimSpread DEFAULT_TOON(0.1) [[ string page = "Mid Specular", float uiMin = 0.0, float uiMax = 0.1 ]],
 
     color midSpecularColor DEFAULT_TOON(color(1))  [[ string page = "Mid Specular" ]],
-    float midSpecularCenter DEFAULT_TOON(0.7) [[ string page = "Mid Specular", float min = 0.0, float max = 1.0 ]],
-    float midSpecularWidth DEFAULT_TOON(0.2) [[ string page = "Mid Specular", float min = 0.0, float max = 1.0 ]],
-    float midSpecularIntensity DEFAULT_TOON(0.5) [[ string page = "Mid Specular", float min = 0.0, float max = 1.0 ]],
+    float midSpecularCenter DEFAULT_TOON(0.7) [[ string page = "Mid Specular", float uiMin = 0.0, float uiMax = 1.0 ]],
+    float midSpecularWidth DEFAULT_TOON(0.2) [[ string page = "Mid Specular", float uiMin = 0.0, float uiMax = 1.0 ]],
+    float midSpecularIntensity DEFAULT_TOON(0.5) [[ string page = "Mid Specular", float uiMin = 0.0, float uiMax = 1.0 ]],
 
     // Halftone Parameters
 
     // Ambient Occlusion
-    float aoAngle DEFAULT_TOON(0.35)  [[ string page = "AO", float min = 0.0, float max = 1.57 ]],
-    float aoMaxDistance DEFAULT_TOON(1.0)  [[ string page = "AO", float min = 0.0 ]],
+    float aoAngle DEFAULT_TOON(0.35)  [[ string page = "AO", float uiMin = 0.0, float uiMax = 1.57 ]],
+    float aoMaxDistance DEFAULT_TOON(1.0)  [[ string page = "AO", float uiMin = 0.0 ]],
     color aoColorIn DEFAULT_TOON(color(1.0))  [[ string page = "AO" ]],
     color aoHitColor DEFAULT_TOON(color(0.5))  [[ string page = "AO" ]],
 
@@ -113,11 +116,11 @@ ENTRY_TOON ToonShader(
     color midSpecularBackgroundColor DEFAULT_TOON(color(1.0))  [[ string page = "Halftone Specular" ]],
 
     // Outline
-    float outlineWidth DEFAULT_TOON(0.005)  [[ string page = "Outline", float min = 0.0 ]],
-    float outlineDistanceThreshold DEFAULT_TOON(1.1)  [[ string page = "Outline", float min = 0.0 ]],
-    float outlineNormalThreshold DEFAULT_TOON(0.1)  [[ string page = "Outline", float min = 0.0 ]],
+    float outlineWidth DEFAULT_TOON(0.005)  [[ string page = "Outline", float uiMin = 0.0 ]],
+    float outlineDistanceThreshold DEFAULT_TOON(1.1)  [[ string page = "Outline", float uiMin = 0.0 ]],
+    float outlineNormalThreshold DEFAULT_TOON(0.1)  [[ string page = "Outline", float uiMin = 0.0 ]],
 
-    float emissionWeight DEFAULT_TOON(1.0)  [[ string page = "Output", float min = 0.0, float max = 1.0 ]],
+    float emissionWeight DEFAULT_TOON(1.0)  [[ string page = "Output", float uiMin = 0.0, float uiMax = 1.0 ]],
     
     // Output
     output color outColor = 0,

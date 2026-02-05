@@ -1,3 +1,7 @@
+#ifdef NO_ENTRY 
+    #define ENTRY_SCRATCH void 
+#endif 
+
 #ifndef ENTRY_SCRATCH
     #define  DEFAULT_SCRATCH(x) = x
     #define ENTRY_SCRATCH shader

@@ -1,4 +1,6 @@
-
+#ifdef NO_ENTRY 
+    #define ENTRY_METALLIC_PAINT void 
+#endif
 
 #ifndef ENTRY_METALLIC_PAINT
     #define  DEFAULT_METALLIC_PAINT(x) = x
@@ -113,38 +115,38 @@ float bump_shadowing_function(vector Ld, float alpha2) {
 
 ENTRY_METALLIC_PAINT MetallicPaintShader (
     vector UV  DEFAULT_METALLIC_PAINT(vector(u, v, 0)),
-    int useUV  DEFAULT_METALLIC_PAINT(0) [[ string help = "Defaults to P otherwise", string widget = "checkBox" ]],
+    int useUV  DEFAULT_METALLIC_PAINT(0) [[ string description = "Defaults to P otherwise", string widget = "checkBox" ]],
 
 	//Primer
-	float primerWeight  DEFAULT_METALLIC_PAINT(1.0) [[ string page = "Primer", float min = 0.0, float max = 1.0 ]],
+	float primerWeight  DEFAULT_METALLIC_PAINT(1.0) [[ string page = "Primer", float uiMin = 0.0, float uiMax = 1.0 ]],
 	color primerColor  DEFAULT_METALLIC_PAINT(color(1.0, 0.1, 0.1)) [[ string page = "Primer" ]],
-	float primerRoughness  DEFAULT_METALLIC_PAINT(1.0) [[ string page = "Primer", float min = 0.0, float max = 1.0 ]],
+	float primerRoughness  DEFAULT_METALLIC_PAINT(1.0) [[ string page = "Primer", float uiMin = 0.0, float uiMax = 1.0 ]],
 	
 	//Flake Pattern
-	int numMetallicLayers  DEFAULT_METALLIC_PAINT(6) [[ string page = "Flake Pattern", string help = "Number of intermediate/metallic layers between primer and clearcoat. Number of patties in a burger", int min = 1 ]],
-	float flakeScale  DEFAULT_METALLIC_PAINT(0.001) [[ string page = "Flake Pattern", float min = 0.0, float max = 200.0 ]],
-	float flakeDensity  DEFAULT_METALLIC_PAINT(0.2) [[ string page = "Flake Pattern", float min = 0.0, float max = 1.0 ]],
-    float flakeRandomize  DEFAULT_METALLIC_PAINT(0.2) [[ string page = "Flake Pattern", string help = "Dictates the randomness of the flake orientations (normals)", float min = 0.0, float max = 1.0 ]],
+	int numMetallicLayers  DEFAULT_METALLIC_PAINT(6) [[ string page = "Flake Pattern", string description = "Number of intermediate/metallic layers between primer and clearcoat. Number of patties in a burger", int min = 1 ]],
+	float flakeScale  DEFAULT_METALLIC_PAINT(0.001) [[ string page = "Flake Pattern", float uiMin = 0.0, float uiMax = 200.0 ]],
+	float flakeDensity  DEFAULT_METALLIC_PAINT(0.2) [[ string page = "Flake Pattern", float uiMin = 0.0, float uiMax = 1.0 ]],
+    float flakeRandomize  DEFAULT_METALLIC_PAINT(0.2) [[ string page = "Flake Pattern", string description = "Dictates the randomness of the flake orientations (normals)", float uiMin = 0.0, float uiMax = 1.0 ]],
 	int flakeSeed  DEFAULT_METALLIC_PAINT(1) [[ string page = "Flake Pattern", int min = 0, int max = 100 ]],
 
 	//Flakes 
-	float flakeWeight  DEFAULT_METALLIC_PAINT(1.0) [[ string page = "Flakes", string help = "Visibility of the metallic flakes", float min = 0.0, float max = 1.0 ]],
+	float flakeWeight  DEFAULT_METALLIC_PAINT(1.0) [[ string page = "Flakes", string description = "Visibility of the metallic flakes", float uiMin = 0.0, float uiMax = 1.0 ]],
 	color flakeReflectivity  DEFAULT_METALLIC_PAINT(color(0.95, 0.95, 0.95)) [[ string page = "Flakes" ]],
 	color flakeEdgeTint  DEFAULT_METALLIC_PAINT(color(1.0, 1.0, 1.0)) [[ string page = "Flakes" ]],
-	float flakeRoughness  DEFAULT_METALLIC_PAINT(0.1) [[ string page = "Flakes", float min = 0.0, float max = 1.0 ]],
+	float flakeRoughness  DEFAULT_METALLIC_PAINT(0.1) [[ string page = "Flakes", float uiMin = 0.0, float uiMax = 1.0 ]],
 	//Base
-	float baseWeight  DEFAULT_METALLIC_PAINT(1.0) [[ string page = "Base", string help = "Weight of the paint that is suspended in the same layer as the flakes", float min = 0.0, float max = 1.0 ]],
-	color baseColor  DEFAULT_METALLIC_PAINT(color(1.0, 0.1, 0.1)) [[ string page = "Base", string help = "Flake Layer Color" ]],
-	float baseRoughness  DEFAULT_METALLIC_PAINT(0.5) [[ string page = "Base", float min = 0.0, float max = 1.0 ]],
-	float baseIOR  DEFAULT_METALLIC_PAINT(1.9) [[ string page = "Base", float min = 1.0, float max = 3.0 ]],
+	float baseWeight  DEFAULT_METALLIC_PAINT(1.0) [[ string page = "Base", string description = "Weight of the paint that is suspended in the same layer as the flakes", float uiMin = 0.0, float uiMax = 1.0 ]],
+	color baseColor  DEFAULT_METALLIC_PAINT(color(1.0, 0.1, 0.1)) [[ string page = "Base", string description = "Flake Layer Color" ]],
+	float baseRoughness  DEFAULT_METALLIC_PAINT(0.5) [[ string page = "Base", float uiMin = 0.0, float uiMax = 1.0 ]],
+	float baseIOR  DEFAULT_METALLIC_PAINT(1.9) [[ string page = "Base", float uiMin = 1.0, float uiMax = 3.0 ]],
 
 	//Clearcoat
-	float clearcoatWeight  DEFAULT_METALLIC_PAINT(1.0) [[ string page = "Clearcoat", float min = 0.0, float max = 1.0 ]],
-	float clearcoatAnisotropy  DEFAULT_METALLIC_PAINT(0.0) [[ string page = "Clearcoat", float min = 0.0, float max = 1.0 ]],
-	float clearcoatRoughness  DEFAULT_METALLIC_PAINT(0.05) [[ string page = "Clearcoat", float min = 0.0, float max = 1.0 ]],
-	float clearcoatRotation  DEFAULT_METALLIC_PAINT(0.0) [[ string page = "Clearcoat", float min = 0.0, float max = 1.0 ]],
-	float clearcoatIOR  DEFAULT_METALLIC_PAINT(1.4) [[ string page = "Clearcoat", float min = 1.0, float max = 3.0 ]],
-	float clearcoatExponent  DEFAULT_METALLIC_PAINT(5) [[ string page = "Clearcoat", float min = 0.0, float max = 10.0 ]],
+	float clearcoatWeight  DEFAULT_METALLIC_PAINT(1.0) [[ string page = "Clearcoat", float uiMin = 0.0, float uiMax = 1.0 ]],
+	float clearcoatAnisotropy  DEFAULT_METALLIC_PAINT(0.0) [[ string page = "Clearcoat", float uiMin = 0.0, float uiMax = 1.0 ]],
+	float clearcoatRoughness  DEFAULT_METALLIC_PAINT(0.05) [[ string page = "Clearcoat", float uiMin = 0.0, float uiMax = 1.0 ]],
+	float clearcoatRotation  DEFAULT_METALLIC_PAINT(0.0) [[ string page = "Clearcoat", float uiMin = 0.0, float uiMax = 1.0 ]],
+	float clearcoatIOR  DEFAULT_METALLIC_PAINT(1.4) [[ string page = "Clearcoat", float uiMin = 1.0, float uiMax = 3.0 ]],
+	float clearcoatExponent  DEFAULT_METALLIC_PAINT(5) [[ string page = "Clearcoat", float uiMin = 0.0, float uiMax = 10.0 ]],
 
 	output closure color Cout  DEFAULT_METALLIC_PAINT(0)
 ) {

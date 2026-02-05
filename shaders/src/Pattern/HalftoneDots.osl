@@ -1,3 +1,6 @@
+#ifdef NO_ENTRY 
+    #define ENTRY_HALFTONE_DOTS void 
+#endif
 
 #ifndef ENTRY_HALFTONE_DOTS
     #define  DEFAULT_HALFTONE_DOTS(x) = x
@@ -7,13 +10,13 @@
 #endif
 
 ENTRY_HALFTONE_DOTS HalftoneDots(
-	vector UVW  DEFAULT_HALFTONE_DOTS(transform("raster", P))  [[ string help = "The input coordinate. If not connected, uses screen pixel space" ]],
-	vector scale  DEFAULT_HALFTONE_DOTS(vector(8.0, 8.0, 8.0))  [[ string help = "This size of the dots. In the default screen space mapping, this is in pixels." ]],
-	float  angle  DEFAULT_HALFTONE_DOTS(45.0)  [[ string help = "angle of the Halftoning" ]],	
-	color  inputValue  DEFAULT_HALFTONE_DOTS(0.25)  [[ string help = "The input value defining the size of the dots to yield the right halftone density. " ]],	
-	float  fuzz  DEFAULT_HALFTONE_DOTS(0.1)  [[ float min = 0.0, float max = 2.0 ]],
-	color  dotsColor  DEFAULT_HALFTONE_DOTS(0.0)  [[ string help = "The color of the dots" ]],		
-	color  backgroundColor  DEFAULT_HALFTONE_DOTS(1.0)  [[ string help = "The color of the space between the dots" ]],		
+	vector UVW  DEFAULT_HALFTONE_DOTS(transform("raster", P))  [[ string description = "The input coordinate. If not connected, uses screen pixel space" ]],
+	vector scale  DEFAULT_HALFTONE_DOTS(vector(8.0, 8.0, 8.0))  [[ string description = "This size of the dots. In the default screen space mapping, this is in pixels." ]],
+	float  angle  DEFAULT_HALFTONE_DOTS(45.0)  [[ string description = "angle of the Halftoning" ]],	
+	color  inputValue  DEFAULT_HALFTONE_DOTS(0.25)  [[ string description = "The input value defining the size of the dots to yield the right halftone density. " ]],	
+	float  fuzz  DEFAULT_HALFTONE_DOTS(0.1)  [[ float uiMin = 0.0, float uiMax = 2.0 ]],
+	color  dotsColor  DEFAULT_HALFTONE_DOTS(0.0)  [[ string description = "The color of the dots" ]],		
+	color  backgroundColor  DEFAULT_HALFTONE_DOTS(1.0)  [[ string description = "The color of the space between the dots" ]],		
 
 	output color dots  DEFAULT_HALFTONE_DOTS(0)
 ) {

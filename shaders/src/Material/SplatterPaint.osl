@@ -1,3 +1,6 @@
+#ifdef NO_ENTRY 
+    #define ENTRY_SPLATTER_PAINT void 
+#endif
 
 #ifndef ENTRY_SPLATTER_PAINT
     #define  DEFAULT_SPLATTER_PAINT(x) = x
@@ -121,36 +124,36 @@ ENTRY_SPLATTER_PAINT SplatterPaint (
     vector UV  DEFAULT_SPLATTER_PAINT(vector(u, v, 0)),
 
 	//Primer
-	float primerWeight  DEFAULT_SPLATTER_PAINT(1.0) [[ string page = "Primer", float min = 0.0, float max = 1.0 ]],
+	float primerWeight  DEFAULT_SPLATTER_PAINT(1.0) [[ string page = "Primer", float uiMin = 0.0, float uiMax = 1.0 ]],
 	color primerColor  DEFAULT_SPLATTER_PAINT(color(1.0, 0.1, 0.1)) [[ string page = "Primer" ]],
-	float primerRoughness  DEFAULT_SPLATTER_PAINT(1.0) [[ string page = "Primer", float min = 0.0, float max = 1.0 ]],
+	float primerRoughness  DEFAULT_SPLATTER_PAINT(1.0) [[ string page = "Primer", float uiMin = 0.0, float uiMax = 1.0 ]],
 	
 	//Flake Pattern
-	int numSubLayers  DEFAULT_SPLATTER_PAINT(1) [[ string page = "Flake Pattern", string help = "Number of intermediate/metallic layers between primer and clearcoat. Number of patties in a burger", int min = 1 ]],
-	float flakeScale  DEFAULT_SPLATTER_PAINT(0.001) [[ string page = "Flake Pattern", float min = 0.0, float max = 200.0 ]],
-	float flakeDensity  DEFAULT_SPLATTER_PAINT(0.2) [[ string page = "Flake Pattern", float min = 0.0, float max = 1.0 ]],
-    float flakeRandomize  DEFAULT_SPLATTER_PAINT(0.2) [[ string page = "Flake Pattern", string help = "Dictates the randomness of the flake orientations (normals)", float min = 0.0, float max = 1.0 ]],
+	int numSubLayers  DEFAULT_SPLATTER_PAINT(1) [[ string page = "Flake Pattern", string description = "Number of intermediate/metallic layers between primer and clearcoat. Number of patties in a burger", int min = 1 ]],
+	float flakeScale  DEFAULT_SPLATTER_PAINT(0.001) [[ string page = "Flake Pattern", float uiMin = 0.0, float uiMax = 200.0 ]],
+	float flakeDensity  DEFAULT_SPLATTER_PAINT(0.2) [[ string page = "Flake Pattern", float uiMin = 0.0, float uiMax = 1.0 ]],
+    float flakeRandomize  DEFAULT_SPLATTER_PAINT(0.2) [[ string page = "Flake Pattern", string description = "Dictates the randomness of the flake orientations (normals)", float uiMin = 0.0, float uiMax = 1.0 ]],
 	int flakeSeed  DEFAULT_SPLATTER_PAINT(1) [[ string page = "Flake Pattern", int min = 0, int max = 100 ]],
 
 	//Flakes 
-	float flakeWeight  DEFAULT_SPLATTER_PAINT(1.0) [[ string page = "Flakes", string help = "Visibility of the metallic flakes", float min = 0.0, float max = 1.0 ]],
+	float flakeWeight  DEFAULT_SPLATTER_PAINT(1.0) [[ string page = "Flakes", string description = "Visibility of the metallic flakes", float uiMin = 0.0, float uiMax = 1.0 ]],
 	color flakeReflectivity  DEFAULT_SPLATTER_PAINT(color(0.95, 0.95, 0.95)) [[ string page = "Flakes" ]],
 	color flakeEdgeTint  DEFAULT_SPLATTER_PAINT(color(1.0, 1.0, 1.0)) [[ string page = "Flakes" ]],
-	float flakeRoughness  DEFAULT_SPLATTER_PAINT(0.1) [[ string page = "Flakes", float min = 0.0, float max = 1.0 ]],
+	float flakeRoughness  DEFAULT_SPLATTER_PAINT(0.1) [[ string page = "Flakes", float uiMin = 0.0, float uiMax = 1.0 ]],
 	
     //Base
-	float baseWeight  DEFAULT_SPLATTER_PAINT(0.5) [[ string page = "Base", string help = "Weight of the paint that is suspended in the same layer as the flakes", float min = 0.0, float max = 1.0 ]],
-	color baseColor  DEFAULT_SPLATTER_PAINT(color(1.0, 0.1, 0.1)) [[ string page = "Base", string help = "Flake Layer Color" ]],
-	float baseRoughness  DEFAULT_SPLATTER_PAINT(0.5) [[ string page = "Base", float min = 0.0, float max = 1.0 ]],
-	float baseIOR  DEFAULT_SPLATTER_PAINT(1.9) [[ string page = "Base", float min = 1.0, float max = 3.0 ]],
+	float baseWeight  DEFAULT_SPLATTER_PAINT(0.5) [[ string page = "Base", string description = "Weight of the paint that is suspended in the same layer as the flakes", float uiMin = 0.0, float uiMax = 1.0 ]],
+	color baseColor  DEFAULT_SPLATTER_PAINT(color(1.0, 0.1, 0.1)) [[ string page = "Base", string description = "Flake Layer Color" ]],
+	float baseRoughness  DEFAULT_SPLATTER_PAINT(0.5) [[ string page = "Base", float uiMin = 0.0, float uiMax = 1.0 ]],
+	float baseIOR  DEFAULT_SPLATTER_PAINT(1.9) [[ string page = "Base", float uiMin = 1.0, float uiMax = 3.0 ]],
 
 	//Clearcoat
-	float clearcoatWeight  DEFAULT_SPLATTER_PAINT(1.0) [[ string page = "Clearcoat", float min = 0.0, float max = 1.0 ]],
-	float clearcoatAnisotropy  DEFAULT_SPLATTER_PAINT(0.0) [[ string page = "Clearcoat", float min = 0.0, float max = 1.0 ]],
-	float clearcoatRoughness  DEFAULT_SPLATTER_PAINT(0.05) [[ string page = "Clearcoat", float min = 0.0, float max = 1.0 ]],
-	float clearcoatRotation  DEFAULT_SPLATTER_PAINT(0.0) [[ string page = "Clearcoat", float min = 0.0, float max = 1.0 ]],
-	float clearcoatIOR  DEFAULT_SPLATTER_PAINT(1.4) [[ string page = "Clearcoat", float min = 1.0, float max = 3.0 ]],
-	float clearcoatExponent  DEFAULT_SPLATTER_PAINT(5) [[ string page = "Clearcoat", float min = 0.0, float max = 10.0 ]],
+	float clearcoatWeight  DEFAULT_SPLATTER_PAINT(1.0) [[ string page = "Clearcoat", float uiMin = 0.0, float uiMax = 1.0 ]],
+	float clearcoatAnisotropy  DEFAULT_SPLATTER_PAINT(0.0) [[ string page = "Clearcoat", float uiMin = 0.0, float uiMax = 1.0 ]],
+	float clearcoatRoughness  DEFAULT_SPLATTER_PAINT(0.05) [[ string page = "Clearcoat", float uiMin = 0.0, float uiMax = 1.0 ]],
+	float clearcoatRotation  DEFAULT_SPLATTER_PAINT(0.0) [[ string page = "Clearcoat", float uiMin = 0.0, float uiMax = 1.0 ]],
+	float clearcoatIOR  DEFAULT_SPLATTER_PAINT(1.4) [[ string page = "Clearcoat", float uiMin = 1.0, float uiMax = 3.0 ]],
+	float clearcoatExponent  DEFAULT_SPLATTER_PAINT(5) [[ string page = "Clearcoat", float uiMin = 0.0, float uiMax = 10.0 ]],
 
     color layer1 = color(1),
     color layer2 = color(0.5),

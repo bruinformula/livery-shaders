@@ -1,3 +1,6 @@
+#ifdef NO_ENTRY 
+    #define ENTRY_SIMPLE_SPLATTER void 
+#endif
 
 #ifndef ENTRY_SIMPLE_SPLATTER
     #define DEFAULT_SIMPLE_SPLATTER(x) = x

@@ -1,3 +1,6 @@
+#ifdef NO_ENTRY 
+    #define ENTRY_BUMP_TO_ROUGHNESS void 
+#endif
 
 #ifndef ENTRY_BUMP_TO_ROUGHNESS
     #define  DEFAULT_BUMP_TO_ROUGHNESS(x) = x
@@ -46,21 +49,21 @@ void covarianceToEigen( float a, float b, float c,
 }
 
 ENTRY_BUMP_TO_ROUGHNESS BumpToRoughness (    
-    vector UV  DEFAULT_BUMP_TO_ROUGHNESS(vector(u, v, 0)) [[ string help = "UV coordinates for the surface" ]],
-    vector bumpNormal  DEFAULT_BUMP_TO_ROUGHNESS(vector(0, 0, 1)) [[ string help = "Input bump/normal vector (in tangent space or world space)" ]],
+    vector UV  DEFAULT_BUMP_TO_ROUGHNESS(vector(u, v, 0)) [[ string description = "UV coordinates for the surface" ]],
+    vector bumpNormal  DEFAULT_BUMP_TO_ROUGHNESS(vector(0, 0, 1)) [[ string description = "Input bump/normal vector (in tangent space or world space)" ]],
     
-    int isTangentSpace  DEFAULT_BUMP_TO_ROUGHNESS(1) [[ string widget = "checkBox", string help = "Is the input normal in tangent space (vs world space)?" ]],
-    float baseRoughness  DEFAULT_BUMP_TO_ROUGHNESS(0.001) [[ string help = "Base roughness at the micro-facet level", float min = 0.0, float max = 1.0 ]],
-    float gain  DEFAULT_BUMP_TO_ROUGHNESS(1.0) [[ string help = "Multiplier for aggregate roughness", float min = 0.0, float max = 10.0]],
-    float anisotropyGain  DEFAULT_BUMP_TO_ROUGHNESS(1.0) [[ string help = "Multiplier for aggregate anisotropy", float min = 0.0, float max = 2.0 ]],
+    int isTangentSpace  DEFAULT_BUMP_TO_ROUGHNESS(1) [[ string widget = "checkBox", string description = "Is the input normal in tangent space (vs world space)?" ]],
+    float baseRoughness  DEFAULT_BUMP_TO_ROUGHNESS(0.001) [[ string description = "Base roughness at the micro-facet level", float uiMin = 0.0, float uiMax = 1.0 ]],
+    float gain  DEFAULT_BUMP_TO_ROUGHNESS(1.0) [[ string description = "Multiplier for aggregate roughness", float uiMin = 0.0, float uiMax = 10.0]],
+    float anisotropyGain  DEFAULT_BUMP_TO_ROUGHNESS(1.0) [[ string description = "Multiplier for aggregate anisotropy", float uiMin = 0.0, float uiMax = 2.0 ]],
     
     // Outputs
-    output normal outNormal  DEFAULT_BUMP_TO_ROUGHNESS(N) [[ string help = "Computed normal in world space" ]],
-    output float outRoughness  DEFAULT_BUMP_TO_ROUGHNESS(0.0) [[ string help = "Computed roughness value" ]],
-    output float outAnisotropy  DEFAULT_BUMP_TO_ROUGHNESS(0.0) [[ string help = "Computed anisotropy (0=isotropic, 1=max anisotropic)" ]],
-    output vector outAnisotropyDirection  DEFAULT_BUMP_TO_ROUGHNESS(vector(0)) [[ string help = "Direction of anisotropy in world space" ]],
-    output float outRoughnessU  DEFAULT_BUMP_TO_ROUGHNESS(0.0) [[ string help = "Roughness in U direction (major axis)" ]],
-    output float outRoughnessV  DEFAULT_BUMP_TO_ROUGHNESS(0.0) [[ string help = "Roughness in V direction (minor axis)" ]]
+    output normal outNormal  DEFAULT_BUMP_TO_ROUGHNESS(N) [[ string description = "Computed normal in world space" ]],
+    output float outRoughness  DEFAULT_BUMP_TO_ROUGHNESS(0.0) [[ string description = "Computed roughness value" ]],
+    output float outAnisotropy  DEFAULT_BUMP_TO_ROUGHNESS(0.0) [[ string description = "Computed anisotropy (0=isotropic, 1=max anisotropic)" ]],
+    output vector outAnisotropyDirection  DEFAULT_BUMP_TO_ROUGHNESS(vector(0)) [[ string description = "Direction of anisotropy in world space" ]],
+    output float outRoughnessU  DEFAULT_BUMP_TO_ROUGHNESS(0.0) [[ string description = "Roughness in U direction (major axis)" ]],
+    output float outRoughnessV  DEFAULT_BUMP_TO_ROUGHNESS(0.0) [[ string description = "Roughness in V direction (minor axis)" ]]
 )
 {
     vector pPps, pPpt;

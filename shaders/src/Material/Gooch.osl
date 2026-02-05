@@ -1,3 +1,6 @@
+#ifdef NO_ENTRY 
+    #define ENTRY_GOOCH void 
+#endif
 
 #ifndef ENTRY_GOOCH
     #define  DEFAULT_GOOCH(x) = x

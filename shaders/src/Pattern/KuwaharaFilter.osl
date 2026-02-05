@@ -1,3 +1,7 @@
+#ifdef NO_ENTRY 
+    #define ENTRY_KUWAHARA_FILTER void 
+#endif
+
 #ifndef ENTRY_KUWAHARA_FILTER
     #define DEFAULT_KUWAHARA_FILTER(x) = x
     #define ENTRY_KUWAHARA_FILTER shader
