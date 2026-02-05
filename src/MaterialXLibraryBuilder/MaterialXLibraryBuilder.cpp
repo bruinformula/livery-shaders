@@ -1,4 +1,3 @@
-#include <MaterialXCore/Interface.h>
 #include <iostream>
 #include <string>
 #include <filesystem>
@@ -8,6 +7,7 @@
 
 #include <MaterialXCore/Document.h>
 #include <MaterialXCore/Util.h>
+#include <MaterialXCore/Interface.h>
 
 #include <MaterialXFormat/File.h>
 #include <MaterialXFormat/Util.h>
@@ -22,7 +22,7 @@ namespace osl = OSL;
 namespace mx = MaterialX;
 namespace oiio = OIIO;
 
-struct InputArgs {
+struct CommandLineArgs {
     enum ParseResult {
         SUCCESS,
         SUCCESS_AND_BUMP,
@@ -36,49 +36,43 @@ struct InputArgs {
 
 
     ParseResult parse(const std::string_view& token, const std::string_view& nextToken) {
+        // yes managed to get goto in here
         if (token == "--libraryPath") {
-            if (nextToken.empty()) {
-                std::cerr << "Expected another token following command-line option: " << token << std::endl; 
-                return FAILURE;
-            }
-            if (libraryPath.empty()) {
-                libraryPath = nextToken;
-                return SUCCESS_AND_BUMP;
-            } else {
-                std::cerr << "libraryPath is already set!" << std::endl;
-                return FAILURE;
-            }
+            if (nextToken.empty()) goto expectOption;
+            if (!libraryPath.empty()) goto alreadySet;
+            
+            libraryPath = nextToken;
+            return SUCCESS_AND_BUMP;
         } else if (token == "--outputPath") {
-            if (nextToken.empty()) {
-                std::cerr << "Expected another token following command-line option: " << token << std::endl; 
-                return FAILURE;
-            }
-            if (outputPath.empty()) {
-                outputPath = nextToken;
-                return SUCCESS_AND_BUMP;
-            } else {
-                std::cerr << "outputPath is already set!" << std::endl;
-                return FAILURE;
-            }
+            if (nextToken.empty()) goto expectOption;
+            if (!outputPath.empty()) goto alreadySet;
+
+            outputPath = nextToken;
+            return SUCCESS_AND_BUMP;
         } else if (token == "--oslInclude") {
-            if (nextToken.empty()) {
-                std::cerr << "Expected another token following command-line option: " << token << std::endl; 
-                return FAILURE;
-            }
-            if (oslInclude.empty()) {
-                oslInclude = nextToken;
-                return SUCCESS_AND_BUMP;
-            } else {
-                std::cerr << "oslInclude is already set!" << std::endl;
-                return FAILURE;
-            }
+            if (nextToken.empty()) goto expectOption;
+            if (!oslInclude.empty()) goto alreadySet;
+            
+            oslInclude = nextToken;
+            return SUCCESS_AND_BUMP;
         } else if (token == "--help") {
             std::cout << "Usage: ./main --libraryPath <path> --outputPath <path> --oslInclude <path>" << std::endl;
-            return EXIT; // Indicate that no further processing is needed
+            return EXIT;
         } else {
             std::cout << "Unrecognized command-line option: " << token << std::endl;
             return FAILURE;
         }
+
+        alreadySet: {
+            std::cerr << token << " is already set!" << std::endl;
+            return FAILURE;
+        }
+
+        expectOption: {
+            std::cerr << "Expected another token following command-line option: " << token << std::endl; 
+            return FAILURE;
+        }
+
     }
 
     //enforces any additional rules about the input arguments
@@ -169,8 +163,73 @@ public:
     bool writeSourceToDisk = true;
 };
 
-std::string parseOSLParameterValue(const osl::OSLQuery::Parameter& param) {
+enum class MaterialXType {
+    String,
+    Integer,
+    Float,
+    Color3,
+    Vector3,
+    Matrix44,
+    Matrix33,
+    IntegerArray,
+    FloatArray,
+    StringArray,
+    Color3Array,
+    Vector3Array,
+    BSDF,
+    Struct,
+    Unknown
+};
+
+std::string materialXTypeToString(
+    MaterialXType type, 
+    const std::string& structName = ""
+) {
+    switch (type) {
+        case MaterialXType::String: return "string";
+        case MaterialXType::Integer: return "integer";
+        case MaterialXType::Float: return "float";
+        case MaterialXType::Color3: return "color3";
+        case MaterialXType::Vector3: return "vector3";
+        case MaterialXType::Matrix44: return "matrix44";
+        case MaterialXType::Matrix33: return "matrix33";
+        case MaterialXType::IntegerArray: return "integerarray";
+        case MaterialXType::FloatArray: return "floatarray";
+        case MaterialXType::StringArray: return "stringarray";
+        case MaterialXType::Color3Array: return "color3array";
+        case MaterialXType::Vector3Array: return "vector3array";
+        case MaterialXType::BSDF: return "BSDF";
+        case MaterialXType::Struct: return structName;
+        case MaterialXType::Unknown: 
+        default: return "unknown";
+    }
+}
+
+std::string parseOSLParameterValue(
+    const osl::OSLQuery::Parameter& param, 
+    const osl::OSLQuery* oslQuery = nullptr, 
+    const std::string& paramName = ""
+) {
     std::string result = "";
+
+    // Handle struct types
+    if (param.isstruct && oslQuery && !paramName.empty()) {
+        std::vector<std::string> fieldValues;
+        for (const auto& fieldName : param.fields) {
+            std::string fullFieldName = paramName + "." + fieldName.c_str();
+            const osl::OSLQuery::Parameter* fieldParam = oslQuery->getparam(fullFieldName);
+            if (fieldParam) {
+                std::string fieldValue = parseOSLParameterValue(*fieldParam);
+                fieldValues.push_back(fieldValue);
+            }
+        }
+        // Join field values with commas
+        for (size_t i = 0; i < fieldValues.size(); ++i) {
+            if (i > 0) result += ", ";
+            result += fieldValues[i];
+        }
+        return result;
+    }
 
     // Handle array types
     if (param.type.arraylen > 0 || param.type.is_array()) { // is_array() for unsized arrays
@@ -256,64 +315,75 @@ std::string parseOSLParameterValue(const osl::OSLQuery::Parameter& param) {
 
 std::string parseOSLParameterType(const osl::OSLQuery::Parameter& param) {
     const osl::TypeDesc& oslType = param.type;
+    MaterialXType type = MaterialXType::Unknown;
+
+    // Handle struct 
+    if (oslType == osl::TypeDesc::UNKNOWN && param.isstruct) {
+        type = MaterialXType::Struct;
+    }
+
+    // Handle closures  
+    if (oslType == osl::TypeDesc::PTR) {
+        type = MaterialXType::BSDF;
+    }
+
+    // Handle array types
+    if (oslType.arraylen > 0 || oslType.is_array()) {
+        if (oslType.elementtype() == osl::TypeDesc::INT) {
+            type = MaterialXType::IntegerArray;
+        } else if (oslType.elementtype() == osl::TypeDesc::FLOAT) {
+            type = MaterialXType::FloatArray;
+        } else if (oslType.elementtype() == osl::TypeDesc::STRING) {
+            type = MaterialXType::StringArray;
+        } else if (oslType.elementtype().aggregate == osl::TypeDesc::VEC3) {
+            if (oslType.elementtype().vecsemantics == osl::TypeDesc::COLOR) {
+                type = MaterialXType::Color3Array;
+            } else if (oslType.elementtype().vecsemantics == osl::TypeDesc::POINT ||
+                       oslType.elementtype().vecsemantics == osl::TypeDesc::VECTOR ||
+                       oslType.elementtype().vecsemantics == osl::TypeDesc::NORMAL) {
+                type = MaterialXType::Vector3Array;
+            }
+        }
+    }
 
     // Handle scalar types
     if (oslType == osl::TypeDesc::STRING) {
-        return "string";
+        type = MaterialXType::String;
     } else if (oslType == osl::TypeDesc::INT) {
-        return "integer";
+        type = MaterialXType::Integer;
     } else if (oslType == osl::TypeDesc::FLOAT) {
-        return "float";
+        type = MaterialXType::Float;
     }
     
     // Handle vector types
     if (oslType.aggregate == osl::TypeDesc::VEC3) {
         if (oslType.vecsemantics == osl::TypeDesc::COLOR) {
-            return "color3";
+            type = MaterialXType::Color3;
         } else if (oslType.vecsemantics == osl::TypeDesc::POINT ||
                    oslType.vecsemantics == osl::TypeDesc::VECTOR ||
                    oslType.vecsemantics == osl::TypeDesc::NORMAL) {
-            return "vector3";
+            type = MaterialXType::Vector3;
         }
     }
     
     // Handle matrix types
     if (oslType.aggregate == osl::TypeDesc::MATRIX44) {
-        return "matrix44";
+        type = MaterialXType::Matrix44;
     } else if (oslType.aggregate == osl::TypeDesc::MATRIX33) {
-        return "matrix33";
+        type = MaterialXType::Matrix33;
     }
-    
-    // Handle array types 
-    if (oslType.arraylen > 0 || oslType.is_array()) {
-        if (oslType.elementtype() == osl::TypeDesc::INT) {
-            return "integerarray";
-        } else if (oslType.elementtype() == osl::TypeDesc::FLOAT) {
-            return "floatarray";
-        } else if (oslType.elementtype() == osl::TypeDesc::STRING) {
-            return "stringarray";
-        } else if (oslType.elementtype().aggregate == osl::TypeDesc::VEC3) {
-            if (oslType.elementtype().vecsemantics == osl::TypeDesc::COLOR) {
-                return "color3array";
-            } else if (oslType.elementtype().vecsemantics == osl::TypeDesc::POINT ||
-                       oslType.elementtype().vecsemantics == osl::TypeDesc::VECTOR ||
-                       oslType.elementtype().vecsemantics == osl::TypeDesc::NORMAL) {
-                return "vector3array";
-            }
-        }
-    }
-    
-    // Fallback to the OSL type name
-    return oslType.c_str();
+
+    std::string structName = param.isstruct ? param.structname.c_str() : "";
+    return materialXTypeToString(type, structName);
 }
 
-bool compileOSL(
+
+bool compileOSLToBytecode(
     const std::string& oslSourceCode, 
     const std::string& oslFileName, 
-    mx::DocumentPtr& nodeDefMtlxDoc,
-    mx::DocumentPtr& implMtlxDoc,
     const mx::FilePath& outputDir, 
-    const OslCompileOptions& options
+    const OslCompileOptions& options,
+    osl::OSLQuery& osoQuery
 ) {
     mx::FilePath oslFilePath = outputDir / oslFileName;
     oslFilePath.removeExtension();
@@ -340,7 +410,6 @@ bool compileOSL(
 
     oiio::ErrorHandler errorHandler;
     osl::OSLCompiler compiler(&errorHandler);
-    osl::OSLQuery osoQuery;
 
     std::string osoBuffer;
     compiler.compile_buffer(oslSourceCode, osoBuffer, oslCompilerArgs, std::string_view(), oslFilePath.asString());
@@ -350,6 +419,25 @@ bool compileOSL(
     osoFile.open(osoFilePath.asString());
     osoFile << osoBuffer;
     osoFile.close();
+
+    return true;
+}
+
+bool createMaterialXDefinitions(
+    osl::OSLQuery& osoQuery,
+    const std::string& oslFileName,
+    mx::DocumentPtr& nodeDefMtlxDoc,
+    mx::DocumentPtr& implMtlxDoc,
+    mx::DocumentPtr& typeDefMtlxDoc,
+    const mx::FilePath& outputDir
+) {
+    mx::FilePath oslFilePath = outputDir / oslFileName;
+    oslFilePath.removeExtension();
+    oslFilePath.addExtension("osl");
+
+    mx::FilePath osoFilePath = outputDir / oslFileName;
+    osoFilePath.removeExtension();
+    osoFilePath.addExtension("oso");
 
     std::string shaderName = osoQuery.shadername().c_str();
     std::string nodeName = toSnakeCase(shaderName);
@@ -365,8 +453,44 @@ bool compileOSL(
     }
 
     for (auto param = osoQuery.begin(); param != osoQuery.end(); ++param) {
+
+        // add the struct if it doesn't exist
+        if (param->isstruct) { 
+            std::string typeName = param->structname.c_str();
+            std::string paramName = param->name.c_str();
+            
+            mx::TypeDefPtr type = typeDefMtlxDoc->getTypeDef(typeName);
+
+            if (!type) { // if type does exist, add it
+                type = typeDefMtlxDoc->addTypeDef(typeName);
+
+                // the struct fields get spit out as "struct.fieldname"
+                for (auto field = param->fields.begin(); field != param->fields.end(); ++field) {
+                    std::string fieldName = field->c_str();
+                    std::string fullFieldName = paramName + "." + fieldName;
+
+                    const osl::OSLQuery::Parameter* fieldParam = osoQuery.getparam(fullFieldName);
+                    std::string fieldType = parseOSLParameterType(*fieldParam);
+
+                    mx::MemberPtr member = type->addMember(fieldName);
+                    member->setType(fieldType);
+                }
+            }
+        }
+
+        // skip struct members. they are returned as params in the function signature (e.g., "mv1.x", "mv2.y")
         std::string paramName = param->name.c_str();
-        std::string paramType = param->isclosure ? "BSDF" : parseOSLParameterType(*param);
+        if (paramName.find('.') != std::string::npos) {
+            continue;
+        }
+
+        std::string paramType;
+
+        if (param->isclosure) {
+            paramType = "BSDF";
+        } else {
+            paramType = parseOSLParameterType(*param);
+        }
 
         mx::ElementPtr element;
         if (param->isoutput) {
@@ -376,7 +500,7 @@ bool compileOSL(
         }
 
         //Add Defaults 
-        std::string defaultValue = parseOSLParameterValue(*param);
+        std::string defaultValue = parseOSLParameterValue(*param, &osoQuery, paramName);
 
         element->setAttribute("value", defaultValue);
 
@@ -438,19 +562,19 @@ int main(int argc, char* const argv[]) {
         tokens.emplace_back(argv[i]);
     }
 
-    InputArgs inputArgs;
+    CommandLineArgs inputArgs;
     for (size_t i = 0; i < tokens.size(); i++) {
         const std::string_view& token = tokens[i];
         const std::string_view& nextToken = i + 1 < tokens.size() ? tokens[i + 1] : mx::EMPTY_STRING;
-        InputArgs::ParseResult parseResult = inputArgs.parse(token, nextToken);
+        CommandLineArgs::ParseResult parseResult = inputArgs.parse(token, nextToken);
 
-        if (parseResult == InputArgs::EXIT) {
+        if (parseResult == CommandLineArgs::EXIT) {
             return 0;
         }
-        if (parseResult == InputArgs::FAILURE) {
+        if (parseResult == CommandLineArgs::FAILURE) {
             return 1;
         }
-        if (parseResult == InputArgs::SUCCESS_AND_BUMP) {
+        if (parseResult == CommandLineArgs::SUCCESS_AND_BUMP) {
             i++;
         }
     }
@@ -488,6 +612,7 @@ int main(int argc, char* const argv[]) {
     options.writeSourceToDisk = false;
 
     mx::DocumentPtr implMtlxDoc = mx::createDocument();
+    mx::DocumentPtr typeDefMtlxDoc = mx::createDocument();
     mx::DocumentPtr nodeDefMtlxDoc = mx::createDocument();
 
     const mx::FilePath outputDir = inputArgs.outputPath;
@@ -507,8 +632,12 @@ int main(int argc, char* const argv[]) {
             std::string oslFileContent = buffer.str();
             oslFileInput.close();
 
-            compileOSL(oslFileContent, oslFileName.string(), nodeDefMtlxDoc, implMtlxDoc, outputDir, options);
-
+            //compileOSL(oslFileContent, oslFileName.string(), nodeDefMtlxDoc, implMtlxDoc, typeDefMtlxDoc, outputDir, options);
+            osl::OSLQuery osoQuery;
+            
+            compileOSLToBytecode(oslFileContent, oslFileName, outputDir, options, osoQuery);
+    
+            createMaterialXDefinitions(osoQuery, oslFileName, nodeDefMtlxDoc, implMtlxDoc, typeDefMtlxDoc, outputDir);
         } catch (const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;
         }
@@ -516,6 +645,8 @@ int main(int argc, char* const argv[]) {
 
     mx::FilePath outputNodeDefFilePath = outputDir / "autolib_defs.mtlx";
     mx::FilePath outputImplFilePath = outputDir / "autolib_genosl_impl.mtlx";
+
+    nodeDefMtlxDoc->importLibrary(typeDefMtlxDoc); // add the typdefs to the end of the file
 
     mx::writeToXmlFile(nodeDefMtlxDoc, outputNodeDefFilePath);
     mx::writeToXmlFile(implMtlxDoc, outputImplFilePath);
