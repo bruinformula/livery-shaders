@@ -4,4 +4,5 @@
 
 Contains
 - A collection of OSL shaders for cars and CAD.
-- MaterialX bindings 
+- Generation of MaterialX impl bindings of said shaders
+- Flattening MaterialX documents into oso files 

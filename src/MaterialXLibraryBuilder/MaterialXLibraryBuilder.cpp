@@ -1,3 +1,4 @@
+#include <MaterialXCore/Interface.h>
 #include <iostream>
 #include <string>
 #include <filesystem>
@@ -108,6 +109,26 @@ std::vector<std::filesystem::path> findFiles(const std::filesystem::path& rootDi
     return results;
 }
 
+std::string toSnakeCase(const std::string& input) {
+    std::string out;
+    out.reserve(input.size());
+
+    for (size_t i = 0; i < input.size(); ++i) {
+        char c = input[i];
+
+        if (std::isupper(c)) {
+            if (i != 0 && out.back() != '_') {
+                out += '_';
+            }
+            out += std::tolower(c);
+        } else {
+            out += c;
+        }
+    }
+
+    return out;
+}
+
 class ExceptionCompileError : public mx::Exception {
 public:
     ExceptionCompileError(const std::string& msg, const mx::StringVec& errorLog = mx::StringVec()) :
@@ -148,7 +169,14 @@ public:
     bool writeSourceToDisk = true;
 };
 
-bool compileOSL(const std::string& oslSourceCode, const std::string& oslFileName, const mx::FilePath& outputDir, const OslCompileOptions& options) {
+bool compileOSL(
+    const std::string& oslSourceCode, 
+    const std::string& oslFileName, 
+    mx::DocumentPtr& nodeDefMtlxDoc,
+    mx::DocumentPtr& implMtlxDoc,
+    const mx::FilePath& outputDir, 
+    const OslCompileOptions& options
+) {
     mx::FilePath oslFilePath = outputDir / oslFileName;
     oslFilePath.removeExtension();
     oslFilePath.addExtension("osl");
@@ -174,19 +202,74 @@ bool compileOSL(const std::string& oslSourceCode, const std::string& oslFileName
 
     oiio::ErrorHandler errorHandler;
     osl::OSLCompiler compiler(&errorHandler);
+    osl::OSLQuery osoQuery;
 
-    if (options.writeSourceToDisk) {
-        // Compile from the source file
-        compiler.compile(oslFilePath.asString(), oslCompilerArgs);
-    } else {
-        // Compile directly from the string buffer
-        std::string osoBuffer;
-        compiler.compile_buffer(oslSourceCode, osoBuffer, oslCompilerArgs, std::string_view(), oslFilePath.asString());
+    std::string osoBuffer;
+    compiler.compile_buffer(oslSourceCode, osoBuffer, oslCompilerArgs, std::string_view(), oslFilePath.asString());
+    osoQuery.open_bytecode(osoBuffer);
 
-        std::ofstream osoFile;
-        osoFile.open(osoFilePath.asString());
-        osoFile << osoBuffer;
-        osoFile.close();
+    std::ofstream osoFile;
+    osoFile.open(osoFilePath.asString());
+    osoFile << osoBuffer;
+    osoFile.close();
+
+    std::string shaderName = osoQuery.shadername().c_str();
+    std::string nodeName = toSnakeCase(shaderName);
+
+    mx::NodeDefPtr nodeDef = nodeDefMtlxDoc->addNodeDef(
+        "NG_" + nodeName,
+        "",
+        nodeName
+    );
+    if (!nodeDef) {
+        std::cerr << "Failed to create NodeDef for node: " << nodeName << std::endl;
+        return false;
+    }
+
+    for (auto param = osoQuery.begin(); param != osoQuery.end(); ++param) {
+        std::string paramName = toSnakeCase(param->name.c_str());
+        std::string paramType = toSnakeCase(param->type.c_str());
+
+        if (param->isoutput) {
+            mx::OutputPtr output = nodeDef->addOutput(paramName, paramType);
+        } else {
+            mx::InputPtr input = nodeDef->addInput(paramName, paramType);
+        }
+    }
+
+    std::string validationErrors;
+
+    if (!implMtlxDoc->validate(&validationErrors)) {
+        std::cerr << "MaterialX document validation failed after adding NodeDef: " << validationErrors << std::endl;
+        return false;
+    }
+
+    try {
+        std::string implName = "IM_" + nodeName;
+        auto impl = implMtlxDoc->addImplementation(implName);
+
+        if (!impl) {
+            std::cerr << "Failed to create Implementation for node: " << nodeName << std::endl;
+            return false;
+        }
+
+        impl->setNodeDef(nodeDef);
+        impl->setFile(osoFilePath);
+        impl->setFunction(shaderName);
+        impl->setTarget("genosl");
+    } catch (ExceptionCompileError& exc) {
+        std::cerr << "Uh oh! There was error for the following node: "
+                    << nodeDef->getName() << std::endl;
+        std::cerr << exc.what() << std::endl;
+
+        for (const std::string& error : exc.errorLog()) {
+            std::cerr << error << std::endl;
+        }
+    }
+
+    if (!implMtlxDoc->validate(&validationErrors)) {
+        std::cerr << "MaterialX document validation failed after adding Implementation: " << validationErrors << std::endl;
+        return false;
     }
 
     std::cout << "Compiled " << oslFilePath.getBaseName() << " -> " << osoFilePath.getBaseName() << std::endl;
@@ -250,9 +333,13 @@ int main(int argc, char* const argv[]) {
     options.oslIncludePath = oslRendererIncludePaths;
     options.writeSourceToDisk = false;
 
+    mx::DocumentPtr implMtlxDoc = mx::createDocument();
+    mx::DocumentPtr nodeDefMtlxDoc = mx::createDocument();
+
+    const mx::FilePath outputDir = inputArgs.outputPath;
+
     for (int i = 0; i < files.size(); i++) {
         const std::filesystem::path& oslFileName = files[i].filename();
-        const mx::FilePath outputDir = inputArgs.outputPath;
 
         try {
             // open and read the osl file
@@ -266,14 +353,18 @@ int main(int argc, char* const argv[]) {
             std::string oslFileContent = buffer.str();
             oslFileInput.close();
 
-            //std::cout << "OSL File Content:\n" << oslFileContent << std::endl;
-
-            compileOSL(oslFileContent, oslFileName.string(), outputDir, options);
+            compileOSL(oslFileContent, oslFileName.string(), nodeDefMtlxDoc, implMtlxDoc, outputDir, options);
 
         } catch (const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;
         }
     }
+
+    mx::FilePath outputNodeDefFilePath = outputDir / "autolib_defs.mtlx";
+    mx::FilePath outputImplFilePath = outputDir / "autolib_genosl_impl.mtlx";
+
+    mx::writeToXmlFile(nodeDefMtlxDoc, outputNodeDefFilePath);
+    mx::writeToXmlFile(implMtlxDoc, outputImplFilePath);
 
     return 0;
 }
