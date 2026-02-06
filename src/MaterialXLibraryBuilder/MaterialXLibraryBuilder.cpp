@@ -1,3 +1,4 @@
+#include <MaterialXCore/Definition.h>
 #include <iostream>
 #include <string>
 #include <filesystem>
@@ -18,6 +19,10 @@
 #include <MaterialXGenOsl/OslShaderGenerator.h>
 #include <MaterialXGenOsl/OslSyntax.h>
 
+#include <MaterialXGenGlsl/GlslShaderGenerator.h>
+#include <MaterialXGenGlsl/GlslSyntax.h>
+#include <MaterialXGenGlsl/GlslShaderGenerator.h>
+#include <MaterialXGenGlsl/GlslSyntax.h>
 namespace osl = OSL;
 namespace mx = MaterialX;
 namespace oiio = OIIO;
@@ -462,6 +467,164 @@ bool compileOSLToBytecode(
     return true;
 }
 
+std::string materialXTypeToGLSL(const std::string& mtlxType) {
+
+    switch (hashString(mtlxType)) {
+        case hashString("vector3"):
+        case hashString("color3"): {
+            return "vec3";
+        }
+        case hashString("float"): {
+            return "float";
+        }
+        case hashString("string"): // use int to placehold for strings 
+        case hashString("integer"): {
+            return "int";
+        }
+        case hashString("boolean"): {
+            return "bool";
+        }
+        case hashString("BSDF"): {
+            return "BSDF";
+        }
+        case hashString("matrix44"): {
+            return "mat4";
+        }
+        // Array types
+        case hashString("stringarray"): // use int to placehold for strings 
+        case hashString("integerarray"): {
+            return "int[]";
+        }
+        case hashString("floatarray"): {
+            return "float[]";
+        }
+        case hashString("vector3array"):
+        case hashString("color3array"): {
+            return "vec3[]";
+        }
+
+    }
+    
+    return mtlxType; // return struct name
+}
+
+std::string generateGLSLStructsFromTypeDefs(mx::DocumentPtr& typeDefDoc) {
+    std::stringstream glslStructs;
+    
+    for (mx::TypeDefPtr typeDef : typeDefDoc->getTypeDefs()) {
+        std::string typeName = typeDef->getName();
+        
+        // the members will be empty if it isn't a struct
+        auto members = typeDef->getMembers();
+        if (members.empty()) continue;
+        
+        glslStructs << "struct " << typeName << "\n{\n";
+        
+        for (mx::MemberPtr member : members) {
+            std::string memberName = member->getName();
+            std::string memberType = member->getType();
+            std::string glslType = materialXTypeToGLSL(memberType);
+            
+            glslStructs << "    " << glslType << " " << memberName << ";\n";
+        }
+        
+        glslStructs << "};\n\n";
+    }
+    
+    return glslStructs.str();
+}
+
+bool generateGLSLStub(
+    const std::string& oslFileName,
+    const std::string& shaderName,
+    const mx::NodeDefPtr& nodeDef,
+    const mx::FilePath& outputDir,
+    mx::DocumentPtr& nodeDefDoc,
+    mx::DocumentPtr& typeDefDoc
+) {
+    mx::FilePath glslFilePath = outputDir / oslFileName;
+    glslFilePath.removeExtension();
+    glslFilePath.addExtension("glsl");
+
+    try {
+        std::ofstream glslFile;
+        glslFile.open(glslFilePath.asString());
+        
+        glslFile << "// " << nodeDef->getNodeString() << " Stub\n\n";
+        
+        bool hasBSDFOutput = false;
+        for (auto output : nodeDef->getActiveOutputs()) {
+            if (output->getType() == "BSDF") {
+                hasBSDFOutput = true;
+                break;
+            }
+        }
+        
+        if (hasBSDFOutput) {
+            glslFile << "#include \"lib/mx_closure_type.glsl\"\n";
+            glslFile << "#include \"lib/mx_microfacet_specular.glsl\"\n\n";
+        }
+        
+        // build struct definitions based on the typedefs 
+        std::string structDefs = generateGLSLStructsFromTypeDefs(typeDefDoc);
+        if (!structDefs.empty()) {
+            glslFile << "// Struct definitions\n";
+            glslFile << structDefs;
+        }
+        
+        glslFile << "void " << shaderName << "("; // function signature
+        
+        // Add ClosureData as first parameter if this is a BSDF function
+        bool firstParam = true;
+        if (hasBSDFOutput) {
+            glslFile << "ClosureData closureData";
+            firstParam = false;
+        }
+        
+        // Add inputs
+        for (auto input : nodeDef->getActiveInputs()) {
+            if (!firstParam) glslFile << ", ";
+            firstParam = false;
+            
+            std::string mtlxType = input->getType();
+            std::string glslType = materialXTypeToGLSL(mtlxType);
+            std::string paramName = input->getName();
+            
+            glslFile << glslType << " " << paramName;
+        }
+        
+        // Add outputs
+        for (auto output : nodeDef->getActiveOutputs()) {
+            if (!firstParam) glslFile << ", ";
+            firstParam = false;
+            
+            std::string mtlxType = output->getType();
+            std::string glslType = materialXTypeToGLSL(mtlxType);
+            std::string paramName = output->getName();
+            
+            // BSDF outputs should be inout, not out
+            if (mtlxType == "BSDF") {
+                glslFile << "inout " << glslType << " " << paramName;
+            } else {
+                glslFile << "out " << glslType << " " << paramName;
+            }
+        }
+        
+        // function body
+        glslFile << ")\n";
+        glslFile << "{\n";
+        glslFile << "    return;\n";
+        glslFile << "}\n";
+        
+        glslFile.close();
+        return true;
+    }
+    catch (std::exception& e) {
+        std::cerr << "Exception during GLSL stub generation: " << e.what() << std::endl;
+        return false;
+    }
+}
+
 bool createMaterialXDefinitions(
     osl::OSLQuery& osoQuery,
     const std::string& oslFileName,
@@ -471,11 +634,14 @@ bool createMaterialXDefinitions(
     const mx::FilePath& outputDir,
     MaterialXDefinitionOptions& mtlxDefinitionOptions
 ) {
-    mx::FilePath oslFilePath = outputDir / oslFileName;
+    //mx::FilePath oslFilePath = outputDir / oslFileName;
+    mx::FilePath oslFilePath = oslFileName;
+
     oslFilePath.removeExtension();
     oslFilePath.addExtension("osl");
 
-    mx::FilePath osoFilePath = outputDir / oslFileName;
+    //mx::FilePath osoFilePath = outputDir / oslFileName;
+    mx::FilePath osoFilePath = oslFileName;
     osoFilePath.removeExtension();
     osoFilePath.addExtension("oso");
 
@@ -483,7 +649,7 @@ bool createMaterialXDefinitions(
     std::string nodeName = toSnakeCase(shaderName);
 
     mx::NodeDefPtr nodeDef = nodeDefMtlxDoc->addNodeDef(
-        "NG_" + nodeName,
+        "ND_" + nodeName,
         "",
         nodeName
     );
@@ -524,13 +690,7 @@ bool createMaterialXDefinitions(
             continue;
         }
 
-        std::string paramType;
-
-        if (param->isclosure) {
-            paramType = "BSDF";
-        } else {
-            paramType = parseOSLParameterType(*param);
-        }
+        std::string paramType = parseOSLParameterType(*param);
 
         mx::ElementPtr element;
         if (param->isoutput) {
@@ -542,10 +702,11 @@ bool createMaterialXDefinitions(
         //Add Defaults 
         std::string defaultValue = parseOSLParameterValue(*param, &osoQuery, paramName);
 
-        element->setAttribute("value", defaultValue);
+        if (paramType != "BSDF") {
+            element->setAttribute("value", defaultValue);
+        }
 
         //Add Metadata
-
         for (auto metadata = param->metadata.begin(); metadata != param->metadata.end(); ++metadata) {
 
             std::string attributeName = metadata->name.c_str();
@@ -670,18 +831,41 @@ bool createMaterialXDefinitions(
     }
 
     try {
-        std::string implName = "IM_" + nodeName;
-        auto impl = implMtlxDoc->addImplementation(implName);
+        // OSL Implementation
+        std::string implNameOSL = "IM_" + nodeName + "_genosl";
+        auto implOSL = implMtlxDoc->addImplementation(implNameOSL);
 
-        if (!impl) {
+        if (!implOSL) {
             std::cerr << "Failed to create Implementation for node: " << nodeName << std::endl;
             return false;
         }
 
-        impl->setNodeDef(nodeDef);
-        impl->setFile(osoFilePath);
-        impl->setFunction(shaderName);
-        impl->setTarget("genosl");
+        implOSL->setNodeDef(nodeDef);
+        implOSL->setFile(osoFilePath);
+        implOSL->setFunction(shaderName);
+        implOSL->setTarget("genosl");
+
+        // GLSL Stub Implementation
+        mx::FilePath glslFilePath = oslFileName;
+        glslFilePath.removeExtension();
+        glslFilePath.addExtension("glsl");
+        
+        if (!generateGLSLStub(oslFileName, shaderName, nodeDef, outputDir, nodeDefMtlxDoc, typeDefMtlxDoc)) {
+            std::cerr << "Failed to generate GLSL stub for node: " << nodeName << std::endl;
+        } else {
+            std::string implNameGLSL = "IM_" + nodeName + "_genglsl";
+            auto implGLSL = implMtlxDoc->addImplementation(implNameGLSL);
+
+            if (!implGLSL) {
+                std::cerr << "Failed to create GLSL Implementation for node: " << nodeName << std::endl;
+                return false;
+            }
+
+            implGLSL->setNodeDef(nodeDef);
+            implGLSL->setFile(glslFilePath);
+            implGLSL->setFunction(shaderName);
+            implGLSL->setTarget("genglsl");
+        }
     } catch (ExceptionCompileError& exc) {
         std::cerr << "Uh oh! There was error for the following node: "
                     << nodeDef->getName() << std::endl;
