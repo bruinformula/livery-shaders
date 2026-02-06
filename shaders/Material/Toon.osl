@@ -1,4 +1,4 @@
-#ifdef NO_ENTRY 
+#ifndef NOT_MTX_IMPL   
     #define ENTRY_TOON void 
 #endif
     
@@ -55,11 +55,13 @@ ENTRY_TOON ToonShader(
     float opacity DEFAULT_TOON(1.0)  [[ string uifolder = "Base", float uimin = 0.0, float uimax = 1.0 ]],
 
     // Lighting
+    int viewIndependent DEFAULT_TOON(0) [[ string uifolder = "Lighting", string doc = "Ignores the camera direction for specular", string widget = "checkBox"]],
     vector lightDirection DEFAULT_TOON(vector(0, 0, -0.6))  [[ string uifolder = "Lighting" ]],
     color lightColor DEFAULT_TOON(color(1.0))  [[ string uifolder = "Lighting" ]],
     color ambientColor DEFAULT_TOON(0.1)  [[ string uifolder = "Lighting" ]],
 
     // Diffuse
+    float diffuseShadowTermination DEFAULT_TOON(1.0)  [[ string uifolder = "Diffuse", string doc = "On a sphere at a value of zero the termination is at the equator", float uimin = -1.0, float uimax = 1.0 ]],
     float diffuseSmoothness DEFAULT_TOON(0.5)  [[ string uifolder = "Diffuse", float uimin = 0.0, float uimax = 0.1 ]],
 
     // Specular 
@@ -159,10 +161,10 @@ ENTRY_TOON ToonShader(
     );
 
     // Diffuse
-    vector unitLightDirection = normalize(lightDirection - I);
+    vector unitLightDirection = viewIndependent ? normalize(lightDirection) : normalize(lightDirection - I);
     vector invertedLightDir = unitLightDirection * -1;
 
-    float NdotL = dot(N, invertedLightDir);
+    float NdotL = 0.5 * dot(N, invertedLightDir) + 0.5 * diffuseShadowTermination;
     float smoothGradient = smoothstep(0.0, diffuseSmoothness, NdotL);
     color gradientLight = lightColor * smoothGradient;
     color diffuseLayer = gradientLight + ambientColor;
@@ -231,9 +233,9 @@ ENTRY_TOON ToonShader(
     float rimGradient = smoothstep(rimLow, rimHigh, rimIntensity);
     color rim = rimColor * rimGradient;
 
-    float center = midSpecularCenter;
+    float center = midSpecularCenter * 2;
     float width = midSpecularWidth;
-    float left = smoothstep(midSpecularCenter - width, center, NdotL);
+    float left = smoothstep(center - width, center, NdotL);
     float right = 1.0 - smoothstep(center, center + width, NdotL);
     float midSpecularWeight = midSpecularIntensity * left * right;
     color midSpecularLayer = (midSpecularColor * midSpecularWeight) + rim;
@@ -262,7 +264,7 @@ ENTRY_TOON ToonShader(
 
     outColor = baseTone;
 
-    closure color base = oren_nayar_diffuse_bsdf(N, baseTone, 0.0);
+    closure color base = oren_nayar_diffuse_bsdf(N, baseTone, 1.0);
 
     /*
     closure color base = baseTone * conductor_bsdf(
@@ -274,6 +276,8 @@ ENTRY_TOON ToonShader(
         "ggx" // string distribution
     );
     */
+    
+    
     int useEmission = emissionWeight > 0;
     if (useEmission) {
         Cout = base + emissionWeight * uniform_edf(baseTone);

@@ -1,2 +1,7 @@
+#pragma once 
 #define ENTRY_GOOCH void
-#include "../src/Material/Gooch.osl"
+#ifdef NOT_MTX_IMPL
+	#include "../Material/Gooch.osl"
+#else
+	#include "../Gooch.osl"
+#endif

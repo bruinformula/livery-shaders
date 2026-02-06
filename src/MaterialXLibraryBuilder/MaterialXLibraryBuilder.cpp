@@ -1,7 +1,5 @@
-#include <MaterialXCore/Definition.h>
 #include <iostream>
 #include <string>
-#include <filesystem>
 
 #include <OSL/oslquery.h>
 #include <OSL/oslcomp.h>
@@ -21,8 +19,9 @@
 
 #include <MaterialXGenGlsl/GlslShaderGenerator.h>
 #include <MaterialXGenGlsl/GlslSyntax.h>
-#include <MaterialXGenGlsl/GlslShaderGenerator.h>
-#include <MaterialXGenGlsl/GlslSyntax.h>
+
+#include "GLSLStubs.h"
+
 namespace osl = OSL;
 namespace mx = MaterialX;
 namespace oiio = OIIO;
@@ -95,69 +94,6 @@ struct CommandLineArgs {
 
 };
 
-std::vector<std::filesystem::path> findFiles(const std::filesystem::path& rootDir, const std::string_view& extension) {
-    std::vector<std::filesystem::path> results;
-    if (!std::filesystem::exists(rootDir))
-        return results;
-
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(rootDir)) {
-        if (entry.is_regular_file() && entry.path().extension() == extension) {
-            results.push_back(entry.path());
-        }
-    }
-    return results;
-}
-
-std::string toSnakeCase(const std::string& input) {
-    std::string out;
-    out.reserve(input.size());
-
-    for (size_t i = 0; i < input.size(); ++i) {
-        char c = input[i];
-
-        if (std::isupper(c)) {
-            if (i != 0 && out.back() != '_') {
-                out += '_';
-            }
-            out += std::tolower(c);
-        } else {
-            out += c;
-        }
-    }
-
-    return out;
-}
-
-constexpr uint32_t hashString(std::string_view s) {
-        uint32_t h = 2166136261u;
-        for (char c : s)
-            h = (h ^ c) * 16777619u;
-        return h;
-    }
-
-std::string unescapeString(const std::string& input) {
-    std::string result;
-    result.reserve(input.size());
-    
-    for (size_t i = 0; i < input.size(); ++i) {
-        if (input[i] == '\\' && i + 1 < input.size()) {
-            switch (input[i + 1]) {
-                case 'n': result += '\n'; i++; break;
-                case 't': result += '\t'; i++; break;
-                case 'r': result += '\r'; i++; break;
-                case '\\': result += '\\'; i++; break;
-                case '"': result += '"'; i++; break;
-                case '\'': result += '\''; i++; break;
-                default: result += input[i]; break;
-            }
-        } else {
-            result += input[i];
-        }
-    }
-    
-    return result;
-}
-
 class ExceptionCompileError : public mx::Exception {
 public:
     ExceptionCompileError(const std::string& msg, const mx::StringVec& errorLog = mx::StringVec()) :
@@ -196,6 +132,7 @@ public:
     mx::FilePath oslCompilerPath;
     mx::FileSearchPath oslIncludePath;
     bool writeSourceToDisk = true;
+    bool writeByteCodeToDisk = false;
 };
 
 class MaterialXDefinitionOptions {
@@ -208,24 +145,8 @@ public:
     bool implicitAssignmentWarning = true;
 };
 
-enum class MaterialXType {
-    String,
-    Integer,
-    Float,
-    Color3,
-    Vector3,
-    Matrix44,
-    Matrix33,
-    IntegerArray,
-    FloatArray,
-    StringArray,
-    Color3Array,
-    Vector3Array,
-    BSDF,
-    Struct,
-    Unknown
-};
 
+// Utility Functions
 std::string materialXTypeToString(
     MaterialXType type, 
     const std::string& structName = ""
@@ -429,6 +350,7 @@ bool compileOSLToBytecode(
     const OslCompileOptions& options,
     osl::OSLQuery& osoQuery
 ) {
+    // we compile the shader to get attributes and metadata
     mx::FilePath oslFilePath = outputDir / oslFileName;
     oslFilePath.removeExtension();
     oslFilePath.addExtension("osl");
@@ -448,8 +370,45 @@ bool compileOSLToBytecode(
     std::vector<std::string> oslCompilerArgs;
     oslCompilerArgs.emplace_back("-o");
     oslCompilerArgs.emplace_back(osoFilePath);
+
+    // shader metadata is defined in the shader entry 
+    // NOT_MTX_IMPL enable shader entry points 
+    oslCompilerArgs.emplace_back("-DNOT_MTX_IMPL"); 
+
     for (mx::FilePath p : options.oslIncludePath) {
         oslCompilerArgs.emplace_back("-I" + p.asString() + "");
+        
+        if (options.writeSourceToDisk) {
+
+            auto headerFiles = findFiles(p, ".h", true);
+
+            for (auto header = headerFiles.begin(); header != headerFiles.end(); ++header) {
+                mx::FilePath fullHeaderPath = p / *header;
+                std::ifstream headerInput(fullHeaderPath.asString());
+                if (!headerInput.is_open()) {
+                    std::cerr << "Failed to open OSL include header for reading: " << header->asString() << std::endl;
+                    continue;
+                }
+
+                std::stringstream buffer;
+                buffer << headerInput.rdbuf();
+                std::string headerSourceCode = buffer.str();
+                headerInput.close();
+
+                mx::FilePath headerOutputPath = outputDir / *header;
+                
+                // header directories are created if they don't exist
+                mx::FilePath parentPath = headerOutputPath.getParentPath();
+                if (!parentPath.isEmpty() && !parentPath.exists()) {
+                    parentPath.createDirectory();
+                }
+                
+                std::ofstream headerFile;
+                headerFile.open(headerOutputPath.asString());
+                headerFile << headerSourceCode;
+                headerFile.close();
+            }
+        }
     }
 
     oiio::ErrorHandler errorHandler;
@@ -457,172 +416,17 @@ bool compileOSLToBytecode(
 
     std::string osoBuffer;
     compiler.compile_buffer(oslSourceCode, osoBuffer, oslCompilerArgs, std::string_view(), oslFilePath.asString());
+
     osoQuery.open_bytecode(osoBuffer);
 
-    std::ofstream osoFile;
-    osoFile.open(osoFilePath.asString());
-    osoFile << osoBuffer;
-    osoFile.close();
+    if (options.writeByteCodeToDisk) {
+        std::ofstream osoFile;
+        osoFile.open(osoFilePath.asString());
+        osoFile << osoBuffer;
+        osoFile.close();
+    }
 
     return true;
-}
-
-std::string materialXTypeToGLSL(const std::string& mtlxType) {
-
-    switch (hashString(mtlxType)) {
-        case hashString("vector3"):
-        case hashString("color3"): {
-            return "vec3";
-        }
-        case hashString("float"): {
-            return "float";
-        }
-        case hashString("string"): // use int to placehold for strings 
-        case hashString("integer"): {
-            return "int";
-        }
-        case hashString("boolean"): {
-            return "bool";
-        }
-        case hashString("BSDF"): {
-            return "BSDF";
-        }
-        case hashString("matrix44"): {
-            return "mat4";
-        }
-        // Array types
-        case hashString("stringarray"): // use int to placehold for strings 
-        case hashString("integerarray"): {
-            return "int[]";
-        }
-        case hashString("floatarray"): {
-            return "float[]";
-        }
-        case hashString("vector3array"):
-        case hashString("color3array"): {
-            return "vec3[]";
-        }
-
-    }
-    
-    return mtlxType; // return struct name
-}
-
-std::string generateGLSLStructsFromTypeDefs(mx::DocumentPtr& typeDefDoc) {
-    std::stringstream glslStructs;
-    
-    for (mx::TypeDefPtr typeDef : typeDefDoc->getTypeDefs()) {
-        std::string typeName = typeDef->getName();
-        
-        // the members will be empty if it isn't a struct
-        auto members = typeDef->getMembers();
-        if (members.empty()) continue;
-        
-        glslStructs << "struct " << typeName << "\n{\n";
-        
-        for (mx::MemberPtr member : members) {
-            std::string memberName = member->getName();
-            std::string memberType = member->getType();
-            std::string glslType = materialXTypeToGLSL(memberType);
-            
-            glslStructs << "    " << glslType << " " << memberName << ";\n";
-        }
-        
-        glslStructs << "};\n\n";
-    }
-    
-    return glslStructs.str();
-}
-
-bool generateGLSLStub(
-    const std::string& oslFileName,
-    const std::string& shaderName,
-    const mx::NodeDefPtr& nodeDef,
-    const mx::FilePath& outputDir,
-    mx::DocumentPtr& nodeDefDoc,
-    mx::DocumentPtr& typeDefDoc
-) {
-    mx::FilePath glslFilePath = outputDir / oslFileName;
-    glslFilePath.removeExtension();
-    glslFilePath.addExtension("glsl");
-
-    try {
-        std::ofstream glslFile;
-        glslFile.open(glslFilePath.asString());
-        
-        glslFile << "// " << nodeDef->getNodeString() << " Stub\n\n";
-        
-        bool hasBSDFOutput = false;
-        for (auto output : nodeDef->getActiveOutputs()) {
-            if (output->getType() == "BSDF") {
-                hasBSDFOutput = true;
-                break;
-            }
-        }
-        
-        if (hasBSDFOutput) {
-            glslFile << "#include \"lib/mx_closure_type.glsl\"\n";
-            glslFile << "#include \"lib/mx_microfacet_specular.glsl\"\n\n";
-        }
-        
-        // build struct definitions based on the typedefs 
-        std::string structDefs = generateGLSLStructsFromTypeDefs(typeDefDoc);
-        if (!structDefs.empty()) {
-            glslFile << "// Struct definitions\n";
-            glslFile << structDefs;
-        }
-        
-        glslFile << "void " << shaderName << "("; // function signature
-        
-        // Add ClosureData as first parameter if this is a BSDF function
-        bool firstParam = true;
-        if (hasBSDFOutput) {
-            glslFile << "ClosureData closureData";
-            firstParam = false;
-        }
-        
-        // Add inputs
-        for (auto input : nodeDef->getActiveInputs()) {
-            if (!firstParam) glslFile << ", ";
-            firstParam = false;
-            
-            std::string mtlxType = input->getType();
-            std::string glslType = materialXTypeToGLSL(mtlxType);
-            std::string paramName = input->getName();
-            
-            glslFile << glslType << " " << paramName;
-        }
-        
-        // Add outputs
-        for (auto output : nodeDef->getActiveOutputs()) {
-            if (!firstParam) glslFile << ", ";
-            firstParam = false;
-            
-            std::string mtlxType = output->getType();
-            std::string glslType = materialXTypeToGLSL(mtlxType);
-            std::string paramName = output->getName();
-            
-            // BSDF outputs should be inout, not out
-            if (mtlxType == "BSDF") {
-                glslFile << "inout " << glslType << " " << paramName;
-            } else {
-                glslFile << "out " << glslType << " " << paramName;
-            }
-        }
-        
-        // function body
-        glslFile << ")\n";
-        glslFile << "{\n";
-        glslFile << "    return;\n";
-        glslFile << "}\n";
-        
-        glslFile.close();
-        return true;
-    }
-    catch (std::exception& e) {
-        std::cerr << "Exception during GLSL stub generation: " << e.what() << std::endl;
-        return false;
-    }
 }
 
 bool createMaterialXDefinitions(
@@ -841,7 +645,7 @@ bool createMaterialXDefinitions(
         }
 
         implOSL->setNodeDef(nodeDef);
-        implOSL->setFile(osoFilePath);
+        implOSL->setFile(oslFilePath);
         implOSL->setFunction(shaderName);
         implOSL->setTarget("genosl");
 
@@ -885,6 +689,8 @@ bool createMaterialXDefinitions(
 
     return true;
 }
+
+
 
 int main(int argc, char* const argv[]) {
     std::vector<std::string> tokens;
@@ -940,7 +746,7 @@ int main(int argc, char* const argv[]) {
 
     OslCompileOptions options;
     options.oslIncludePath = oslRendererIncludePaths;
-    options.writeSourceToDisk = false;
+    options.writeSourceToDisk = true;
 
     MaterialXDefinitionOptions mtlxDefinitionOptions;
 
@@ -951,13 +757,13 @@ int main(int argc, char* const argv[]) {
     const mx::FilePath outputDir = inputArgs.outputPath;
 
     for (int i = 0; i < files.size(); i++) {
-        const std::filesystem::path& oslFileName = files[i].filename();
+        const std::string oslFileName = files[i].getBaseName();
 
         try {
             // open and read the osl file
-            std::ifstream oslFileInput(files[i]);
+            std::ifstream oslFileInput(files[i].asString());
             if (!oslFileInput.is_open()) {
-                throw std::runtime_error("Failed to open the OSL file for reading: " + files[i].string());
+                throw std::runtime_error("Failed to open the OSL file for reading: " + files[i].asString());
             }
 
             std::stringstream buffer;

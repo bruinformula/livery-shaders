@@ -1,2 +1,7 @@
+#pragma once 
 #define ENTRY_SCRATCH void
-#include "../src/Pattern/Scratch.osl"
+#ifdef NOT_MTX_IMPL
+	#include "../Pattern/Scratch.osl"
+#else
+	#include "../Scratch.osl"
+#endif

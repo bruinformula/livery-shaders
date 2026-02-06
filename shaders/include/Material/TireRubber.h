@@ -1,2 +1,7 @@
+#pragma once 
 #define ENTRY_TIRE_RUBBER void
-#include "../src/Material/TireRubber.osl"
+#ifdef NOT_MTX_IMPL
+	#include "../Material/TireRubber.osl"
+#else
+	#include "../TireRubber.osl"
+#endif

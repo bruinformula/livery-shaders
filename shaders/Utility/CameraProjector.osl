@@ -1,4 +1,4 @@
-#ifdef NO_ENTRY 
+#ifndef NOT_MTX_IMPL   
     #define ENTRY_CAMERA_PROJECTOR void 
 #endif
 

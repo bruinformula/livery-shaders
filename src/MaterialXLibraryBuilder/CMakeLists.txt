@@ -1,4 +1,4 @@
-add_executable(main "${CMAKE_CURRENT_SOURCE_DIR}/MaterialXLibraryBuilder.cpp")
+add_executable(main "${CMAKE_CURRENT_SOURCE_DIR}/MaterialXLibraryBuilder.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/GLSLStubs.cpp")
 
 target_include_directories(main BEFORE PRIVATE ${OpenImageIO_INCLUDES})
 target_include_directories(main BEFORE PRIVATE ${OSL_INCLUDES})

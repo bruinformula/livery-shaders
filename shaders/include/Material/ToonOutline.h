@@ -1,2 +1,7 @@
+#pragma once 
 #define ENTRY_TOON_OUTLINE void
-#include "../src/Material/ToonOutline.osl"
+#ifdef NOT_MTX_IMPL
+	#include "../Material/ToonOutline.osl"
+#else
+	#include "../ToonOutline.osl"
+#endif

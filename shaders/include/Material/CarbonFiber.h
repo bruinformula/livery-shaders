@@ -1,2 +1,7 @@
+#pragma once 
 #define ENTRY_CARBON_FIBER void
-#include "../src/Material/CarbonFiber.osl"
+#ifdef NOT_MTX_IMPL
+    #include "../Material/CarbonFiber.osl"
+#else
+    #include "../CarbonFiber.osl"
+#endif

@@ -1,2 +1,7 @@
+#pragma once 
 #define ENTRY_TOON void
-#include "../src/Material/Toon.osl"
+#ifdef NOT_MTX_IMPL
+	#include "../Material/Toon.osl"
+#else
+	#include "../Toon.osl"
+#endif

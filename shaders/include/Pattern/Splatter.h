@@ -1,2 +1,7 @@
+#pragma once 
 #define ENTRY_SPLATTER void
-#include "../src/Pattern/Splatter.osl"
+#ifdef NOT_MTX_IMPL
+	#include "../Pattern/Splatter.osl"
+#else
+	#include "../Splatter.osl"
+#endif
