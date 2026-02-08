@@ -2,79 +2,15 @@
 #include <string>
 #include <sstream>
 #include <fstream>
-#include <filesystem>
 
 #include <MaterialXCore/Document.h>
 #include <MaterialXFormat/File.h>
 #include <MaterialXFormat/Util.h>
 
 #include "GLSLStubs.h"
+#include "OSLCompiler.h"
 
 namespace mx = MaterialX;
-
-std::vector<mx::FilePath> findFiles(const mx::FilePath& rootDir, const std::string& extension, bool maintainRelativePath) {
-    std::vector<mx::FilePath> results;
-    
-    std::filesystem::path fsRoot(rootDir.asString());
-    if (!std::filesystem::exists(fsRoot))
-        return results;
-
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(fsRoot)) {
-        if (entry.is_regular_file() && entry.path().extension() == extension) {
-            if (maintainRelativePath) {
-                std::filesystem::path rel = std::filesystem::relative(entry.path(), fsRoot);
-                results.emplace_back(mx::FilePath(rel.string()));
-            } else {
-                results.emplace_back(mx::FilePath(entry.path().string()));
-            }
-        }
-    }
-    
-    return results;
-}
-
-std::string toSnakeCase(const std::string& input) {
-    std::string out;
-    out.reserve(input.size());
-
-    for (size_t i = 0; i < input.size(); ++i) {
-        char c = input[i];
-
-        if (std::isupper(c)) {
-            if (i != 0 && out.back() != '_') {
-                out += '_';
-            }
-            out += std::tolower(c);
-        } else {
-            out += c;
-        }
-    }
-
-    return out;
-}
-
-std::string unescapeString(const std::string& input) {
-    std::string result;
-    result.reserve(input.size());
-    
-    for (size_t i = 0; i < input.size(); ++i) {
-        if (input[i] == '\\' && i + 1 < input.size()) {
-            switch (input[i + 1]) {
-                case 'n': result += '\n'; i++; break;
-                case 't': result += '\t'; i++; break;
-                case 'r': result += '\r'; i++; break;
-                case '\\': result += '\\'; i++; break;
-                case '"': result += '"'; i++; break;
-                case '\'': result += '\''; i++; break;
-                default: result += input[i]; break;
-            }
-        } else {
-            result += input[i];
-        }
-    }
-    
-    return result;
-}
 
 std::string materialXTypeToGLSL(const std::string& mtlxType) {
 
