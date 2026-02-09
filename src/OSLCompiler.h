@@ -1,5 +1,5 @@
 #pragma once 
-#include <optional>
+
 #include <string>
 #include <vector>
 
@@ -131,5 +131,5 @@ bool compileOSLToBytecode(
     const std::string& oslFileName, 
     const mx::FilePath& outputDir, 
     const OslCompileOptions& options,
-    std::optional<osl::OSLQuery> osoQuery = std::nullopt
+    osl::OSLQuery* osoQuery = nullptr
 );

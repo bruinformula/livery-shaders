@@ -332,7 +332,7 @@ bool compileOSLToBytecode(
     const std::string& oslFileName, 
     const mx::FilePath& outputDir, 
     const OslCompileOptions& options,
-    std::optional<osl::OSLQuery> osoQuery
+    osl::OSLQuery* osoQuery
 ) {
     // we compile the shader to get attributes and metadata
     mx::FilePath oslFilePath = outputDir / oslFileName;
@@ -394,7 +394,7 @@ bool compileOSLToBytecode(
     std::string osoBuffer;
     compiler.compile_buffer(oslSourceCode, osoBuffer, oslCompilerArgs, std::string_view(), oslFilePath.asString());
 
-    if (osoQuery) {
+    if (osoQuery != nullptr) {
         osoQuery->open_bytecode(osoBuffer);
     }
 

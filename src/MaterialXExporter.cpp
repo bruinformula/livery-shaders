@@ -1,8 +1,8 @@
+#include <MaterialXCore/Element.h>
 #include <iostream>
 #include <ostream>
 #include <string>
 #include <vector>
-#include <unordered_set>
 
 #include <OSL/oslquery.h>
 #include <OSL/oslcomp.h>
@@ -22,7 +22,6 @@
 
 #include "OSLCompiler.h"
 
-namespace osl = OSL;
 namespace mx = MaterialX;
 
 struct CommandLineArgs {
@@ -57,8 +56,15 @@ struct CommandLineArgs {
             if (nextToken.empty()) goto expectOption;
             searchPath.append(mx::FileSearchPath(nextToken));
             return SUCCESS_AND_BUMP;
+        } else if (token == "--oslIncludePath") {
+            if (nextToken.empty()) goto expectOption;
+            if (!oslIncludePath.isEmpty()) goto alreadySet;
+
+            oslIncludePath = nextToken;
+            return SUCCESS_AND_BUMP;
         } else if (token == "--library") {
             if (nextToken.empty()) goto expectOption;
+            
             libraryFolders.push_back(nextToken);
             return SUCCESS_AND_BUMP;
         } else if (token == "--help") {
@@ -156,17 +162,11 @@ int main(int argc, char* const argv[]) {
     const char* mtlxEnvPath = std::getenv("MATERIALX_SEARCH_PATH");
 
     if (mtlxEnvPath) {
-        std::cout << "DEBUG: MATERIALX_SEARCH_PATH=" << mtlxEnvPath << std::endl;
+        //std::cout << "DEBUG: MATERIALX_SEARCH_PATH=" << mtlxEnvPath << std::endl;
         inputArgs.searchPath.append(mx::FileSearchPath(mtlxEnvPath));
     }
     
-    std::cout << "DEBUG: MaterialX default search paths:" << std::endl;
-    for (const auto& path : inputArgs.searchPath) {
-        std::cout << "  - " << path.asString() << std::endl;
-    }
-    
     inputArgs.libraryFolders.push_back("libraries");
-    inputArgs.libraryFolders.push_back(inputArgs.libraryPath);
 
     //get std::vector of paths to all .mtlx files in libraryPath
     std::vector<mx::FilePath> files = findFiles(inputArgs.libraryPath, ".mtlx");
@@ -195,16 +195,19 @@ int main(int argc, char* const argv[]) {
         return 1;
     }
     
+    std::vector<mx::DocumentPtr> materialDocuments;
+    
     for (const mx::FilePath& file : files) {
         try {
             mx::DocumentPtr doc = mx::createDocument();
             mx::readFromXmlFile(doc, file, inputArgs.searchPath);
             std::cout << "File " << file.asString() << " contains:" << std::endl;
-            std::cout << "  NodeDefs: " << doc->getNodeDefs().size() << std::endl;
             std::cout << "  Materials: " << doc->getMaterialNodes().size() << std::endl;
             std::cout << "  Nodes: " << doc->getNodes().size() << std::endl;
-            librariesDoc->importLibrary(doc);
-            std::cout << "Imported: " << file.asString() << std::endl;
+            doc->importLibrary(librariesDoc);
+            std::cout << "  After importing libraries - NodeDefs: " << doc->getNodeDefs().size() << std::endl;
+            materialDocuments.push_back(doc);
+            std::cout << "Loaded: " << file.asString() << std::endl;
         } catch (std::exception& e) {
             std::cerr << "Failed to load MaterialX file " << file.asString() << ": " << e.what() << std::endl;
             return 1;
@@ -220,36 +223,39 @@ int main(int argc, char* const argv[]) {
     context.getOptions().fileTextureVerticalFlip = false;
     context.getOptions().oslImplicitSurfaceShaderConversion = false;
 
-
     OslCompileOptions options;
     options.oslIncludePath = oslRendererIncludePaths;
     options.writeSourceToDisk = true;
     options.writeByteCodeToDisk = true;
 
-    std::vector<mx::NodePtr> ordered;
-    std::unordered_set<std::string> visited;
+    std::cout << "Processing " << materialDocuments.size() << " material documents." << std::endl;
+    
+    for (const mx::DocumentPtr& doc : materialDocuments) {
+        std::cout << "Document has " << doc->getMaterialNodes().size() << " material nodes." << std::endl;
+        
+        for (mx::NodePtr materialNode : doc->getMaterialNodes()) {
+            const std::string oslFileName = materialNode->getName();
 
-    for (mx::NodePtr materialNode : librariesDoc->getMaterialNodes()) {
+            std::cout << "Generating OSL shader for material: " << oslFileName << std::endl;
 
-        const std::string oslFileName = materialNode->getName();
-
-        try {
-            mx::ShaderPtr shader = oslShaderGen->generate(
-                "complete_material", 
-                materialNode, 
-                context
-            );
-            
-            compileOSLToBytecode(
-                shader->getSourceCode(), 
-                oslFileName, 
-                inputArgs.outputPath, 
-                options
-            );
-                        
-        } catch (mx::Exception& e) {
-            std::cerr << "Error: " << e.what() << std::endl;
-            return 1;
+            try {
+                mx::ShaderPtr shader = oslShaderGen->generate(
+                    "complete_material", 
+                    materialNode, 
+                    context
+                );
+                
+                compileOSLToBytecode(
+                    shader->getSourceCode(), 
+                    oslFileName, 
+                    inputArgs.outputPath, 
+                    options
+                );
+                            
+            } catch (mx::Exception& e) {
+                std::cerr << "Error: " << e.what() << std::endl;
+                return 1;
+            }
         }
     }
     return 0;

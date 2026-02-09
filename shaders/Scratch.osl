@@ -1,0 +1,57 @@
+#ifndef SOLO_SHADER   
+    #define ENTRY_SCRATCH void 
+#endif 
+
+#ifndef ENTRY_SCRATCH
+    #define  DEFAULT_SCRATCH(x) = x
+    #define ENTRY_SCRATCH shader
+#else
+    #define  DEFAULT_SCRATCH(x)
+#endif
+
+ENTRY_SCRATCH Scratch(
+    vector UV  DEFAULT_SCRATCH(vector(u, v, 0)),
+    float density  DEFAULT_SCRATCH(0.1),
+    float roughnessMin  DEFAULT_SCRATCH(0.0),
+    float roughnessMax  DEFAULT_SCRATCH(0.01),
+    float roughnessDefault  DEFAULT_SCRATCH(0.1),
+    float anisotropicMin DEFAULT_SCRATCH(0.1),
+    float anisotropicMax  DEFAULT_SCRATCH(0.2),
+    float anisotropicDefault  DEFAULT_SCRATCH(0),
+    float width  DEFAULT_SCRATCH(0.001),
+    float offset  DEFAULT_SCRATCH(0.0),
+    float normalStrength DEFAULT_SCRATCH(1.0),
+    output normal outNormal DEFAULT_SCRATCH(normal(0, 0, 1))
+) {
+    float delta = 1.0/(40 - 1);
+    float maxRadius = sqrt(density);
+    int maxSearchCell = (int)ceil(maxRadius/delta);
+    point index = point(round(UV.x/delta), round(UV.y/delta), 0.0);
+
+    for (int x = -maxSearchCell; x <= maxSearchCell; ++x){
+        for (int y = -maxSearchCell; y <= maxSearchCell; ++y){
+            point currentIndex = index + point(x, y, 0);
+            point currentOrigin = (currentIndex + (hashnoise(currentIndex) - 0.5)) * delta;
+
+            float directionValue = hashnoise(currentIndex + vector(123, 456, 0));
+            
+            float theta = directionValue * M_PI;
+
+            vector bitangent = vector(-sin(theta), cos(theta), 0);
+            
+            vector diff = P - currentOrigin;
+            float dist = dot(diff, bitangent);
+            float actualWidth = width * hashnoise(currentIndex);
+
+            if (abs(dist) < actualWidth * 0.5) {
+                // t goes from -1 (left edge) to 1 (right edge)
+                float t = dist / (actualWidth * 0.5);
+
+                outNormal = normalize(normal(0,0,1) - bitangent * t * normalStrength);
+                
+                break;
+            }
+        }
+
+    }
+}

@@ -49,7 +49,7 @@ struct CommandLineArgs {
 
             outputPath = mx::FilePath(nextToken);
             return SUCCESS_AND_BUMP;
-        } else if (token == "--oslInclude") {
+        } else if (token == "--oslIncludePath") {
             if (nextToken.empty()) goto expectOption;
             if (!oslIncludePath.isEmpty()) goto alreadySet;
             
@@ -117,8 +117,6 @@ public:
     bool implicitAssignmentWarning = true;
 };
 
-
-
 bool createMaterialXDefinitions(
     osl::OSLQuery& osoQuery,
     const std::string& oslFileName,
@@ -130,7 +128,6 @@ bool createMaterialXDefinitions(
 ) {
     //mx::FilePath oslFilePath = outputDir / oslFileName;
     mx::FilePath oslFilePath = oslFileName;
-
     oslFilePath.removeExtension();
     oslFilePath.addExtension("osl");
 
@@ -139,6 +136,11 @@ bool createMaterialXDefinitions(
     osoFilePath.removeExtension();
     osoFilePath.addExtension("oso");
 
+    if (osoQuery.shadername().empty()) {
+        std::cerr << "OSLQuery is empty for file: " << oslFileName << std::endl;
+        return false;
+    }
+    
     std::string shaderName = osoQuery.shadername().c_str();
     std::string nodeName = toSnakeCase(shaderName);
 
@@ -147,10 +149,13 @@ bool createMaterialXDefinitions(
         "",
         nodeName
     );
+
     if (!nodeDef) {
         std::cerr << "Failed to create NodeDef for node: " << nodeName << std::endl;
         return false;
     }
+
+    //std::cout << osoQuery.nparams() << " parameters found for shader: " << shaderName << std::endl;
 
     for (auto param = osoQuery.begin(); param != osoQuery.end(); ++param) {
 
@@ -407,6 +412,7 @@ int main(int argc, char* const argv[]) {
     }
 
     if (!inputArgs.verify()) {
+        std::cerr << "Input argument verification failed." << std::endl;
         return 1;
     }
 
@@ -421,8 +427,8 @@ int main(int argc, char* const argv[]) {
     options.writeSourceToDisk = true;
 
     // shader metadata is defined in the shader entry 
-    // NOT_MTX_IMPL enables shader entry points 
-    options.definePreprocessors.emplace_back("NOT_MTX_IMPL");
+    // SOLO_SHADER enables shader entry points 
+    options.definePreprocessors.emplace_back("SOLO_SHADER");
 
     MaterialXDefinitionOptions mtlxDefinitionOptions;
 
@@ -447,7 +453,7 @@ int main(int argc, char* const argv[]) {
 
             osl::OSLQuery osoQuery;
             
-            compileOSLToBytecode(oslFileContent, oslFileName, inputArgs.outputPath, options, osoQuery);
+            compileOSLToBytecode(oslFileContent, oslFileName, inputArgs.outputPath, options, &osoQuery);
     
             createMaterialXDefinitions(osoQuery, oslFileName, nodeDefMtlxDoc, implMtlxDoc, typeDefMtlxDoc, inputArgs.outputPath, mtlxDefinitionOptions);
         } catch (const std::exception& e) {

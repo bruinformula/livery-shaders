@@ -1,0 +1,25 @@
+#ifndef SOLO_SHADER   
+    #define ENTRY_DIRT void 
+#endif
+
+#ifndef ENTRY_DIRT
+    #define DEFAULT_DIRT(x) = x
+    #define ENTRY_DIRT shader
+#else
+    #define DEFAULT_DIRT(x)
+#endif
+
+ENTRY_DIRT Dirt(
+    vector UV  DEFAULT_DIRT(vector(u, v, 0)),
+    color baseColor  DEFAULT_DIRT(color(1,1,1)),
+    float baseRoughness DEFAULT_DIRT(0.4),
+    color sheenColor  DEFAULT_DIRT(color(1,1,1)),
+    float sheenRoughness  DEFAULT_DIRT(0.3),
+    output closure color Cout  DEFAULT_DIRT(0)
+) {
+    closure color baseLayer = oren_nayar_diffuse_bsdf(N, baseColor, 0.5);
+
+    closure color sheenLayer = sheen_bsdf(N, sheenColor, 0.51);
+
+    Cout = layer(sheenLayer, baseLayer);
+}

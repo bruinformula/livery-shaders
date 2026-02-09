@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<materialx version="1.39" colorspace="lin_rec709">
+  <surfacematerial name="Test_AutoLib" type="material" xpos="17.391304" ypos="0.000000">
+    <input name="surfaceshader" type="surfaceshader" nodename="surface" />
+  </surfacematerial>
+  <surface name="surface" type="surfaceshader" xpos="14.623188" ypos="-0.508621">
+    <input name="bsdf" type="BSDF" nodename="mix_bsdf" />
+  </surface>
+  <metallic_paint name="metallic_paint" type="BSDF" xpos="7.275362" ypos="-9.137931">
+    <input name="useUV" type="integer" value="2" />
+    <input name="UV" type="vector3" value="0, 0.1, 0" />
+  </metallic_paint>
+  <mix name="mix_bsdf" type="BSDF" xpos="12.724638" ypos="-1.672414">
+    <input name="bg" type="BSDF" nodename="carbon_fiber" output="Cout" />
+    <input name="mix" type="float" nodename="worleynoise2d_float" />
+    <input name="fg" type="BSDF" nodename="metallic_paint" />
+  </mix>
+  <texcoord name="texcoord_vector2" type="vector2" xpos="7.159420" ypos="4.163793" />
+  <worleynoise2d name="worleynoise2d_float" type="float" xpos="10.442029" ypos="3.422414">
+    <input name="texcoord" type="vector2" nodename="texcoord_vector2" />
+  </worleynoise2d>
+  <carbon_fiber name="carbon_fiber" type="multioutput" xpos="7.159420" ypos="-1.258621">
+    <output name="Cout" type="BSDF" />
+  </carbon_fiber>
+</materialx>

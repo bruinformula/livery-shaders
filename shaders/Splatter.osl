@@ -1,0 +1,136 @@
+#ifndef SOLO_SHADER   
+    #define ENTRY_SPLATTER void 
+#endif
+
+#ifndef ENTRY_SPLATTER
+    #define DEFAULT_SPLATTER(x) = x
+    #define ENTRY_SPLATTER shader
+#else
+    #define DEFAULT_SPLATTER(x)
+#endif
+
+point randomCellPosition(int x, int y, float jitter, int seed) {
+    vector off = cellnoise(vector(x, y, 0), seed);
+    off -= 0.5;
+    off *= jitter;
+    off += 0.5;
+    return point(x + off[0], y + off[1], 0);
+}
+
+float randomRadius(int x, int y, float minRadius, float maxRadius) {
+    float randomValue = noise("cell", vector(x + 123.456, y + 789.012, 0));
+    
+    return minRadius + randomValue * (maxRadius - minRadius);
+}
+
+float sigmoidMask(float x, float low, float center, float sharpness) {
+    float k = 1.0 / max(1e-6, sharpness);
+    float s = 1.0 / (1.0 + exp(-k * (x - center)));
+    return low + (1.0 - low) * s;
+}
+
+float smoothMin(float a, float b, float k) {
+    float res = -log(exp(-k*a) + exp(-k*b)) / k;
+    return res;
+}
+
+ENTRY_SPLATTER splatter(
+    vector UV  DEFAULT_SPLATTER(vector(u, v, 0)),
+    int seed  DEFAULT_SPLATTER(0) [[ string uifolder = "Pattern" ]],
+    float jitter  DEFAULT_SPLATTER(1.0) [[ string uifolder = "Pattern" ]],
+    float scaleRadius  DEFAULT_SPLATTER(1.0) [[ string uifolder = "Pattern" ]],
+    float minRadius  DEFAULT_SPLATTER(0.1) [[ string uifolder = "Pattern" ]],
+    float maxRadius  DEFAULT_SPLATTER(0.4) [[ string uifolder = "Pattern" ]],
+    float unionSmoothness  DEFAULT_SPLATTER(8.0) [[ string uifolder = "Pattern", string doc = "Controls the smoothness between overlapping drops" ]],
+
+    //splatter spikes control
+    float spikeAmount  DEFAULT_SPLATTER(0.95) [[ string uifolder = "Spikes", string doc = "Controls the intensity of the spikes on the splatter", float uimin = 0.0, float uimax = 1.0 ]],
+    float spikePeak  DEFAULT_SPLATTER(24.0) [[ string uifolder = "Spikes", string doc = "Controls the height of the peak spikes", float uimin = 1.0 ]],
+    float spikeFrequency  DEFAULT_SPLATTER(12.0)  [[ string uifolder = "Spikes", string doc = "Higher values increase the number of spikes", float uimin = 0.0 ]],
+    float spikePerimeterSmoothness  DEFAULT_SPLATTER(0.01) [[ string uifolder = "Spikes", float uimin = 0.0, float uimax = 1.0 ]],
+    float spikeTrimWidth DEFAULT_SPLATTER(0.1) [[ string uifolder = "Spikes", string doc = "Width of the ramp zone at angle boundaries to smooth the seam", float uimin = 0.0, float uimax = 0.5 ]],
+
+    float basinHeight DEFAULT_SPLATTER(0.6) [[ string uifolder = "Basin", string doc = "Base height of the splatter basin", float uimin = 0.0, float uimax = 1.0 ]],
+    float basinCenter DEFAULT_SPLATTER(0.5) [[ string uifolder = "Basin", string doc = "The the inflection point where the basin rises to a parameter", float uimin = 0.0, float uimax = 1.0 ]],
+    float basinSmoothness DEFAULT_SPLATTER(0.5) [[ string uifolder = "Basin", string doc = "The the inflection point where the basin rises to a parameter", float uimin = 0.0, float uimax = 1.0 ]],
+
+    output float height  DEFAULT_SPLATTER(0.0),
+    output float mask  DEFAULT_SPLATTER(0.0)
+) {    
+    int cellX = (int)floor(UV[0]);
+    int cellY = (int)floor(UV[1]);
+    
+    vector localPos = UV - vector(cellX, cellY, 0);
+    
+    float noisedDistance = 1e6;
+    float smoothDistance = 1e6;
+
+    for (int x = -1; x <= 1; x++) {
+        for (int y = -1; y <= 1; y++) {
+            point cellCenter = randomCellPosition(cellX + x, cellY + y, jitter, seed);
+        
+            vector diff = UV - cellCenter;
+            float edgeDistance = length(diff);
+        
+            float circleRandomSeed = noise("cell", vector(cellX + x + 456.789 + seed, cellY + y + 321.654 + seed, seed)) * 1000.0; //generate a seed based on cell position and user seed
+            float angleNoise = spikeFrequency * noise("uperlin", circleRandomSeed); // noise to vary the angle distortion
+            float angle = (atan2(diff.y, diff.x) / (2.0 * M_PI)) + 0.5;
+        
+            float addNoise = pow(spikePeak, noise("snoise", (angle * angleNoise) - circleRandomSeed)); // add the squiggle
+            
+            if (spikeTrimWidth > 0.0) {
+                float distFromBoundary = min(angle, 1.0 - angle);
+                // Smooth blend factor: 0 at boundaries, 1.0 in the middle
+                float edgeFactor = smoothstep(0.0, spikeTrimWidth, distFromBoundary);
+                addNoise = addNoise * edgeFactor;
+            }
+
+            addNoise = ((1 - spikeAmount) * addNoise) + spikeAmount;
+
+            float radius = randomRadius(cellX + x, cellY + y, minRadius * scaleRadius, maxRadius * scaleRadius);
+        
+            float edgeNoisedDistance = edgeDistance - (radius * addNoise);
+        
+            if (edgeNoisedDistance < noisedDistance) {
+                noisedDistance = edgeNoisedDistance;
+            }
+
+            if (x == -1 && y == -1) {
+                smoothDistance = edgeDistance;
+            } else {
+                smoothDistance = smoothMin(smoothDistance, edgeDistance, unionSmoothness);
+            }
+        }
+    }
+
+    mask = 1.0 - smoothstep(0, spikePerimeterSmoothness, noisedDistance);
+
+    float heightProfile = sigmoidMask(smoothDistance, basinHeight, basinCenter, basinSmoothness);
+    height = (heightProfile * 1.40) * mask;
+}
+
+/*
+splatter(
+    UV * 4,
+    seed, //int seed
+    1.0, // float jitter
+    0.65, // float scaleRadius
+    0.1, // float minRadius
+    0.15, // float maxRadius
+    8.0, // float unionSmoothness
+
+    //splatter spikes control
+    0.9, // float spikeAmount
+    24.0, // float spikePeak
+    12.0, // float spikeFrequency
+    0.01, // float spikePerimeterSmoothness
+    0.01, //float spikeTrimWidth
+
+    0.95, // float basinHeight
+    0.3, // float basinCenter
+    0.075, // float basinSmoothness 
+
+    0.0, // output float height
+    0.0, // output float mask
+);
+*/
