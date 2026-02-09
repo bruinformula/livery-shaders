@@ -3,6 +3,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 #include <OSL/oslquery.h>
 #include <OSL/oslcomp.h>
@@ -205,7 +206,6 @@ int main(int argc, char* const argv[]) {
             std::cout << "  Materials: " << doc->getMaterialNodes().size() << std::endl;
             std::cout << "  Nodes: " << doc->getNodes().size() << std::endl;
             doc->importLibrary(librariesDoc);
-            std::cout << "  After importing libraries - NodeDefs: " << doc->getNodeDefs().size() << std::endl;
             materialDocuments.push_back(doc);
             std::cout << "Loaded: " << file.asString() << std::endl;
         } catch (std::exception& e) {
@@ -228,15 +228,22 @@ int main(int argc, char* const argv[]) {
     options.writeSourceToDisk = true;
     options.writeByteCodeToDisk = true;
 
-    std::cout << "Processing " << materialDocuments.size() << " material documents." << std::endl;
-    
+    std::unordered_set<std::string> materialNames;
+
     for (const mx::DocumentPtr& doc : materialDocuments) {
         std::cout << "Document has " << doc->getMaterialNodes().size() << " material nodes." << std::endl;
-        
+
         for (mx::NodePtr materialNode : doc->getMaterialNodes()) {
             const std::string oslFileName = materialNode->getName();
 
             std::cout << "Generating OSL shader for material: " << oslFileName << std::endl;
+
+            if (materialNames.contains(oslFileName)) {
+                std::cerr << "Duplicate material name found: " << oslFileName << ". Material names must be unique!" << std::endl;
+                return 1;
+            }
+
+            materialNames.insert(oslFileName);
 
             try {
                 mx::ShaderPtr shader = oslShaderGen->generate(

@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<materialx version="1.39" colorspace="lin_rec709">
+  <surfacematerial name="Test_AutoLib1" type="material" xpos="17.391304" ypos="0.000000">
+    <input name="surfaceshader" type="surfaceshader" nodename="surface" />
+  </surfacematerial>
+  <surface name="surface" type="surfaceshader" xpos="14.681159" ypos="-0.517241">
+    <input name="bsdf" type="BSDF" output="output_BSDF" nodegraph="nodegraph1" />
+  </surface>
+  <metallic_paint name="metallic_paint" type="BSDF" xpos="7.507246" ypos="-2.603448">
+    <input name="useUV" type="integer" value="2" />
+    <input name="UV" type="vector3" value="0, 0.1, 0" />
+  </metallic_paint>
+  <texcoord name="texcoord_vector2" type="vector2" xpos="5.884058" ypos="1.284483" />
+  <worleynoise2d name="worleynoise2d_float" type="float" xpos="8.818841" ypos="1.008621">
+    <input name="texcoord" type="vector2" nodename="texcoord_vector2" />
+  </worleynoise2d>
+  <carbon_fiber name="carbon_fiber" type="multioutput" xpos="7.449275" ypos="-0.672414">
+    <output name="Cout" type="BSDF" />
+  </carbon_fiber>
+  <nodegraph name="nodegraph1" xpos="12.463768" ypos="-0.931035">
+    <input name="input_BSDF" type="BSDF" xpos="7.195652" ypos="-2.465517" nodename="metallic_paint" />
+    <input name="input_BSDF2" type="BSDF" xpos="7.086957" ypos="-0.948276" output="Cout" nodename="carbon_fiber" />
+    <mix name="mix_bsdf" type="BSDF" xpos="9.594203" ypos="-2.068965">
+      <input name="fg" type="BSDF" interfacename="input_BSDF" />
+      <input name="bg" type="BSDF" interfacename="input_BSDF2" />
+      <input name="mix" type="float" interfacename="input_float" />
+    </mix>
+    <input name="input_float" type="float" xpos="7.202899" ypos="0.301724" nodename="worleynoise2d_float" />
+    <output name="output_BSDF" type="BSDF" nodename="mix_bsdf" xpos="11.376812" ypos="-1.362069" />
+  </nodegraph>
+  <surfacematerial name="surfacematerial" type="material" xpos="17.246376" ypos="1.698276">
+    <input name="surfaceshader" type="surfaceshader" nodename="surface2" />
+  </surfacematerial>
+  <metallic_paint name="metallic_paint2" type="BSDF" xpos="8.782609" ypos="4.422414" />
+  <surface name="surface2" type="surfaceshader" xpos="13.072464" ypos="3.594828">
+    <input name="bsdf" type="BSDF" nodename="metallic_paint2" />
+  </surface>
+</materialx>
