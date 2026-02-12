@@ -13,24 +13,24 @@ target_link_libraries(shared PRIVATE
     MaterialXGenOsl
 )
 
-# MaterialXExporter
+# MaterialXOSOExporter
 
-add_executable(MaterialXExporter "${CMAKE_CURRENT_SOURCE_DIR}/MaterialXExporter.cpp")
+add_executable(MaterialXOSOExporter "${CMAKE_CURRENT_SOURCE_DIR}/MaterialXOSOExporter.cpp")
 
-target_include_directories(MaterialXExporter BEFORE PRIVATE ${OpenImageIO_INCLUDES})
-target_include_directories(MaterialXExporter BEFORE PRIVATE ${OSL_INCLUDES})
-target_include_directories(MaterialXExporter BEFORE PRIVATE ${MaterialX_INCLUDES})
+target_include_directories(MaterialXOSOExporter BEFORE PRIVATE ${OpenImageIO_INCLUDES})
+target_include_directories(MaterialXOSOExporter BEFORE PRIVATE ${OSL_INCLUDES})
+target_include_directories(MaterialXOSOExporter BEFORE PRIVATE ${MaterialX_INCLUDES})
 
-target_link_libraries(MaterialXExporter PRIVATE
+target_link_libraries(MaterialXOSOExporter PRIVATE
     OSL::oslquery
     OSL::oslcomp
 )
 
-target_link_libraries(MaterialXExporter PRIVATE
+target_link_libraries(MaterialXOSOExporter PRIVATE
     shared
 )
 
-set_target_properties(MaterialXExporter PROPERTIES
+set_target_properties(MaterialXOSOExporter PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 

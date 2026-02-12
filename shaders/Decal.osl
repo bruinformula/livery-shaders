@@ -1,0 +1,142 @@
+#ifndef SOLO_SHADER   
+    #define ENTRY_DECAL void 
+#endif
+
+#ifndef ENTRY_DECAL
+    #define DEFAULT_DECAL(x) = x
+    #define ENTRY_DECAL shader
+#else
+    #define DEFAULT_DECAL(x)
+#endif
+
+struct DecalParams {
+    // height is determined by the aspect ratio of the decal.
+    string filename;
+    float width;
+    string units;
+};
+
+ENTRY_DECAL Decal(
+    point UV DEFAULT_DECAL(0),
+    DecalParams decalParams DEFAULT_DECAL({}),
+
+    // Texture
+    int stickerMode DEFAULT_DECAL(0) [[ int uimin = 0, int uimax = 1, string doc = "UV sizing correction for images to maintain their size in world space" ]],
+    int autoGamma DEFAULT_DECAL(1) [[ int uimin = 0, int uimax = 1 ]],
+    float manualGamma DEFAULT_DECAL(1.0) [[ float uimin = 0 ]],
+    
+    // Outputs
+    output color outColor DEFAULT_DECAL(0),
+    output float outAlpha DEFAULT_DECAL(0),
+    output vector testOutput DEFAULT_DECAL(0)
+) {
+    int resolution[2]; // X, Y
+    if (!gettextureinfo(decalParams.filename, "resolution", resolution))
+        return;
+
+    float aspectRatio = (float)resolution[1] / (float)resolution[0];
+
+    // Compute decal dimensions in the specified unit space.
+    // The user sets `width`; height follows from the image aspect ratio.
+    float decalWidth  = decalParams.width;
+    float decalHeight = decalWidth * aspectRatio;
+
+    // blender doesn't support transformu()
+    //   transform(from, to, vec)
+    vector worldDim = transform(decalParams.units, "world",
+                                vector(decalWidth, decalHeight, 0));
+    float worldW = worldDim.x;
+    float worldH = worldDim.y;
+
+    float U, V;
+
+    if (stickerMode) {
+        // We need delP/delU and delP/delV — the world-space tangent vectors for the input UV
+        // OSL gives us derivatives w.r.t. two screen differentials x,y:
+        //
+        //   dPdx = delP/delx    dPdy = delP/dely
+        //   dUdx = delU/delx    dUdy = delU/dely
+        //   dVdx = delV/delx    dVdy = delV/dely
+        //
+        // By the chain rule:
+        //   dPdx = delP/delU * dUdx + delP/delV * dVdx
+        //   dPdy = delP/delU * dUdy + delP/delV * dVdy
+        //
+        // A 2×2 system (per component of P).  Inverting the
+        // UV Jacobian gives us delP/delU and delP/delV exactly.
+
+        vector dPdx = Dx(P);
+        vector dPdy = Dy(P);
+
+        vector dUVdx = Dx(UV);
+        vector dUVdy = Dy(UV);
+
+        float dUdx = dUVdx.x;
+        float dVdx = dUVdx.y;
+        float dUdy = dUVdy.x;
+        float dVdy = dUVdy.y;
+
+        // Determinant of the UV Jacobian
+        float det = dUdx * dVdy - dVdx * dUdy;
+
+        float worldPerU, worldPerV;
+
+        if (abs(det) > 1e-12) { // invert  
+            // delP/delU = ( dVdy * dPdx - dVdx * dPdy) / det
+            // delP/delV = (-dUdy * dPdx + dUdx * dPdy) / det
+            vector dPdU = ( dVdy * dPdx - dVdx * dPdy) / det;
+            vector dPdV = (-dUdy * dPdx + dUdx * dPdy) / det;
+
+            worldPerU = length(dPdU);
+            worldPerV = length(dPdV);
+        } else {
+            // blahhh Jacobian – fall back to filterwidth estimate
+            worldPerU = length(filterwidth(UV));
+            worldPerV = worldPerU;
+        }
+
+        // if derivatives are blahhh, use a 1:1 mapping
+        if (worldPerU <= 0) worldPerU = worldW;
+        if (worldPerV <= 0) worldPerV = worldH;
+
+        float uvSpanU = worldW / worldPerU;
+        float uvSpanV = worldH / worldPerV;
+
+        U = (UV.x - 0.5) / uvSpanU + 0.5;
+        V = (UV.y - 0.5) / uvSpanV + 0.5;
+
+        testOutput = vector(worldPerU, worldPerV, 0);
+    } else {
+        point UVw = transform("world", UV);
+
+        U = ((UVw.x - 0.5) / worldW) + 0.5;
+        V = ((UVw.y - 0.5) / worldH) + 0.5;
+    }
+
+    // eraly exit outside the decal rectangle
+    if (U < 0.0 || U > 1.0 || V < 0.0 || V > 1.0)
+        return;
+
+    outColor = texture(decalParams.filename, U, 1.0 - V, "alpha", outAlpha);
+
+    int channels = 0;
+    gettextureinfo(decalParams.filename, "channels", channels);
+
+    if (channels < 4)
+        outAlpha = 1.0;
+    
+    // Gamma handling
+    if (autoGamma) {
+        if (!endswith(decalParams.filename, ".exr") &&
+            !endswith(decalParams.filename, ".EXR") &&
+            !endswith(decalParams.filename, ".hdr") &&
+            !endswith(decalParams.filename, ".HDR") &&
+            !endswith(decalParams.filename, ".tx")  &&
+            !endswith(decalParams.filename, ".TX")) {
+            outColor = pow(outColor, 2.2);
+        }
+    } else if (manualGamma != 1.0) {
+        outColor = pow(outColor, manualGamma);
+    }
+}
+    

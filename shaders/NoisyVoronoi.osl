@@ -1,0 +1,120 @@
+#ifndef SOLO_SHADER   
+    #define ENTRY_NOISY_VORONOI void 
+#endif
+
+#ifndef ENTRY_NOISY_VORONOI
+    #define DEFAULT_NOISY_VORONOI(x) = x
+    #define ENTRY_NOISY_VORONOI shader
+#else
+    #define DEFAULT_NOISY_VORONOI(x)
+#endif
+
+point fract(point p) {
+    point fractional = point(0);
+    float whole_x= floor(p[0]);
+    float whole_y = floor(p[1]);
+    float whole_z = floor(p[2]);
+    fractional[0] = p[0] - whole_x;
+    fractional[1] = p[1] - whole_y;
+    fractional[2] = p[2] - whole_z;
+    return fractional;
+}
+
+ENTRY_NOISY_VORONOI NoisyVoronoi(
+    // Color 
+    color color1 DEFAULT_NOISY_VORONOI(1),
+    color color2 DEFAULT_NOISY_VORONOI(0),
+    int multicolored DEFAULT_NOISY_VORONOI(0) [[ string doc = "Output random colors. Color 1 and Color 2 are ignored.", int uimin = 0, int uimax = 1 ]],
+
+    float scale DEFAULT_NOISY_VORONOI(1) [[ string doc = "Size of the cell pattern", float uimin = 0.001, float uimax = 10 ]],
+    float scaleMultiplier DEFAULT_NOISY_VORONOI(1) [[ string doc = "Multiplier for finer control of pattern size", float uimin = 0.001, float uimax = 10 ]],
+
+    int seed DEFAULT_NOISY_VORONOI(0) [[ string doc = "Seed for random cell pattern", int uimin = 1, int uimax = 32767 ]],
+    float offsetMultiplier DEFAULT_NOISY_VORONOI(6) [[ string doc = "Multiplier for the offset for pattern variations", string page = "Extra control", float uimin = 0.01, float uimax = 10 ]],
+    int blobby DEFAULT_NOISY_VORONOI(0) [[ string doc = "Turns on or off metaball behavior", int uimin = 0, int uimax = 1 ]],
+    float cellExpansion DEFAULT_NOISY_VORONOI(1.5) [[ string doc = "Fill of each cell", float uimin = -2, float uimax = 2 ]],
+
+    // Noise 
+    float noiseScale DEFAULT_NOISY_VORONOI(1) [[ string doc = "Edge noise size", float uimin = 0, float uimax = 10 ]],
+    float noiseAmount DEFAULT_NOISY_VORONOI(0.15) [[ string doc = "Multiplier for the edge noise size", float uimin = 0, float uimax = 10 ]],
+    int octaves DEFAULT_NOISY_VORONOI(1) [[ string doc = "Number of noise iterations", int uimin = 1, int uimax = 20 ]],
+    int noiseType DEFAULT_NOISY_VORONOI(2) [[ string doc = "Noise type", string options = "cell:0|hash:1|simplex:2" ]],
+
+    // Input Mapping
+    point UVW DEFAULT_NOISY_VORONOI(transform("world", P)) [[ string doc = "World Space UVW" ]],
+    int objectUVW DEFAULT_NOISY_VORONOI(1) [[ string doc = "Use Object Space UVW instead of World Space UVW", int uimin = 0, int uimax = 1 ]],
+
+    output color outColor DEFAULT_NOISY_VORONOI(0)
+) {
+    point uvw = point(0);
+
+    if (objectUVW == 1) {
+        uvw = transform("object", P) / (scale * scaleMultiplier); // object space uvw
+    }
+    else {
+        uvw = UVW / (scale * scaleMultiplier); // world space uvw
+    }
+    
+    uvw += 0.0001; // prevents z-fighting on objects with no depth
+
+    point intUVW= floor(uvw);	
+    point fracUVW = fract(uvw);
+    float minDistance = 1.5; 
+    point minPoint = 0;     
+    float positionNoise = 0;
+
+    // noise iterations
+    if (noiseScale > 0 && noiseAmount > 0){
+        for (int o = 1; o < octaves + 1; o++) {
+            float n = noiseScale / (o * 4); // reduce noise size by 4 each iteration
+            int shift = o; // prevents spiky striations from the origin
+            if (noiseType == 0) {
+                positionNoise += noise("cell", point((uvw[0] + shift) / n, (uvw[1] + shift) / n, (uvw[2] + shift )/ n)) * noiseAmount;
+              }
+            else if (noiseType == 1) {
+                positionNoise += noise("hash", point((uvw[0] + shift) / n, (uvw[1] + shift) / n, (uvw[2] + shift )/ n)) * noiseAmount;
+              }
+            else {
+                positionNoise += noise("simplex", point((uvw[0] + shift) / n, (uvw[1] + shift) / n, (uvw[2] + shift )/ n)) * noiseAmount;
+             }
+        }
+    }
+
+    // Voronoi cells 
+    for (int x = -1; x <= 1; x++) {
+        for (int y = -1; y <= 1; y++) {
+            for (int z = -1; z <= 1; z++) {
+                point neighbor = point(float(x), float(y), float(z));
+
+                point offset = fract(hashnoise(intUVW + neighbor, 1) * seed);
+    
+                offset = 0.5 + 0.5 * sin(offsetMultiplier * offset);
+    
+                // Position of the cell with added noise
+                point newPoint = neighbor + offset - fracUVW + positionNoise;
+                float cellDistance = length(newPoint);
+                
+                if(cellDistance < minDistance) {
+                    minDistance = cellDistance;
+                    minPoint = offset;
+                }
+                
+               // blend circles
+                if (blobby == 1) {
+                    minDistance = min(minDistance, minDistance * cellDistance);
+                }
+            }
+        }
+    }
+    
+    // greyscale values of the cells
+    float cellValue = max(dot(minPoint, point(0.25,0.5,0.0)), step(cellExpansion + positionNoise, minDistance)) ;
+
+    if (multicolored == 1) {
+        outColor = color( max(dot(minPoint, point(1,0,0)), step(cellExpansion + positionNoise, minDistance)),
+                          max(dot(minPoint, point(0,1,0)), step(cellExpansion + positionNoise, minDistance)),
+                          max(dot(minPoint, point(0,0,1)), step(cellExpansion + positionNoise, minDistance)) );
+    } else {
+      outColor = mix(color1, color2, cellValue); 
+    }
+}

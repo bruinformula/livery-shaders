@@ -24,6 +24,19 @@
 namespace osl = OSL;
 namespace mx = MaterialX;
 
+const std::string argOptions =
+    " MaterialXLibraryBuilder -- Generates MaterialX bindings for a bunch of OSL shaders\n"
+    " Options: \n"
+    "    --oslLibraryPath           Path to the directory containing OSL shader files.  All .osl files in this directory and its subdirectories will be processed. \n"
+    "    --libraryOutputPath        Path to the output directory where generated MaterialX documents and OSL shaders will be written. \n"
+    "    --skipWritingOSLSource     Skip generating Only generate OSL source files to the libraryOutputPath \n"
+    "    --skipWritingMtlxHeaders   Skip generating MaterialX implementation files to the libraryOutputPath. \n"
+    "    --oslIncludePath           OSL Include Path\n"
+    "    --oslDefine [NAME=VALUE]   Define a preprocessor macro to be used during OSL compilation.  Can be specified multiple times to define multiple macros.\n"
+    "    --path                     Specify an additional data search path location (e.g. '/projects/MaterialX').  This absolute path will be queried when locating data libraries, XInclude references, and referenced images.\n"
+    "    --library                  Specify an additional data library folder (e.g. 'vendorlib', 'studiolib').  This relative path will be appended to each location in the data search path when loading data libraries.\n"
+    "    --help                     Prints this message\n";
+
 struct CommandLineArgs {
     enum ParseResult {
         SUCCESS,
@@ -33,7 +46,12 @@ struct CommandLineArgs {
     };
     mx::FilePath oslIncludePath;
     mx::FilePath oslLibraryPath;
-    mx::FilePath outputPath;
+    mx::FilePath libraryOutputPath;
+        std::vector<std::string> oslDefine;
+
+
+    bool skipWritingOSLSource;
+    bool skipWritingMtlxHeaders;
 
     ParseResult parse(const std::string& token, const std::string& nextToken) {
         // yes managed to get goto in here
@@ -43,11 +61,11 @@ struct CommandLineArgs {
             
             oslLibraryPath = mx::FilePath(nextToken);
             return SUCCESS_AND_BUMP;
-        } else if (token == "--outputPath") {
+        } else if (token == "--libraryOutputPath") {
             if (nextToken.empty()) goto expectOption;
-            if (!outputPath.isEmpty()) goto alreadySet;
+            if (!libraryOutputPath.isEmpty()) goto alreadySet;
 
-            outputPath = mx::FilePath(nextToken);
+            libraryOutputPath = mx::FilePath(nextToken);
             return SUCCESS_AND_BUMP;
         } else if (token == "--oslIncludePath") {
             if (nextToken.empty()) goto expectOption;
@@ -55,8 +73,18 @@ struct CommandLineArgs {
             
             oslIncludePath = mx::FilePath(nextToken);
             return SUCCESS_AND_BUMP;
+        } else if (token == "--oslDefine") {
+            if (nextToken.empty()) goto expectOption;
+            oslDefine.push_back(nextToken);
+            return SUCCESS_AND_BUMP;
+        } else if (token == "--skipWritingOSLSource") {
+            skipWritingOSLSource = true;
+            return SUCCESS;
+        } else if (token == "--skipWritingMtlxHeaders") {
+            skipWritingMtlxHeaders = true;
+            return SUCCESS;
         } else if (token == "--help") {
-            std::cout << "Usage: ./main --oslLibraryPath <path> --outputPath <path> --oslInclude <path>" << std::endl;
+            std::cout << argOptions << std::endl;
             return EXIT;
         } else {
             std::cout << "Unrecognized command-line option: " << token << std::endl;
@@ -81,18 +109,18 @@ struct CommandLineArgs {
             std::cerr << "oslLibraryPath is not set!" << std::endl;
             return false;
         }
-        if (outputPath.isEmpty()) {
-            std::cerr << "outputPath is not set!" << std::endl;
+        if (libraryOutputPath.isEmpty()) {
+            std::cerr << "libraryOutputPath is not set!" << std::endl;
             return false;
         }
 
         // Output Path
-        if (!outputPath.exists() || !outputPath.isDirectory()) {
-            outputPath.createDirectory();
+        if (!libraryOutputPath.exists() || !libraryOutputPath.isDirectory()) {
+            libraryOutputPath.createDirectory();
 
-            if (!outputPath.exists() || !outputPath.isDirectory()) {
+            if (!libraryOutputPath.exists() || !libraryOutputPath.isDirectory()) {
                 std::cerr << "Failed to find and/or create the provided output mtlx path:"
-                        << outputPath.asString() << std::endl;
+                        << libraryOutputPath.asString() << std::endl;
                 return false;
             }
         }
@@ -424,7 +452,8 @@ int main(int argc, char* const argv[]) {
 
     OslCompileOptions options;
     options.oslIncludePath = oslRendererIncludePaths;
-    options.writeSourceToDisk = true;
+    options.writeSourceToDisk = !inputArgs.skipWritingOSLSource;
+    options.definePreprocessors = inputArgs.oslDefine;
 
     // shader metadata is defined in the shader entry 
     // SOLO_SHADER enables shader entry points 
@@ -453,21 +482,24 @@ int main(int argc, char* const argv[]) {
 
             osl::OSLQuery osoQuery;
             
-            compileOSLToBytecode(oslFileContent, oslFileName, inputArgs.outputPath, options, &osoQuery);
+            compileOSLToBytecode(oslFileContent, oslFileName, inputArgs.libraryOutputPath, options, &osoQuery);
     
-            createMaterialXDefinitions(osoQuery, oslFileName, nodeDefMtlxDoc, implMtlxDoc, typeDefMtlxDoc, inputArgs.outputPath, mtlxDefinitionOptions);
+            createMaterialXDefinitions(osoQuery, oslFileName, nodeDefMtlxDoc, implMtlxDoc, typeDefMtlxDoc, inputArgs.libraryOutputPath, mtlxDefinitionOptions);
         } catch (const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;
         }
     }
 
-    mx::FilePath outputNodeDefFilePath = inputArgs.outputPath / "autolib_defs.mtlx";
-    mx::FilePath outputImplFilePath = inputArgs.outputPath / "autolib_genosl_impl.mtlx";
+    mx::FilePath outputNodeDefFilePath = inputArgs.libraryOutputPath / "autolib_defs.mtlx";
+    mx::FilePath outputImplFilePath = inputArgs.libraryOutputPath / "autolib_genosl_impl.mtlx";
 
     nodeDefMtlxDoc->importLibrary(typeDefMtlxDoc); // add the typdefs to the end of the file
 
-    mx::writeToXmlFile(nodeDefMtlxDoc, outputNodeDefFilePath);
-    mx::writeToXmlFile(implMtlxDoc, outputImplFilePath);
+    if (!inputArgs.skipWritingMtlxHeaders) {
+        mx::writeToXmlFile(nodeDefMtlxDoc, outputNodeDefFilePath);
+        mx::writeToXmlFile(implMtlxDoc, outputImplFilePath);
+    }
+
 
     return 0;
 }

@@ -352,9 +352,7 @@ bool compileOSLToBytecode(
 
     std::vector<std::string> oslCompilerArgs = options.getArgs(osoFilePath);
 
-    for (mx::FilePath p : options.oslIncludePath) {
-        oslCompilerArgs.emplace_back("-I" + p.asString() + "");
-        
+    for (mx::FilePath p : options.oslIncludePath) {        
         if (options.writeSourceToDisk) {
 
             auto headerFiles = findFiles(p, ".h", true);
@@ -386,6 +384,10 @@ bool compileOSLToBytecode(
                 headerFile.close();
             }
         }
+    }
+
+    for (const std::string& def : options.definePreprocessors) {
+        oslCompilerArgs.emplace_back("-D" + def);
     }
 
     oiio::ErrorHandler errorHandler;

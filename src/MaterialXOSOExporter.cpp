@@ -1,4 +1,3 @@
-#include <MaterialXCore/Element.h>
 #include <iostream>
 #include <ostream>
 #include <string>
@@ -25,6 +24,18 @@
 
 namespace mx = MaterialX;
 
+const std::string argOptions =
+    " MaterialXOSOExporter -- Compiles a bunch of MaterialX documents into OSL btyecode \n"
+    " Options: \n"
+    "    --mtlxMaterialsPath        Path to the directory containing OSL shader files.  All .osl files in this directory and its subdirectories will be processed. \n"
+    "    --osoOutputPath            Path to the output directory where generated MaterialX documents and OSL shaders will be written. \n"
+    "    --oslIncludePath           OSL Include Path\n"
+    "    --oslDefine [NAME=VALUE]   Define a preprocessor macro to be used during OSL compilation.  Can be specified multiple times to define multiple macros.\n"
+    "    --writeOSLSource           Write OSL source files to disk\n"
+    "    --path                     Specify an additional data search path location (e.g. '/projects/MaterialX').  This absolute path will be queried when locating data libraries, XInclude references, and referenced images.\n"
+    "    --library                  Specify an additional data library folder (e.g. 'vendorlib', 'studiolib').  This relative path will be appended to each location in the data search path when loading data libraries.\n"
+    "    --help                     Prints this message\n";
+
 struct CommandLineArgs {
     enum ParseResult {
         SUCCESS,
@@ -32,26 +43,29 @@ struct CommandLineArgs {
         FAILURE,
         EXIT
     };
+    mx::FilePath mtlxMaterialsPath;
+    mx::FilePath osoOutputPath;
     mx::FilePath oslIncludePath;
-    mx::FilePath libraryPath;
-    mx::FilePath outputPath;
+    std::vector<std::string> oslDefine;
 
     mx::FileSearchPath searchPath;
     std::vector<mx::FilePath> libraryFolders;
 
+    bool writeOSLSource = false;
+
     ParseResult parse(const std::string& token, const std::string& nextToken) {
         // yes managed to get goto in here
-        if (token == "--libraryPath") {
+        if (token == "--mtlxMaterialsPath") {
             if (nextToken.empty()) goto expectOption;
-            if (!libraryPath.isEmpty()) goto alreadySet;
+            if (!mtlxMaterialsPath.isEmpty()) goto alreadySet;
             
-            libraryPath = nextToken;
+            mtlxMaterialsPath = nextToken;
             return SUCCESS_AND_BUMP;
-        } else if (token == "--outputPath") {
+        } else if (token == "--osoOutputPath") {
             if (nextToken.empty()) goto expectOption;
-            if (!outputPath.isEmpty()) goto alreadySet;
+            if (!osoOutputPath.isEmpty()) goto alreadySet;
 
-            outputPath = nextToken;
+            osoOutputPath = nextToken;
             return SUCCESS_AND_BUMP;
         } else if (token == "--path") {
             if (nextToken.empty()) goto expectOption;
@@ -68,8 +82,15 @@ struct CommandLineArgs {
             
             libraryFolders.push_back(nextToken);
             return SUCCESS_AND_BUMP;
+        } else if (token == "--oslDefine") {
+            if (nextToken.empty()) goto expectOption;
+            oslDefine.push_back(nextToken);
+            return SUCCESS_AND_BUMP;
+        } else if (token == "--writeOSLSource") {
+            writeOSLSource = true;
+            return SUCCESS;
         } else if (token == "--help") {
-            std::cout << "Usage: ./main --libraryPath <path> --outputPath <path> " << std::endl;
+            std::cout << argOptions << std::endl;
             return EXIT;
         } else {
             std::cout << "Unrecognized command-line option: " << token << std::endl;
@@ -90,21 +111,21 @@ struct CommandLineArgs {
 
     //enforces any additional rules about the input arguments
     bool verify() {
-        if (libraryPath.isEmpty()) {
-            std::cerr << "libraryPath is not set!" << std::endl;
+        if (mtlxMaterialsPath.isEmpty()) {
+            std::cerr << "mtlxMaterialsPath is not set!" << std::endl;
             return false;
         }
-        if (outputPath.isEmpty()) {
-            std::cerr << "outputPath is not set!" << std::endl;
+        if (osoOutputPath.isEmpty()) {
+            std::cerr << "osoOutputPath is not set!" << std::endl;
             return false;
         }
 
-        if (!outputPath.exists() || !outputPath.isDirectory()) {
-            outputPath.createDirectory();
+        if (!osoOutputPath.exists() || !osoOutputPath.isDirectory()) {
+            osoOutputPath.createDirectory();
 
-            if (!outputPath.exists() || !outputPath.isDirectory()) {
+            if (!osoOutputPath.exists() || !osoOutputPath.isDirectory()) {
                 std::cerr << "Failed to find and/or create the provided output oso path:"
-                        << outputPath.asString() << std::endl;
+                        << osoOutputPath.asString() << std::endl;
                 return 1;
             }
         }
@@ -169,10 +190,10 @@ int main(int argc, char* const argv[]) {
     
     inputArgs.libraryFolders.push_back("libraries");
 
-    //get std::vector of paths to all .mtlx files in libraryPath
-    std::vector<mx::FilePath> files = findFiles(inputArgs.libraryPath, ".mtlx");
+    //get std::vector of paths to all .mtlx files in mtlxMaterialsPath
+    std::vector<mx::FilePath> files = findFiles(inputArgs.mtlxMaterialsPath, ".mtlx");
     
-    std::cout << "Found " << files.size() << " MaterialX files in " << inputArgs.libraryPath.asString() << std::endl;
+    std::cout << "Found " << files.size() << " MaterialX files in " << inputArgs.mtlxMaterialsPath.asString() << std::endl;
     for (const auto& file : files) {
         std::cout << "  - " << file.asString() << std::endl;
     }
@@ -225,8 +246,11 @@ int main(int argc, char* const argv[]) {
 
     OslCompileOptions options;
     options.oslIncludePath = oslRendererIncludePaths;
-    options.writeSourceToDisk = true;
+    options.writeSourceToDisk = inputArgs.writeOSLSource;
     options.writeByteCodeToDisk = true;
+    options.definePreprocessors = inputArgs.oslDefine;
+    options.embedSource = false;
+    options.optimizationLevel = OslCompileOptions::Performance;
 
     std::unordered_set<std::string> materialNames;
 
@@ -255,7 +279,7 @@ int main(int argc, char* const argv[]) {
                 compileOSLToBytecode(
                     shader->getSourceCode(), 
                     oslFileName, 
-                    inputArgs.outputPath, 
+                    inputArgs.osoOutputPath, 
                     options
                 );
                             
