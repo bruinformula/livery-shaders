@@ -1,1 +1,1 @@
-./build/bin/MaterialXExporter --libraryPath ./test/test_materials --outputPath ./build/oso --library ./build/autolib --library ./test/test_materials/nodegraphs
+./build/bin/MaterialXOSOExporter --mtlxMaterialsPath ./test/test_materials --osoOutputPath ./build/oso --library ./build/autolib --library ./test/test_materials/nodegraphs

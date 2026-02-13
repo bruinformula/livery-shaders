@@ -47,11 +47,10 @@ struct CommandLineArgs {
     mx::FilePath oslIncludePath;
     mx::FilePath oslLibraryPath;
     mx::FilePath libraryOutputPath;
-        std::vector<std::string> oslDefine;
+    std::vector<std::string> oslDefine;
 
-
-    bool skipWritingOSLSource;
-    bool skipWritingMtlxHeaders;
+    bool skipWritingOSLSource = false;
+    bool skipWritingMtlxHeaders = false;
 
     ParseResult parse(const std::string& token, const std::string& nextToken) {
         // yes managed to get goto in here
@@ -408,10 +407,71 @@ bool createMaterialXDefinitions(
         return false;
     }
 
-    std::cout << "Compiled " << oslFilePath.getBaseName() << " -> " << osoFilePath.getBaseName() << std::endl;
+    std::cout << "Registered " << oslFilePath.getBaseName() << " as " << nodeDef->getName() << std::endl;
+    for (const auto& input : nodeDef->getInputs()) {
+        std::cout << "  Input: " << input->getType() << " " << input->getName() << std::endl;
+    }
+    
+    for (const auto& output : nodeDef->getOutputs()) {
+        std::cout << "  Output: " << output->getType() << " " << output->getName() << std::endl;
+    }
 
     return true;
 }
+
+void dumpElement(mx::ElementPtr elem, int indent = 0) {
+    std::string padding(indent, ' ');
+
+    std::cout << padding
+              << elem->getCategory()
+              << " name=\"" << elem->getName() << "\""
+              << " path=\"" << elem->getNamePath() << "\"";
+
+    // only TypedElement has getType()
+    if (auto typed = elem->asA<mx::TypedElement>()) {
+        if (!typed->getType().empty())
+            std::cout << " type=\"" << typed->getType() << "\"";
+    }
+
+    // only ValueElement has getValueString()
+    if (auto valueElem = elem->asA<mx::ValueElement>()) {
+        if (valueElem->hasValue())
+            std::cout << " value=\"" << valueElem->getValueString() << "\"";
+    }
+
+    std::cout << std::endl;
+
+    if (auto node = elem->asA<mx::Node>()) {
+        for (auto input : node->getInputs()) {
+            std::cout << padding << "  INPUT "
+                      << input->getName()
+                      << " type=" << input->getType();
+
+            if (input->getConnectedOutput()) {
+                std::cout << " -> "
+                          << input->getConnectedOutput()->getNamePath();
+            } else if (input->hasValue()) {
+                std::cout << " value="
+                          << input->getValueString();
+            }
+
+            std::cout << std::endl;
+        }
+
+        for (auto output : node->getOutputs()) {
+            std::cout << padding << "  OUTPUT "
+                      << output->getName()
+                      << " type=" << output->getType()
+                      << std::endl;
+        }
+    }
+
+    for (auto child : elem->getChildren()) {
+        dumpElement(child, indent + 2);
+    }
+}
+
+
 
 int main(int argc, char* const argv[]) {
     std::vector<std::string> tokens;
@@ -495,6 +555,48 @@ int main(int argc, char* const argv[]) {
 
     nodeDefMtlxDoc->importLibrary(typeDefMtlxDoc); // add the typdefs to the end of the file
 
+    constexpr bool debug = false;
+
+    if (debug) {
+        for (auto elem : nodeDefMtlxDoc->traverseTree()) {
+            //dumpElement(elem);
+        }
+
+        for (auto elem : implMtlxDoc->traverseTree()) {
+            //dumpElement(elem);
+        }
+
+        for (auto elem : nodeDefMtlxDoc->traverseTree()) {
+            if (auto valueElem = elem->asA<mx::ValueElement>()) {
+                if (valueElem->hasValue()) {
+                    std::cout << valueElem->getNamePath()
+                            << " type=" << valueElem->getType()
+                            << " value=\"" << valueElem->getValueString()
+                            << "\"" << std::endl;
+                }
+                valueElem->validate();
+            }
+        }
+    }
+
+    
+    std::string nodeDefMessage;
+    bool isNodeDefValid = nodeDefMtlxDoc->validate(&nodeDefMessage);
+
+    if (!isNodeDefValid) {
+        std::cerr << "Node Def Validation failed:\n" << nodeDefMessage << std::endl;
+        //return 1;
+    }
+
+    std::string implMessage;
+    bool isImplValid = implMtlxDoc->validate(&implMessage);
+
+    if (!isImplValid) {
+        std::cerr << "Implementation Validation failed:\n" << implMessage << std::endl;
+        //return 1;
+    }
+    
+    
     if (!inputArgs.skipWritingMtlxHeaders) {
         mx::writeToXmlFile(nodeDefMtlxDoc, outputNodeDefFilePath);
         mx::writeToXmlFile(implMtlxDoc, outputImplFilePath);

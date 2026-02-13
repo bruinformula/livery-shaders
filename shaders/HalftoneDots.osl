@@ -18,7 +18,7 @@ ENTRY_HALFTONE_DOTS HalftoneDots(
 	color  dotsColor  DEFAULT_HALFTONE_DOTS(0.0)  [[ string doc = "The color of the dots" ]],		
 	color  backgroundColor  DEFAULT_HALFTONE_DOTS(1.0)  [[ string doc = "The color of the space between the dots" ]],		
 
-	output color dots  DEFAULT_HALFTONE_DOTS(0)
+	output color dots  DEFAULT_HALFTONE_DOTS(color(1,2,3))
 ) {
 	vector pos = rotate(UVW, radians(angle), 0.0, vector(0.0,0.0,1.0));
 	pos = vector(pos.x / scale.x, pos.y / scale.y, 0.0);

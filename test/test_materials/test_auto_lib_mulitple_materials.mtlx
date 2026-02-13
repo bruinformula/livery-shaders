@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <materialx version="1.39" colorspace="lin_rec709">
   <surfacematerial name="Test_AutoLib1" type="material" xpos="17.391304" ypos="0.000000">
-    <input name="surfaceshader" type="surfaceshader" nodename="surface" />
+    <input name="surfaceshader" type="surfaceshader" value="" />
   </surfacematerial>
-  <surface name="surface" type="surfaceshader" xpos="14.681159" ypos="-0.517241">
+  <surface name="surface" type="surfaceshader" xpos="14.681159" ypos="-0.508621">
     <input name="bsdf" type="BSDF" output="output_BSDF" nodegraph="nodegraph1" />
   </surface>
-  <metallic_paint name="metallic_paint" type="BSDF" xpos="7.507246" ypos="-2.603448">
+  <metallic_paint name="metallic_paint" type="BSDF" xpos="7.507246" ypos="-2.594828">
     <input name="useUV" type="integer" value="2" />
     <input name="UV" type="vector3" value="0, 0.1, 0" />
   </metallic_paint>
@@ -17,7 +17,7 @@
   <carbon_fiber name="carbon_fiber" type="multioutput" xpos="7.449275" ypos="-0.672414">
     <output name="Cout" type="BSDF" />
   </carbon_fiber>
-  <nodegraph name="nodegraph1" xpos="12.463768" ypos="-0.931035">
+  <nodegraph name="nodegraph1" xpos="11.782609" ypos="-0.508621">
     <input name="input_BSDF" type="BSDF" xpos="7.195652" ypos="-2.465517" nodename="metallic_paint" />
     <input name="input_BSDF2" type="BSDF" xpos="7.086957" ypos="-0.948276" output="Cout" nodename="carbon_fiber" />
     <mix name="mix_bsdf" type="BSDF" xpos="9.594203" ypos="-2.068965">
@@ -31,8 +31,29 @@
   <surfacematerial name="surfacematerial" type="material" xpos="17.246376" ypos="1.698276">
     <input name="surfaceshader" type="surfaceshader" nodename="surface2" />
   </surfacematerial>
-  <metallic_paint name="metallic_paint2" type="BSDF" xpos="8.782609" ypos="4.422414" />
+  <metallic_paint name="metallic_paint2" type="BSDF" xpos="8.782609" ypos="4.422414">
+    <input name="UV" type="vector3" output="testOutput" nodename="decal" />
+    <input name="primerColor" type="color3" output="outColor" nodename="decal" />
+    <input name="flakeRoughness" type="float" output="outAlpha" nodename="decal2" />
+  </metallic_paint>
   <surface name="surface2" type="surfaceshader" xpos="13.072464" ypos="3.594828">
     <input name="bsdf" type="BSDF" nodename="metallic_paint2" />
   </surface>
+  <create_decal name="create_decal" type="DecalParams" xpos="4.492754" ypos="4.870690">
+    <input name="filename" type="string" value="asdfasdfasdf" />
+    <input name="width" type="float" value="0.2" />
+  </create_decal>
+  <decal name="decal" type="multioutput" xpos="6.731884" ypos="5.810345">
+    <input name="decalParams" type="DecalParams" nodename="create_decal" />
+    <output name="outColor" type="color3" />
+  </decal>
+  <create_decal name="create_decal2" type="DecalParams" xpos="4.492754" ypos="7.594828">
+    <input name="filename" type="string" value="wonderful" />
+    <input name="width" type="float" value="0.2" />
+    <input name="units" type="string" value="cm" />
+  </create_decal>
+  <decal name="decal2" type="multioutput" xpos="6.971014" ypos="7.801724">
+    <input name="decalParams" type="DecalParams" nodename="create_decal2" />
+    <output name="outAlpha" type="float" />
+  </decal>
 </materialx>

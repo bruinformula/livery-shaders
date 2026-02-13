@@ -175,9 +175,11 @@ std::string parseOSLParameterValue(
         }
         // Join field values with commas
         for (size_t i = 0; i < fieldValues.size(); ++i) {
-            if (i > 0) result += ", ";
+            if (i > 0) result += "; ";
             result += fieldValues[i];
         }
+        result.insert(0, "{ ");
+        result.insert(result.size(), " }");
         return result;
     }
 
@@ -294,19 +296,18 @@ std::string parseOSLParameterType(const osl::OSLQuery::Parameter& param) {
                 type = MaterialXType::Vector3Array;
             }
         }
+        //std::cout << materialXTypeToString(type) << std::endl;
     }
-
-    // Handle scalar types
-    if (oslType == osl::TypeDesc::STRING) {
+    // Handle scalar types only if not already identified as array
+    else if (oslType == osl::TypeDesc::STRING) {
         type = MaterialXType::String;
     } else if (oslType == osl::TypeDesc::INT) {
         type = MaterialXType::Integer;
     } else if (oslType == osl::TypeDesc::FLOAT) {
         type = MaterialXType::Float;
     }
-    
-    // Handle vector types
-    if (oslType.aggregate == osl::TypeDesc::VEC3) {
+    // Handle vector types (only if not already identified as array)
+    else if (oslType.aggregate == osl::TypeDesc::VEC3) {
         if (oslType.vecsemantics == osl::TypeDesc::COLOR) {
             type = MaterialXType::Color3;
         } else if (oslType.vecsemantics == osl::TypeDesc::POINT ||

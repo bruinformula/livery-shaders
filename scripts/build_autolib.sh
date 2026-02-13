@@ -1,1 +1,1 @@
-./build/bin/MaterialXLibraryBuilder --oslLibraryPath shaders/ --oslIncludePath shaders/ --outputPath ./build/autolib
+./build/bin/MaterialXLibraryBuilder --oslLibraryPath shaders/ --oslIncludePath shaders/ --libraryOutputPath ./build/autolib
