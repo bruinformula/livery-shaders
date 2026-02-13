@@ -9,13 +9,6 @@
     #define DEFAULT_DECAL(x)
 #endif
 
-struct DecalParams {
-    // height is determined by the aspect ratio of the decal.
-    string filename;
-    float width;
-    string units;
-};
-
 ENTRY_DECAL Decal [[ 
     string nodegroup = "autolib", 
 ]] (

@@ -99,19 +99,7 @@ float specNoise(point position,
     return clamp(totalNoise * variation, 0.0, 1.0);
 }
 
-// Return alpha^2 parameter from normal divergence
- float bump_alpha2(normal Nbump) {
-    float cos_d = min(abs(dot(Ng, Nbump)), 1.0);
-    float tan2_d = (1 - cos_d * cos_d) / (cos_d * cos_d);
-    return clamp(0.125 * tan2_d, 0.0, 1.0);
- }
 
- // Shadowing factor
-float bump_shadowing_function(vector Ld, float alpha2) {
-    float cos_i = max(abs(dot(Ng, Ld)), 1e-6);
-    float tan2_i = (1 - cos_i * cos_i) / (cos_i * cos_i);
-    return 2.0 / (1 + sqrt(1 + alpha2 * tan2_i));
-}
 
 ENTRY_METALLIC_PAINT MetallicPaint [[ 
 	string nodegroup = "autolib", 
@@ -132,11 +120,13 @@ ENTRY_METALLIC_PAINT MetallicPaint [[
 	float flakeDensity  DEFAULT_METALLIC_PAINT(0.2) [[ string uifolder = "Flake Pattern", float uimin = 0.0, float uimax = 1.0 ]],
     float flakeRandomize  DEFAULT_METALLIC_PAINT(0.2) [[ string uifolder = "Flake Pattern", string doc = "Dictates the randomness of the flake orientations (normals)", float uimin = 0.0, float uimax = 1.0 ]],
 	int flakeSeed  DEFAULT_METALLIC_PAINT(1) [[ string uifolder = "Flake Pattern", int uimin = 0, int uimax = 100 ]],
+	
 	//Flakes 
 	float flakeWeight  DEFAULT_METALLIC_PAINT(1.0) [[ string uifolder = "Flakes", string doc = "Visibility of the metallic flakes", float uimin = 0.0, float uimax = 1.0 ]],
 	color flakeReflectivity  DEFAULT_METALLIC_PAINT(color(0.95, 0.95, 0.95)) [[ string uifolder = "Flakes" ]],
 	color flakeEdgeTint  DEFAULT_METALLIC_PAINT(color(1.0, 1.0, 1.0)) [[ string uifolder = "Flakes" ]],
 	float flakeRoughness  DEFAULT_METALLIC_PAINT(0.1) [[ string uifolder = "Flakes", float uimin = 0.0, float uimax = 1.0 ]],
+	
 	//Base
 	float baseWeight  DEFAULT_METALLIC_PAINT(1.0) [[ string uifolder = "Base", string doc = "Weight of the paint that is suspended in the same layer as the flakes", float uimin = 0.0, float uimax = 1.0 ]],
 	color baseColor  DEFAULT_METALLIC_PAINT(color(1.0, 0.1, 0.1)) [[ string uifolder = "Base", string doc = "Flake Layer Color" ]],

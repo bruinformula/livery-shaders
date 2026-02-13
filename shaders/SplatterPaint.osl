@@ -12,66 +12,6 @@
 #include "MetallicPaint.h"
 #include "Splatter.h"
 
-struct SplatterLayerParams {
-    point position;
-    int seed;
-    float jitter;
-    float scaleRadius;
-    float minRadius;
-    float maxRadius;
-    float unionSmoothness;
-
-    float spikeAmount;
-    float spikePeak;
-    float spikeFrequency;
-    float spikePerimeterSmoothness;
-    float spikeTrimWidth;
-
-    float basinHeight;
-    float basinCenter;
-    float basinSmoothness;
-
-    //paint
-    float splatterBumpStrength;
-    color primerColor;
-    
-    //base layer params
-    float baseWeight;
-    color baseColor;
-    float baseRoughness;
-    float baseIOR;
-    
-    //metallic/flake layer params
-    float flakeWeight;
-    color flakeReflectivity;
-    color flakeEdgeTint;
-    float flakeRoughness;
-};
-
-void splatter(SplatterLayerParams params, output float height, output float mask) {
-    splatter(
-        params.position,        
-        params.seed,
-        params.jitter,
-        params.scaleRadius,
-        params.minRadius,
-        params.maxRadius,
-        params.unionSmoothness,
-
-        params.spikeAmount,
-        params.spikePeak,
-        params.spikeFrequency,
-        params.spikePerimeterSmoothness,
-        params.spikeTrimWidth,
-
-        params.basinHeight,
-        params.basinCenter,
-        params.basinSmoothness,
-        height,
-        mask
-    );
-}
-
 SplatterLayerParams jitterSplatterParams(
     SplatterLayerParams baseParams,
     int sublayerIndex,
@@ -157,9 +97,9 @@ ENTRY_SPLATTER_PAINT SplatterPaint [[
 	float clearcoatIOR  DEFAULT_SPLATTER_PAINT(1.4) [[ string uifolder = "Clearcoat", float uimin = 1.0, float uimax = 3.0 ]],
 	float clearcoatExponent  DEFAULT_SPLATTER_PAINT(5) [[ string uifolder = "Clearcoat", float uimin = 0.0, float uimax = 10.0 ]],
 
-    color layer1 = color(1),
-    color layer2 = color(0.5),
-    color layer3 = color(0.2),
+    SplatterLayerParams splatterLayer1 = defaultSplatterLayerParams1(color(0.2)),
+    SplatterLayerParams splatterLayer2 = defaultSplatterLayerParams2(color(0.5)),
+    SplatterLayerParams splatterLayer3 = defaultSplatterLayerParams3(color(0.7)),
 
 	output closure color Cout  DEFAULT_SPLATTER_PAINT(0)
 ) {
@@ -171,116 +111,6 @@ ENTRY_SPLATTER_PAINT SplatterPaint [[
 	//Metallic Flake and Base Layers
 	closure color baseLayer = 0;
 	float cumulativeHeight = 0.0;
-
-
-
-    SplatterLayerParams splatterLayer1 = {
-        UV * 12,
-        flakeSeed, //int seed
-        2.0, // float jitter
-        0.65, // float scaleRadius
-        0.005, // float minRadius
-        0.15, // float maxRadius
-        8.0, // float unionSmoothness
-
-        //splatter spikes control
-        0.9, // float spikeAmount
-        12.0, // float spikePeak
-        48.0, // float spikeFrequency
-        0.01, // float spikePerimeterSmoothness
-        0.0, //float spikeTrimWidth
-
-        0.95, // float basinHeight
-        0.3, // float basinCenter
-        0.075, // float basinSmoothness 
-
-        0.075, //float splatterBumpStrength 
-        layer1, // color primerColor
-        
-        // base layer params
-        1.0, // float baseWeight,
-        layer1, // color baseColor,
-        0.3, // float baseRoughness,
-        1.4, // float baseIOR,
-        
-        // metallic/flake layer params
-        1.0, // float flakeWeight,
-        layer1, // color flakeReflectivity,
-        layer1, // color flakeEdgeTint,
-        0.1 // float flakeRoughness
-    };
-
-    SplatterLayerParams splatterLayer2 = {
-        UV * 36,
-        (splatterLayer1.seed * numSubLayers) + 1, // int seed
-        2.0, // float jitter
-        0.8, // float scaleRadius
-        0.005, // float minRadius
-        0.3, // float maxRadius
-        8.0, // float unionSmoothness
-
-        //splatter spikes control
-        0.9, // float spikeAmount
-        8, // float spikePeak
-        36, // float spikeFrequency
-        0.01, // float spikePerimeterSmoothness
-        0.02, //float spikeTrimWidth
-
-        0.95, // float basinHeight
-        0.3, // float basinCenter
-        0.075, // float basinSmoothness 
-
-        0.075, //float splatterBumpStrength 
-        layer2, // color primerColor
-        
-        // base layer params
-        1.0, // float baseWeight,
-        layer2, // color baseColor,
-        0.3, // float baseRoughness,
-        1.4, // float baseIOR,
-        
-        // metallic/flake layer params
-        1.0, // float flakeWeight,
-        layer2, // color flakeReflectivity,
-        layer2, // color flakeEdgeTint,
-        0.1 // float flakeRoughness
-    };
-
-    SplatterLayerParams splatterLayer3 = {
-        UV * 36,
-        (splatterLayer2.seed * numSubLayers) + 1, // int seed
-        2.0, // float jitter
-        0.8, // float scaleRadius
-        0.005, // float minRadius
-        0.3, // float maxRadius
-        8.0, // float unionSmoothness
-
-        //splatter spikes control
-        0.9, // float spikeAmount
-        8, // float spikePeak
-        36, // float spikeFrequency
-        0.01, // float spikePerimeterSmoothness
-        0.02, //float spikeTrimWidth
-
-        0.95, // float basinHeight
-        0.3, // float basinCenter
-        0.075, // float basinSmoothness 
-
-        0.075, //float splatterBumpStrength 
-        layer3, // color primerColor
-        
-        // base layer params
-        1.0, // float baseWeight,
-        layer3, // color baseColor,
-        0.3, // float baseRoughness,
-        1.4, // float baseIOR,
-        
-        // metallic/flake layer params
-        1.0, // float flakeWeight,
-        layer3, // color flakeReflectivity,
-        layer3, // color flakeEdgeTint,
-        0.1 // float flakeRoughness
-    };
 
     int numPrimaryLayers = 3;
     SplatterLayerParams splatterLayers[3] = { splatterLayer3, splatterLayer2, splatterLayer1 };
@@ -298,7 +128,8 @@ ENTRY_SPLATTER_PAINT SplatterPaint [[
             float splatterHeight;
             float splatterMask;
 
-            splatter(
+            Splatter(
+                UV * subParams.scale,
                 subParams,
                 splatterHeight,
                 splatterMask
