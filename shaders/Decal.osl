@@ -16,15 +16,9 @@ struct DecalParams {
     string units;
 };
 
-DecalParams createDecalParams(string filename, float width, string units) {
-    DecalParams params;
-    params.filename = filename;
-    params.width = width;
-    params.units = units;
-    return params;
-}
-
-ENTRY_DECAL Decal(
+ENTRY_DECAL Decal [[ 
+    string nodegroup = "autolib", 
+]] (
     point UV DEFAULT_DECAL(0),
     DecalParams decalParams DEFAULT_DECAL({}),
 

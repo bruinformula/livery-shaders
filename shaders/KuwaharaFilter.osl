@@ -9,7 +9,9 @@
     #define DEFAULT_KUWAHARA_FILTER(x)
 #endif
 
-ENTRY_KUWAHARA_FILTER KuwaharaFilter(
+ENTRY_KUWAHARA_FILTER KuwaharaFilter [[ 
+    string nodegroup = "autolib", 
+]] (
     vector UV = vector(u, v, 0),
     string fileName = "" [[ string widget = "filename", string uifolder = "Image" ]],
     string fileColorSpace = "" [[ string uiname = "Colorspace", string uifolder = "Color Space Conversion", string widget = "colorspace" ]],

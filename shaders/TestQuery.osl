@@ -21,11 +21,16 @@ struct mystruct {
 };
 
 struct arraystruct {
-    float iarray[3];
-    string sarray[2];
+    float farray[3];
+    int iarray[2];
+    //string sarray[3]; this causes a crash
 };
 
-ENTRY_TEST_QUERY TestQuery(
+ENTRY_TEST_QUERY TestQuery [[ 
+    string nodegroup = "autolib", 
+    int isdefaultversion = 1, 
+    string version = "0.1" 
+]] (
     // Test boring params
     float f = M_PI,
     string s = "hello",
@@ -37,7 +42,7 @@ ENTRY_TEST_QUERY TestQuery(
     myvec mv1 = { 0.25, 1.0, 2.0 },
     myvec mv2 = { 0.25, 1.0, 2.0 },
     mystruct ms = { 3.14, "world", 99, point(0,1,1) },
-    //arraystruct as = { {1,2,3}, {"foo", "bar"} }, // TODO: this causes a crash
+    arraystruct as = { {1,2,3}, {2, 1} }, 
     output color Cout = 0,
     output closure color bsdf = 0,
 
@@ -70,9 +75,7 @@ ENTRY_TEST_QUERY TestQuery(
     int myparam2 = 2 [[ string s[2] = { "foo", "bar" } ]],
     int myparam3 = 3 [[ float minmax[2] = { 42, 44 } ]],
     int myparam4 = 4 [[ color c = color(1,2,3) ]],
-    )
-    [[ string author = "Jane Doe" ]]
-{
+) {
     float localvariable = 0;  // should not be reported, of course
     printf ("foo=%f, bar=%f\n", foo, bar);
 }

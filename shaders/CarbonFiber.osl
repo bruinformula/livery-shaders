@@ -132,7 +132,9 @@ normal getBumpedNormal( vector centerColor,
     return normalize(ddu * worldTangent + ddv * worldBitangent + inverseBumpAmount * worldNormal);
 }
 
-ENTRY_CARBON_FIBER CarbonFiber (
+ENTRY_CARBON_FIBER CarbonFiber [[ 
+    string nodegroup = "autolib", 
+]] (
     point UV  DEFAULT_CARBON_FIBER(point(u, v, 0)),
 
     vector fiberScale  DEFAULT_CARBON_FIBER(vector(64, 32, 0)) [[ string doc = "Scale axis of the carbon fiber pattern", vector uimin = vector(64, 32, 0) ]],

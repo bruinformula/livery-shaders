@@ -12,7 +12,9 @@
 #include "MTX.h"
 #include "Scratch.h"
 
-ENTRY_WHEEL Wheel(
+ENTRY_WHEEL Wheel [[ 
+    string nodegroup = "autolib", 
+]] (
 
     vector UV  DEFAULT_WHEEL(vector(u, v, 0)),
     int useUV  DEFAULT_WHEEL(0) [[ string doc = "Defaults to P otherwise", string widget = "checkBox" ]],

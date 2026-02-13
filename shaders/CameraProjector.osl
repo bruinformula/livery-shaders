@@ -11,7 +11,9 @@
 
 #include "Decal.h"
 
-ENTRY_CAMERA_PROJECTOR CameraProjector (
+ENTRY_CAMERA_PROJECTOR CameraProjector [[ 
+    string nodegroup = "autolib", 
+]] (
     DecalParams decalParams  DEFAULT_CAMERA_PROJECTOR({}),
 
     // Texture

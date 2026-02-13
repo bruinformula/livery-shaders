@@ -9,7 +9,9 @@
     #define DEFAULT_SIMPLE_SPLATTER(x)
 #endif
 
-ENTRY_SIMPLE_SPLATTER simpleSplatter(
+ENTRY_SIMPLE_SPLATTER simpleSplatter [[ 
+    string nodegroup = "autolib", 
+]] (
     vector UV  DEFAULT_SIMPLE_SPLATTER(vector(u, v, 0)),
     float scale  DEFAULT_SIMPLE_SPLATTER(5.0),
     float smoothness  DEFAULT_SIMPLE_SPLATTER(0.01),

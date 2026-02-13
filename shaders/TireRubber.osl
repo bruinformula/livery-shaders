@@ -11,7 +11,9 @@
 
 #include "MTX.h"
 
-ENTRY_TIRE_RUBBER TireRubber (
+ENTRY_TIRE_RUBBER TireRubber [[ 
+    string nodegroup = "autolib", 
+]] (
 
     vector UV = vector(u, v, 0),
     int useUV = 0 [[ string doc = "Defaults to P otherwise", string widget = "checkBox" ]],

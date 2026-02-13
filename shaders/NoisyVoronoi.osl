@@ -20,7 +20,9 @@ point fract(point p) {
     return fractional;
 }
 
-ENTRY_NOISY_VORONOI NoisyVoronoi(
+ENTRY_NOISY_VORONOI NoisyVoronoi [[ 
+    string nodegroup = "autolib", 
+]] (
     // Color 
     color color1 DEFAULT_NOISY_VORONOI(1),
     color color2 DEFAULT_NOISY_VORONOI(0),

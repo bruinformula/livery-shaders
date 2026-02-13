@@ -1,3 +1,4 @@
+#include <MaterialXGenShader/Library.h>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -183,6 +184,113 @@ bool createMaterialXDefinitions(
     }
 
     //std::cout << osoQuery.nparams() << " parameters found for shader: " << shaderName << std::endl;
+
+    //std::cout << osoQuery.metadata().size() << " shader metadata entries found for shader: " << shaderName << std::endl;
+
+    //Add Shader Metadata
+    for (auto metadata = osoQuery.metadata().begin(); metadata != osoQuery.metadata().end(); ++metadata) {
+
+        std::string attributeName = metadata->name.c_str();
+        std::string attributeType = parseOSLParameterType(*metadata);
+        std::string attributeValue = parseOSLParameterValue(*metadata);
+        
+        // Unescape string attributes
+        if (attributeType == "string") {
+            attributeValue = unescapeString(attributeValue);
+        }
+
+        std::string paramType = metadata->type.c_str();
+        std::string paramName = metadata->name.c_str();
+
+        //most of these aren't tested 
+
+        switch (hashString(attributeName)) {
+            case hashString("name"): {
+                if (!mtlxDefinitionOptions.implicitAssignmentWarning) break;
+                std::cout << "name is the unique identifier of the nodedef and should not be reassigned via metadata. Skipping." << std::endl;
+                continue;
+            }
+            case hashString("node"): {
+                if (!mtlxDefinitionOptions.implicitAssignmentWarning) break;
+                std::cout << "node is defined by the shader function being exported and cannot be overridden. Skipping." << std::endl;
+                continue;
+            }
+
+            case hashString("inherit"): {
+                if (!mtlxDefinitionOptions.typeMismatchWarning) break;
+                if (attributeType != "string") {
+                    std::cerr << "Warning: inherit attribute must be string type, got " << attributeType << " for nodedef " << shaderName << std::endl;
+                }
+                break;
+            }
+
+            case hashString("nodegroup"): {
+                if (!mtlxDefinitionOptions.typeMismatchWarning) break;
+                if (attributeType != "string") {
+                    std::cerr << "Warning: nodegroup attribute must be string type, got " << attributeType << " for nodedef " << shaderName << std::endl;
+                }
+                break;
+            }
+
+            case hashString("version"): {
+                if (!mtlxDefinitionOptions.typeMismatchWarning) break;
+                if (attributeType != "string") {
+                    std::cerr << "Warning: version attribute must be string type formatted as " << "major[.minor], got " << attributeType << " for nodedef " << shaderName << std::endl;
+                }
+                break;
+            }
+
+            case hashString("isdefaultversion"): {
+                if (!mtlxDefinitionOptions.typeMismatchWarning) break;
+                if (attributeType != "integer") {
+                    std::cerr << "Warning: isdefaultversion must be boolean (integer), got " << attributeType << " for nodedef " << shaderName << std::endl;
+                }
+                
+                if (attributeValue == "1") {
+                    attributeValue = "true";
+                } else if (attributeValue == "0") {
+                    attributeValue = "false";
+                } else {
+                    std::cerr << "Warning: isdefaultversion should be boolean (1 or 0), got " << attributeValue << " for nodedef " << shaderName << std::endl;
+                }
+
+                break;
+            }
+
+            case hashString("target"): {
+                if (!mtlxDefinitionOptions.typeMismatchWarning) break;
+                if (attributeType != "stringarray") {
+                    std::cerr << "Warning: target attribute must be stringarray type, got " << attributeType << " for nodedef " << shaderName << std::endl;
+                }
+                break;
+            }
+            case hashString("uiname"): {
+                if (!mtlxDefinitionOptions.typeMismatchWarning) break;
+                if (attributeType != "string") {
+                    std::cerr << "Warning: uiname attribute must be string type, got " << attributeType << " for nodedef " << shaderName << std::endl;
+                }
+                break;
+            }
+            case hashString("internalgeomprops"): {
+                if (!mtlxDefinitionOptions.typeMismatchWarning) break;
+                if (attributeType != "stringarray") {
+                    std::cerr << "Warning: internalgeomprops must be stringarray type, got " << attributeType << " for nodedef " << shaderName << std::endl;
+                }
+                break;
+            }
+
+            case hashString("doc"):
+            case hashString("help"):
+            default: {
+                if (!mtlxDefinitionOptions.unknownAttributeWarning) break;
+                std::cout << "Warning: Unknown attribute '" << attributeName << "' for nodedef " << shaderName << std::endl;
+                break;
+            }
+        }
+
+        // Assuming the verification passed the attribute will be added
+        nodeDef->setAttribute(attributeName, attributeValue);
+    }
 
     for (auto param = osoQuery.begin(); param != osoQuery.end(); ++param) {
 
@@ -407,13 +515,17 @@ bool createMaterialXDefinitions(
         return false;
     }
 
-    std::cout << "Registered " << oslFilePath.getBaseName() << " as " << nodeDef->getName() << std::endl;
-    for (const auto& input : nodeDef->getInputs()) {
-        std::cout << "  Input: " << input->getType() << " " << input->getName() << std::endl;
-    }
-    
-    for (const auto& output : nodeDef->getOutputs()) {
-        std::cout << "  Output: " << output->getType() << " " << output->getName() << std::endl;
+    constexpr bool debug = false;
+
+    if (debug) {
+        std::cout << "Registered " << oslFilePath.getBaseName() << " as " << nodeDef->getName() << std::endl;
+        for (const auto& input : nodeDef->getInputs()) {
+            std::cout << "  Input: " << input->getType() << " " << input->getName() << std::endl;
+        }
+        
+        for (const auto& output : nodeDef->getOutputs()) {
+            std::cout << "  Output: " << output->getType() << " " << output->getName() << std::endl;
+        }
     }
 
     return true;
@@ -470,8 +582,6 @@ void dumpElement(mx::ElementPtr elem, int indent = 0) {
         dumpElement(child, indent + 2);
     }
 }
-
-
 
 int main(int argc, char* const argv[]) {
     std::vector<std::string> tokens;
@@ -585,7 +695,7 @@ int main(int argc, char* const argv[]) {
 
     if (!isNodeDefValid) {
         std::cerr << "Node Def Validation failed:\n" << nodeDefMessage << std::endl;
-        //return 1;
+        return 1;
     }
 
     std::string implMessage;
@@ -593,15 +703,13 @@ int main(int argc, char* const argv[]) {
 
     if (!isImplValid) {
         std::cerr << "Implementation Validation failed:\n" << implMessage << std::endl;
-        //return 1;
+        return 1;
     }
-    
     
     if (!inputArgs.skipWritingMtlxHeaders) {
         mx::writeToXmlFile(nodeDefMtlxDoc, outputNodeDefFilePath);
         mx::writeToXmlFile(implMtlxDoc, outputImplFilePath);
     }
-
 
     return 0;
 }

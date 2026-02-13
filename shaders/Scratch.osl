@@ -9,7 +9,9 @@
     #define  DEFAULT_SCRATCH(x)
 #endif
 
-ENTRY_SCRATCH Scratch(
+ENTRY_SCRATCH Scratch [[ 
+    string nodegroup = "autolib", 
+]] (
     vector UV  DEFAULT_SCRATCH(vector(u, v, 0)),
     float density  DEFAULT_SCRATCH(0.1),
     float roughnessMin  DEFAULT_SCRATCH(0.0),

@@ -49,7 +49,9 @@ void ToonOutline(
 
 */
 
-ENTRY_TOON ToonShader(
+ENTRY_TOON ToonShader [[ 
+    string nodegroup = "autolib", 
+]] (
     // Base
     color baseColor DEFAULT_TOON(color(0.4))  [[ string uifolder = "Base" ]],
     float opacity DEFAULT_TOON(1.0)  [[ string uifolder = "Base", float uimin = 0.0, float uimax = 1.0 ]],

@@ -34,7 +34,9 @@ float smoothMin(float a, float b, float k) {
     return res;
 }
 
-ENTRY_SPLATTER splatter(
+ENTRY_SPLATTER splatter [[ 
+    string nodegroup = "autolib", 
+]] (
     vector UV  DEFAULT_SPLATTER(vector(u, v, 0)),
     int seed  DEFAULT_SPLATTER(0) [[ string uifolder = "Pattern" ]],
     float jitter  DEFAULT_SPLATTER(1.0) [[ string uifolder = "Pattern" ]],

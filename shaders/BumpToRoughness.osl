@@ -48,7 +48,9 @@ void covarianceToEigen( float a, float b, float c,
     v2 = normalize(v2);
 }
 
-ENTRY_BUMP_TO_ROUGHNESS BumpToRoughness (    
+ENTRY_BUMP_TO_ROUGHNESS BumpToRoughness [[ 
+    string nodegroup = "autolib", 
+]] (    
     vector UV  DEFAULT_BUMP_TO_ROUGHNESS(vector(u, v, 0)) [[ string doc = "UV coordinates for the surface" ]],
     vector bumpNormal  DEFAULT_BUMP_TO_ROUGHNESS(vector(0, 0, 1)) [[ string doc = "Input bump/normal vector (in tangent space or world space)" ]],
     

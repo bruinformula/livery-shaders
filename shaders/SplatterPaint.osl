@@ -120,7 +120,9 @@ SplatterLayerParams jitterSplatterParams(
     return jittered;
 }
 
-ENTRY_SPLATTER_PAINT SplatterPaint (
+ENTRY_SPLATTER_PAINT SplatterPaint [[ 
+    string nodegroup = "autolib", 
+]] (
     vector UV  DEFAULT_SPLATTER_PAINT(vector(u, v, 0)),
 
 	//Primer

@@ -9,7 +9,9 @@
     #define DEFAULT_DIRT(x)
 #endif
 
-ENTRY_DIRT Dirt(
+ENTRY_DIRT Dirt [[ 
+    string nodegroup = "autolib", 
+]] (
     vector UV  DEFAULT_DIRT(vector(u, v, 0)),
     color baseColor  DEFAULT_DIRT(color(1,1,1)),
     float baseRoughness DEFAULT_DIRT(0.4),

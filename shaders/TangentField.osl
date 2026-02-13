@@ -9,7 +9,9 @@
     #define  DEFAULT_TANGENT_FIELD(x)
 #endif
 
-ENTRY_TANGENT_FIELD TangentField (
+ENTRY_TANGENT_FIELD TangentField [[ 
+    string nodegroup = "autolib", 
+]] (
     float inputRotation  DEFAULT_TANGENT_FIELD(0) [[ string uiname = "Input Rotation", string doc = "A single float value to rotate the shading tangent. Takes precedence over inputVector."]],
     vector inputVector  DEFAULT_TANGENT_FIELD(vector(0.5)) [[ string uiname = "Input Vector", string doc = "Red and green channels read as x and y coordinates of a 2d vector. Ignored if inputRotation is connected." ]],
     float rotationOffset  DEFAULT_TANGENT_FIELD(0) [[ string uiname = "Rotation Offset", string doc = "A global rotation offset in degrees." ]],

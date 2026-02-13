@@ -113,7 +113,11 @@ float bump_shadowing_function(vector Ld, float alpha2) {
     return 2.0 / (1 + sqrt(1 + alpha2 * tan2_i));
 }
 
-ENTRY_METALLIC_PAINT MetallicPaint(
+ENTRY_METALLIC_PAINT MetallicPaint [[ 
+	string nodegroup = "autolib", 
+	int isdefaultversion = 1, 
+	string version = "0.1" 
+]] (
     vector UV  DEFAULT_METALLIC_PAINT(vector(u, v, 0)),
     int useUV  DEFAULT_METALLIC_PAINT(0) [[ string doc = "Defaults to P otherwise", string widget = "checkBox" ]],
 

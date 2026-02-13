@@ -33,7 +33,9 @@ int probeForOutline( vector rayDir,
 }
 
 
-ENTRY_TOON_OUTLINE ToonOutline(
+ENTRY_TOON_OUTLINE ToonOutline [[ 
+    string nodegroup = "autolib", 
+]] (
     float width  DEFAULT_TOON_OUTLINE(0.01),
     float distanceThreadshold  DEFAULT_TOON_OUTLINE(1.1),
     float normalThreadshold  DEFAULT_TOON_OUTLINE(0.1),

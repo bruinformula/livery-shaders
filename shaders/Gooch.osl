@@ -9,7 +9,9 @@
     #define  DEFAULT_GOOCH(x)
 #endif
 
-ENTRY_GOOCH Gooch(
+ENTRY_GOOCH Gooch [[ 
+    string nodegroup = "autolib", 
+]] (
     color warmColor = color(0.8, 0.8, 0.7),
     color coolColor = color(0.3, 0.3, 0.8),
     float specular_intensity = 1.0,

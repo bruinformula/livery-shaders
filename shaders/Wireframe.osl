@@ -9,7 +9,9 @@
     #define DEFAULT_WIREFRAME(x)
 #endif
 
-ENTRY_WIREFRAME Wireframe(
+ENTRY_WIREFRAME Wireframe [[ 
+    string nodegroup = "autolib", 
+]] (
     int edgeType  DEFAULT_WIREFRAME(1) [[ string options = "triangles|polygons|patches" ]], 
     float lineWidth  DEFAULT_WIREFRAME(1)  [[ float uimin = 0.0 ]], 
     int raster  DEFAULT_WIREFRAME(1)  [[ int uimin = 0, int uimax = 1 ]],
