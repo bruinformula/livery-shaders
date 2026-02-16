@@ -27,13 +27,8 @@ const std::string argOptions =
     "    --library                  Specify an additional data library folder (e.g. 'vendorlib', 'studiolib').  This relative path will be appended to each location in the data search path when loading data libraries.\n"
     "    --help                     Prints this message\n";
 
-struct CommandLineArgs {
-    enum ParseResult {
-        SUCCESS,
-        SUCCESS_AND_BUMP,
-        FAILURE,
-        EXIT
-    };
+struct NodeQueryCommandLineArgs : public CommandLineArgs {
+
     mx::FilePath mtlxMaterialsPath;
     mx::FilePath csvOutputPath;
 
@@ -42,35 +37,35 @@ struct CommandLineArgs {
     mx::FileSearchPath searchPath;
     std::vector<mx::FilePath> libraryFolders;
 
-    ParseResult parse(const std::string& token, const std::string& nextToken) {
+    ParseResult parse(const std::string& token, const std::string& nextToken) override {
         // yes managed to get goto in here
         if (token == "--mtlxMaterialsPath") {
             if (nextToken.empty()) goto expectOption;
             if (!mtlxMaterialsPath.isEmpty()) goto alreadySet;
             
             mtlxMaterialsPath = nextToken;
-            return SUCCESS_AND_BUMP;
+            return SUCCESS_CONSUME_NEXT;
         } else if (token == "--csvOutputPath") {
             if (nextToken.empty()) goto expectOption;
             if (!csvOutputPath.isEmpty()) goto alreadySet;
 
             csvOutputPath = nextToken;
-            return SUCCESS_AND_BUMP;
+            return SUCCESS_CONSUME_NEXT;
         } else if (token == "--node") {
             if (nextToken.empty()) goto expectOption;
             if (!interestingNode.empty()) goto alreadySet;
 
             interestingNode = nextToken;
-            return SUCCESS_AND_BUMP;
+            return SUCCESS_CONSUME_NEXT;
         } else if (token == "--path") {
             if (nextToken.empty()) goto expectOption;
             searchPath.append(mx::FileSearchPath(nextToken));
-            return SUCCESS_AND_BUMP;
+            return SUCCESS_CONSUME_NEXT;
         } else if (token == "--library") {
             if (nextToken.empty()) goto expectOption;
             
             libraryFolders.push_back(nextToken);
-            return SUCCESS_AND_BUMP;
+            return SUCCESS_CONSUME_NEXT;
         } else if (token == "--help") {
             std::cout << argOptions << std::endl;
             return EXIT;
@@ -128,7 +123,7 @@ int main(int argc, char* const argv[]) {
         tokens.emplace_back(argv[i]);
     }
 
-    CommandLineArgs inputArgs;
+    NodeQueryCommandLineArgs inputArgs;
     for (size_t i = 0; i < tokens.size(); i++) {
         const std::string& token = tokens[i];
         const std::string& nextToken = i + 1 < tokens.size() ? tokens[i + 1] : mx::EMPTY_STRING;
@@ -137,7 +132,7 @@ int main(int argc, char* const argv[]) {
         switch (parseResult) {
             case CommandLineArgs::SUCCESS:
                 break;
-            case CommandLineArgs::SUCCESS_AND_BUMP:
+            case CommandLineArgs::SUCCESS_CONSUME_NEXT:
                 i++;
                 break;
             case CommandLineArgs::FAILURE:

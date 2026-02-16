@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<materialx version="1.39" colorspace="lin_rec709">
+  <surfacematerial name="Test_AutoLib1" type="material" xpos="17.014492" ypos="-0.646552">
+    <input name="surfaceshader" type="surfaceshader" nodename="surface" />
+  </surfacematerial>
+  <splatter_paint name="splatter_paint" type="BSDF" xpos="8.898551" ypos="-2.620690">
+    <input name="splatterLayer3" type="BSDF" output="splatterLayer" nodename="splatter_layer2" />
+    <input name="splatterLayer2" type="BSDF" output="splatterLayer" nodename="splatter_layer" />
+    <input name="splatterLayer1" type="BSDF" output="splatterLayer" nodename="splatter_layer3" />
+  </splatter_paint>
+  <surface name="surface" type="surfaceshader" xpos="12.608696" ypos="-0.112069">
+    <input name="bsdf" type="BSDF" nodename="splatter_paint" />
+  </surface>
+  <decal name="decal" type="multioutput" xpos="-8.797101" ypos="-4.827586">
+    <output name="outColor" type="color3" />
+  </decal>
+  <splatter_layer name="splatter_layer" type="multioutput" xpos="1.014493" ypos="-13.896552">
+    <output name="splatterLayer" type="BSDF" />
+    <input name="primerColor" type="color3" output="outColor" nodename="decal2" />
+  </splatter_layer>
+  <splatter_layer name="splatter_layer2" type="multioutput" xpos="-2.702899" ypos="-11.206897">
+    <output name="splatterLayer" type="BSDF" />
+    <input name="primerColor" type="color3" output="outColor" nodename="decal" />
+  </splatter_layer>
+  <splatter_layer name="splatter_layer3" type="multioutput" xpos="5.072464" ypos="-14.982759">
+    <output name="splatterLayer" type="BSDF" />
+    <input name="primerColor" type="color3" output="outColor" nodename="decal3" />
+  </splatter_layer>
+  <decal name="decal2" type="multioutput" xpos="-8.797101" ypos="-8.379311">
+    <output name="outColor" type="color3" />
+  </decal>
+  <decal name="decal3" type="multioutput" xpos="-8.797101" ypos="-11.827586">
+    <output name="outColor" type="color3" />
+  </decal>
+</materialx>

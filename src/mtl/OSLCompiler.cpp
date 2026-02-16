@@ -90,6 +90,142 @@ std::string unescapeString(const std::string& input) {
     return result;
 }
 
+// Osl compile options
+OslCompileOptions::ParseResult OslCompileOptions::parse(const std::string& token, const std::string& nextToken) {
+    switch (hashString(token.c_str())) {
+        case hashString("--help"): {
+            std::cout << oslcArgOptions << std::endl;
+            return SUCCESS;
+        }
+        case hashString("-v"): {
+            verboseMode = true;
+            return SUCCESS;
+        }
+        case hashString("-q"): {
+            quietMode = true;
+            return SUCCESS;
+        }
+        case hashString("-d"): {
+            debugMode = true;
+            return SUCCESS;
+        }
+        case hashString("-embed-source"): {
+            embedSource = true;
+            return SUCCESS;
+        }
+        case hashString("-Werror"): {
+            warningsAsErrors = true;
+            return SUCCESS;
+        }
+        case hashString("-O0"): {
+            optimizationLevel = Optimization::None;
+            return SUCCESS;
+        }
+        case hashString("-O1"): {
+            optimizationLevel = Optimization::Size;
+            return SUCCESS;
+        }
+        case hashString("-O2"): {
+            optimizationLevel = Optimization::Performance;
+            return SUCCESS;
+        }
+        case hashString("-E"): {
+            preprocessOnly = true;
+            return SUCCESS;
+        }
+        case hashString("-buffer"): {
+            forceBuffer = true;
+            return SUCCESS;
+        }
+        case hashString("-MD"): {
+            writeMD = true;
+            return SUCCESS;
+        }
+        case hashString("-MMD"): {
+            writeMMD = true;
+            return SUCCESS;
+        }
+        case hashString("-M"): {
+            writeM = true;
+            return SUCCESS;
+        }
+        case hashString("-MM"): {
+            writeMM = true;
+            return SUCCESS;
+        }
+        case hashString("-MF"): {
+            if (nextToken.empty()) goto expectOption;
+            depfileName = nextToken;
+            return SUCCESS_CONSUME_NEXT;
+        }
+        case hashString("-MT"): {
+            if (nextToken.empty()) goto expectOption;
+            depfileTarget = nextToken;
+            return SUCCESS_CONSUME_NEXT;
+        }
+        case hashString("--writeOSLSource"): {
+            writeSourceToDisk = true;
+            return SUCCESS;
+        }
+        case hashString("--writeByteCode"): {
+            writeByteCodeToDisk = true;
+            return SUCCESS;
+        }
+        case hashString("--skipWriteOSLSource"): {
+            writeSourceToDisk = false;
+            return SUCCESS;
+        }
+        case hashString("--skipWriteByteCode"): {
+            writeByteCodeToDisk = false;
+            return SUCCESS;
+        }
+        default: { // handle -I, -D, -U prefix options
+            if (token.substr(0, 2) == "-I") {
+                std::string path = token.substr(2);
+                if (path.empty() && !nextToken.empty()) {
+                    path = nextToken;
+                    oslIncludePath.append(mx::FilePath(path));
+                    return SUCCESS_CONSUME_NEXT;
+                } else if (!path.empty()) {
+                    oslIncludePath.append(mx::FilePath(path));
+                    return SUCCESS;
+                }
+                goto expectOption;
+            } else if (token.substr(0, 2) == "-D") {
+                std::string define = token.substr(2);
+                if (define.empty() && !nextToken.empty()) {
+                    define = nextToken;
+                    definePreprocessors.push_back(define);
+                    return SUCCESS_CONSUME_NEXT;
+                } else if (!define.empty()) {
+                    definePreprocessors.push_back(define);
+                    return SUCCESS;
+                }
+                goto expectOption;
+            } else if (token.substr(0, 2) == "-U") {
+                std::string undefine = token.substr(2);
+                if (undefine.empty() && !nextToken.empty()) {
+                    undefine = nextToken;
+                    undefinePreprocessors.push_back(undefine);
+                    return SUCCESS_CONSUME_NEXT;
+                } else if (!undefine.empty()) {
+                    undefinePreprocessors.push_back(undefine);
+                    return SUCCESS;
+                }
+                goto expectOption;
+            }
+            
+            std::cout << "Unrecognized command-line option: " << token << std::endl;
+            return FAILURE;
+        }
+    }
+
+    expectOption: {
+        std::cerr << "Expected another token following command-line option: " << token << std::endl;
+        return FAILURE;
+    }
+}
+
 std::vector<std::string> OslCompileOptions::getArgs(const mx::FilePath& osoFilePath) const {
     // build up a vector of compiler arguments
     std::vector<std::string> oslCompilerArgs;
@@ -127,6 +263,11 @@ std::vector<std::string> OslCompileOptions::getArgs(const mx::FilePath& osoFileP
         oslCompilerArgs.emplace_back("-I" + p.asString() + "");
     }
     
+    std::cout << "oslc ";
+    for (const auto& arg : oslCompilerArgs) {
+        std::cout << arg << " ";
+    }
+    std::cout << "\n";
     return oslCompilerArgs;
 }
 

@@ -25,6 +25,27 @@
 namespace mx = MaterialX;
 namespace osl = OSL;
 
+const std::string oslcArgOptions =
+    " Open Shading Language Compiler\n"
+    " Options:\n"
+    "    --help                 Print this message\n"
+    "    -v                     Verbose mode\n"
+    "    -q                     Quiet mode\n"
+    "    -Ipath                 Add path to the #include search path\n"
+    "    -Dsym[=val]            Define preprocessor symbol\n"
+    "    -Usym                  Undefine preprocessor symbol\n"
+    "    -O0, -O1, -O2          Set optimization level (default=1)\n"
+    "    -d                     Debug mode\n"
+    "    -E                     Only preprocess the input and output to stdout\n"
+    "    -Werror                Treat all warnings as errors\n"
+    "    -embed-source          Embed preprocessed source in the oso file\n"
+    "    -buffer                (debugging) Force compile from buffer\n"
+    "    -MD, -MMD              Write a depfile containing headers used, to a file\n"
+    "    -M, -MM                Like -MD, but write depfile to stdout\n"
+    "    -MF filename           Specify the name of the depfile to output (for -MD, -MMD)\n"
+    "    -MT target             Specify a custom dependency target name for -M...\n"
+    "    --writeOSLSource       Write OSL source to disk\n"
+    "    --writeByteCode        Write compiled bytecode to disk\n";
 
 // Utilities
 std::vector<mx::FilePath> findFiles(const mx::FilePath& rootDir, const std::string& extension, bool maintainRelativePath = false);
@@ -99,31 +120,51 @@ private:
     mx::StringVec _errorLog;
 };
 
-struct OslCompileOptions {
+struct CommandLineArgs {
+
+    enum ParseResult {
+        SUCCESS,
+        SUCCESS_CONSUME_NEXT,
+        FAILURE,
+        EXIT
+    };
+
+    virtual ParseResult parse(const std::string& token, const std::string& nextToken) = 0;
+};
+
+struct OslCompileOptions : public CommandLineArgs {
     // Standard Options
     bool verboseMode = false;
     bool quietMode = false;
     bool debugMode = false;
     bool embedSource = false;
     bool warningsAsErrors = false;
-
+    bool preprocessOnly = false;
+    bool forceBuffer = false;
+    bool writeMD = false;
+    bool writeMMD = false;
+    bool writeM = false;
+    bool writeMM = false;
+    std::string depfileName;
+    std::string depfileTarget;
     mx::FileSearchPath oslIncludePath;
     std::vector<std::string> definePreprocessors;
     std::vector<std::string> undefinePreprocessors;
-
+    
     enum Optimization {
-        None, // O0
-        Size, // O1
-        Performance // O2
+        None,        // O0
+        Size,        // O1
+        Performance  // O2
     };
-
     Optimization optimizationLevel = Optimization::Size;
-
+    
     // Other Options
     bool writeSourceToDisk = true;
     bool writeByteCodeToDisk = false;
-
+    
     std::vector<std::string> getArgs(const mx::FilePath& osoFilePath) const;
+    
+    ParseResult parse(const std::string& token, const std::string& nextToken) override;
 };
 
 bool compileOSLToBytecode(

@@ -2,6 +2,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <fstream>
+#include <sstream>
+#include <regex>
+#include <filesystem>
 
 #include <OSL/oslquery.h>
 #include <OSL/oslcomp.h>
@@ -24,86 +28,78 @@
 
 namespace osl = OSL;
 namespace mx = MaterialX;
+namespace fs = std::filesystem;
 
 const std::string argOptions =
     " MaterialXLibraryBuilder -- Generates MaterialX bindings for a bunch of OSL shaders\n"
     " Options: \n"
     "    --oslLibraryPath           Path to the directory containing OSL shader files.  All .osl files in this directory and its subdirectories will be processed. \n"
     "    --libraryOutputPath        Path to the output directory where generated MaterialX documents and OSL shaders will be written. \n"
-    "    --skipWritingOSLSource     Skip generating Only generate OSL source files to the libraryOutputPath \n"
     "    --skipWritingMtlxHeaders   Skip generating MaterialX implementation files to the libraryOutputPath. \n"
-    "    --oslIncludePath           OSL Include Path\n"
-    "    --oslDefine [NAME=VALUE]   Define a preprocessor macro to be used during OSL compilation.  Can be specified multiple times to define multiple macros.\n"
+    "    --autolib-include-rewrite  Rewrite #include paths in header files to point to flattened OSL files in root directory. \n"
     "    --path                     Specify an additional data search path location (e.g. '/projects/MaterialX').  This absolute path will be queried when locating data libraries, XInclude references, and referenced images.\n"
     "    --library                  Specify an additional data library folder (e.g. 'vendorlib', 'studiolib').  This relative path will be appended to each location in the data search path when loading data libraries.\n"
     "    --help                     Prints this message\n";
 
-struct CommandLineArgs {
-    enum ParseResult {
-        SUCCESS,
-        SUCCESS_AND_BUMP,
-        FAILURE,
-        EXIT
-    };
-    mx::FilePath oslIncludePath;
+struct LibraryCommandLineArgs : public CommandLineArgs {
     mx::FilePath oslLibraryPath;
     mx::FilePath libraryOutputPath;
-    std::vector<std::string> oslDefine;
-
-    bool skipWritingOSLSource = false;
     bool skipWritingMtlxHeaders = false;
-
-    ParseResult parse(const std::string& token, const std::string& nextToken) {
-        // yes managed to get goto in here
-        if (token == "--oslLibraryPath") {
-            if (nextToken.empty()) goto expectOption;
-            if (!oslLibraryPath.isEmpty()) goto alreadySet;
-            
-            oslLibraryPath = mx::FilePath(nextToken);
-            return SUCCESS_AND_BUMP;
-        } else if (token == "--libraryOutputPath") {
-            if (nextToken.empty()) goto expectOption;
-            if (!libraryOutputPath.isEmpty()) goto alreadySet;
-
-            libraryOutputPath = mx::FilePath(nextToken);
-            return SUCCESS_AND_BUMP;
-        } else if (token == "--oslIncludePath") {
-            if (nextToken.empty()) goto expectOption;
-            if (!oslIncludePath.isEmpty()) goto alreadySet;
-            
-            oslIncludePath = mx::FilePath(nextToken);
-            return SUCCESS_AND_BUMP;
-        } else if (token == "--oslDefine") {
-            if (nextToken.empty()) goto expectOption;
-            oslDefine.push_back(nextToken);
-            return SUCCESS_AND_BUMP;
-        } else if (token == "--skipWritingOSLSource") {
-            skipWritingOSLSource = true;
-            return SUCCESS;
-        } else if (token == "--skipWritingMtlxHeaders") {
-            skipWritingMtlxHeaders = true;
-            return SUCCESS;
-        } else if (token == "--help") {
-            std::cout << argOptions << std::endl;
-            return EXIT;
-        } else {
-            std::cout << "Unrecognized command-line option: " << token << std::endl;
-            return FAILURE;
+    bool autolibIncludeRewrite = false;
+    
+    OslCompileOptions oslCompileOptions;
+    
+    ParseResult parse(const std::string& token, const std::string& nextToken) override {
+        switch (hashString(token.c_str())) {
+            case hashString("--oslLibraryPath"): {
+                if (nextToken.empty()) goto expectOption;
+                if (!oslLibraryPath.isEmpty()) goto alreadySet;
+                oslLibraryPath = mx::FilePath(nextToken);
+                return SUCCESS_CONSUME_NEXT;
+            }
+            case hashString("--libraryOutputPath"): {
+                if (nextToken.empty()) goto expectOption;
+                if (!libraryOutputPath.isEmpty()) goto alreadySet;
+                libraryOutputPath = mx::FilePath(nextToken);
+                return SUCCESS_CONSUME_NEXT;
+            }
+            case hashString("--skipWritingMtlxHeaders"): {
+                skipWritingMtlxHeaders = true;
+                return SUCCESS;
+            }
+            case hashString("--autolib-include-rewrite"): {
+                autolibIncludeRewrite = true;
+                return SUCCESS;
+            }
+            case hashString("--help"): {
+                std::cout << argOptions << std::endl;
+                std::cout << "\n" << oslcArgOptions << std::endl;
+                return EXIT;
+            }
+            default: { // try parsing as OSL compile option
+                ParseResult oslResult = oslCompileOptions.parse(token, nextToken);
+                if (oslResult == SUCCESS || oslResult == SUCCESS_CONSUME_NEXT) {
+                    return oslResult;
+                } else if (oslResult == FAILURE) { // already printed error message
+                    return FAILURE;
+                } else {
+                    std::cout << "Unrecognized command-line option: " << token << std::endl;
+                    return FAILURE;
+                }
+            }
         }
-
+        
         alreadySet: {
             std::cerr << token << " is already set!" << std::endl;
             return FAILURE;
         }
-
         expectOption: {
             std::cerr << "Expected another token following command-line option: " << token << std::endl; 
             return FAILURE;
         }
-
     }
-
-    //enforces any additional rules about the input arguments
+    
+    // enforce additional rules about the input arguments
     bool verify() {
         if (oslLibraryPath.isEmpty()) {
             std::cerr << "oslLibraryPath is not set!" << std::endl;
@@ -113,26 +109,34 @@ struct CommandLineArgs {
             std::cerr << "libraryOutputPath is not set!" << std::endl;
             return false;
         }
-
-        // Output Path
+        
+        // output Path
         if (!libraryOutputPath.exists() || !libraryOutputPath.isDirectory()) {
             libraryOutputPath.createDirectory();
-
             if (!libraryOutputPath.exists() || !libraryOutputPath.isDirectory()) {
-                std::cerr << "Failed to find and/or create the provided output mtlx path:"
-                        << libraryOutputPath.asString() << std::endl;
+                std::cerr << "Failed to find and/or create the provided output mtlx path: "
+                          << libraryOutputPath.asString() << std::endl;
                 return false;
             }
         }
-
-        if (!oslIncludePath.exists() || !oslIncludePath.isDirectory()) {
-            std::cerr << "The provided path to the OSL includes is not valid: " << oslIncludePath.asString() << std::endl;
+        
+        // validate osl library path
+        if (!oslLibraryPath.exists() || !oslLibraryPath.isDirectory()) {
+            std::cerr << "The provided path to the OSL library is not valid: " << oslLibraryPath.asString() << std::endl;
             return false;
         }
-
+        
+        // validate osl include paths
+        for (const auto& includePath : oslCompileOptions.oslIncludePath) {
+            if (!includePath.exists() || !includePath.isDirectory()) {
+                std::cerr << "The provided OSL include path is not valid: " 
+                          << includePath.asString() << std::endl;
+                return false;
+            }
+        }
+        
         return true;
     }
-
 };
 
 class MaterialXDefinitionOptions {
@@ -145,21 +149,90 @@ public:
     bool implicitAssignmentWarning = true;
 };
 
+std::string getRelativePathToRoot(const mx::FilePath& headerPath) {
+    fs::path path(headerPath.asString());
+    
+    size_t depth = 0;
+    for (const auto& part : path) {
+        if (part != "." && part != path.filename()) {
+            depth++;
+        }
+    }
+    
+    std::string prefix;
+    prefix.reserve(depth * 3); // reserve some extra space
+    for (size_t i = 0; i < depth; i++) {
+        prefix.append("../");
+    }
+    
+    return prefix;
+}
+
+bool rewriteHeaderIncludePaths(const mx::FilePath& headerFilePath, const mx::FilePath& relativeHeaderPath) {
+    fs::path fsHeaderPath(headerFilePath.asString());
+    
+    std::ifstream headerInput(fsHeaderPath);
+    if (!headerInput.is_open()) {
+        std::cerr << "Failed to open header file for rewriting: " << headerFilePath.asString() << std::endl;
+        return false;
+    }
+    
+    std::stringstream buffer;
+    buffer << headerInput.rdbuf();
+    std::string headerContent = buffer.str();
+    headerInput.close();
+    
+    std::string relativePrefix = getRelativePathToRoot(relativeHeaderPath);
+    
+    // regex to match #include "path/to/file.osl" and capture just the filename
+    std::regex includeRegex("#include\\s+\"(?:[^\"]*/)?([\\w]+\\.osl)\"");
+    
+    // replace with #include "../filename.osl" (or appropriate depth)
+    std::string modifiedContent;
+    std::string::const_iterator searchStart(headerContent.cbegin());
+    std::smatch match;
+    
+    while (std::regex_search(searchStart, headerContent.cend(), match, includeRegex)) {
+        modifiedContent.append(searchStart, searchStart + match.position());
+        
+        std::string filename = match[1].str();
+        modifiedContent.append("#include \"");
+        modifiedContent.append(relativePrefix);
+        modifiedContent.append(filename);
+        modifiedContent.append("\"");
+        
+        searchStart += match.position() + match.length();
+    }
+    
+    modifiedContent.append(searchStart, headerContent.cend());
+    
+    std::ofstream headerOutput(fsHeaderPath);
+    if (!headerOutput.is_open()) {
+        std::cerr << "Failed to open header file for writing: " << headerFilePath.asString() << std::endl;
+        return false;
+    }
+    
+    headerOutput << modifiedContent;
+    headerOutput.close();
+    
+    return true;
+}
+
 bool createMaterialXDefinitions(
     osl::OSLQuery& osoQuery,
     const std::string& oslFileName,
+    const mx::FilePath& relativeOslPath,
     mx::DocumentPtr& nodeDefMtlxDoc,
     mx::DocumentPtr& implMtlxDoc,
     mx::DocumentPtr& typeDefMtlxDoc,
     const mx::FilePath& outputDir,
     MaterialXDefinitionOptions& mtlxDefinitionOptions
 ) {
-    //mx::FilePath oslFilePath = outputDir / oslFileName;
+    // OSL files are referenced from root
     mx::FilePath oslFilePath = oslFileName;
     oslFilePath.removeExtension();
     oslFilePath.addExtension("osl");
 
-    //mx::FilePath osoFilePath = outputDir / oslFileName;
     mx::FilePath osoFilePath = oslFileName;
     osoFilePath.removeExtension();
     osoFilePath.addExtension("oso");
@@ -183,10 +256,6 @@ bool createMaterialXDefinitions(
         return false;
     }
 
-    //std::cout << osoQuery.nparams() << " parameters found for shader: " << shaderName << std::endl;
-
-    //std::cout << osoQuery.metadata().size() << " shader metadata entries found for shader: " << shaderName << std::endl;
-
     //Add Shader Metadata
     for (auto metadata = osoQuery.metadata().begin(); metadata != osoQuery.metadata().end(); ++metadata) {
 
@@ -201,8 +270,6 @@ bool createMaterialXDefinitions(
 
         std::string paramType = metadata->type.c_str();
         std::string paramName = metadata->name.c_str();
-
-        //most of these aren't tested 
 
         switch (hashString(attributeName)) {
             case hashString("name"): {
@@ -301,15 +368,23 @@ bool createMaterialXDefinitions(
             
             mx::TypeDefPtr type = typeDefMtlxDoc->getTypeDef(typeName);
 
-            if (!type) { // if type does exist, add it
+            if (!type) { // if type doesn't exist, add it
                 type = typeDefMtlxDoc->addTypeDef(typeName);
 
-                // the struct fields get spit out as "struct.fieldname"
+                // TODO:
+                // for some types like mtx integer aren't rewritten as int in the generated osl struct
+                
                 for (auto field = param->fields.begin(); field != param->fields.end(); ++field) {
                     std::string fieldName = field->c_str();
                     std::string fullFieldName = paramName + "." + fieldName;
 
                     const osl::OSLQuery::Parameter* fieldParam = osoQuery.getparam(fullFieldName);
+
+                    if (fieldParam == nullptr) {
+                        std::cerr << "Failed to find OSL parameter for struct field: " << fullFieldName << std::endl;
+                        continue;
+                    }
+                    
                     std::string fieldType = parseOSLParameterType(*fieldParam);
 
                     mx::MemberPtr member = type->addMember(fieldName);
@@ -318,7 +393,7 @@ bool createMaterialXDefinitions(
             }
         }
 
-        // skip struct members. they are returned as params in the function signature (e.g., "mv1.x", "mv2.y")
+        // skip struct members
         std::string paramName = param->name.c_str();
         if (paramName.find('.') != std::string::npos) {
             continue;
@@ -353,20 +428,20 @@ bool createMaterialXDefinitions(
             }
 
             switch (hashString(attributeName)) {
-                case hashString("name"):  { // name is just the name in the shader
+                case hashString("name"):  { 
                     if (!mtlxDefinitionOptions.implicitAssignmentWarning) break;
                     std::cout << "name is determined by the name of the shader function signature. Skipping" << std::endl;
-                    continue; // skip setting this attribute
+                    continue;
                 }
                 case hashString("type"): {
                     if (!mtlxDefinitionOptions.implicitAssignmentWarning) break;
                     std::cout << "type is determined from the OSL parameter type and cannot be overridden by metadata. Skipping." << std::endl;
-                    continue; // skip setting this attribute
+                    continue;
                 }
                 case hashString("value"): {
                     if (!mtlxDefinitionOptions.implicitAssignmentWarning) break;
                     std::cout << "value is determined from the OSL parameter type and cannot be overridden by metadata. Skipping." << std::endl;
-                    continue; // skip setting this attribute
+                    continue;
                 }
                 case hashString("uniform"): {
                     if (!mtlxDefinitionOptions.typeMismatchWarning) break;
@@ -400,13 +475,13 @@ bool createMaterialXDefinitions(
                 case hashString("colorspace"): {
                     if (!mtlxDefinitionOptions.typeMismatchWarning) break;
                     if (paramType != "color3") {
-                        std::cerr << "Warning: colorspace can only be used with color3inputs, parameter " << paramName << " is " << paramType << std::endl;
+                        std::cerr << "Warning: colorspace can only be used with color3 inputs, parameter " << paramName << " is " << paramType << std::endl;
                     }
                     break;
                 }
                 case hashString("unittype"): {
                    if (!mtlxDefinitionOptions.typeMismatchWarning) break;
-                    if (paramType != "float" && paramType != "vector3" && paramType != "filename") { // TODO: need to ensure filename
+                    if (paramType != "float" && paramType != "vector3" && paramType != "filename") {
                         std::cerr << "Warning: unittype can only be used with float, vector, or filename inputs, parameter " << paramName << " is " << paramType << std::endl;
                     }
                     break;
@@ -590,7 +665,9 @@ int main(int argc, char* const argv[]) {
         tokens.emplace_back(argv[i]);
     }
 
-    CommandLineArgs inputArgs;
+    LibraryCommandLineArgs inputArgs;
+    inputArgs.oslCompileOptions.writeSourceToDisk = true;
+
     for (size_t i = 0; i < tokens.size(); i++) {
         const std::string& token = tokens[i];
         const std::string& nextToken = i + 1 < tokens.size() ? tokens[i + 1] : mx::EMPTY_STRING;
@@ -599,7 +676,7 @@ int main(int argc, char* const argv[]) {
         switch (parseResult) {
             case CommandLineArgs::SUCCESS:
                 break;
-            case CommandLineArgs::SUCCESS_AND_BUMP:
+            case CommandLineArgs::SUCCESS_CONSUME_NEXT:
                 i++;
                 break;
             case CommandLineArgs::FAILURE:
@@ -616,18 +693,10 @@ int main(int argc, char* const argv[]) {
 
     //get std::vector of paths to all .osl files in oslLibraryPath
     std::vector<mx::FilePath> files = findFiles(inputArgs.oslLibraryPath, ".osl");
-    
-    mx::FileSearchPath oslRendererIncludePaths;
-    oslRendererIncludePaths.append(inputArgs.oslIncludePath);
-
-    OslCompileOptions options;
-    options.oslIncludePath = oslRendererIncludePaths;
-    options.writeSourceToDisk = !inputArgs.skipWritingOSLSource;
-    options.definePreprocessors = inputArgs.oslDefine;
 
     // shader metadata is defined in the shader entry 
     // SOLO_SHADER enables shader entry points 
-    options.definePreprocessors.emplace_back("SOLO_SHADER");
+    inputArgs.oslCompileOptions.definePreprocessors.emplace_back("SOLO_SHADER");
 
     MaterialXDefinitionOptions mtlxDefinitionOptions;
 
@@ -637,6 +706,12 @@ int main(int argc, char* const argv[]) {
 
     for (int i = 0; i < files.size(); i++) {
         const std::string oslFileName = files[i].getBaseName();
+        
+        // Get relative path from oslLibraryPath using filesystem utilities
+        fs::path fullPath(files[i].asString());
+        fs::path basePath(inputArgs.oslLibraryPath.asString());
+        fs::path relativePath = fs::relative(fullPath, basePath);
+        mx::FilePath relativeOslPath(relativePath.string());
 
         try {
             // open and read the osl file
@@ -652,18 +727,35 @@ int main(int argc, char* const argv[]) {
 
             osl::OSLQuery osoQuery;
             
-            compileOSLToBytecode(oslFileContent, oslFileName, inputArgs.libraryOutputPath, options, &osoQuery);
+            compileOSLToBytecode(oslFileContent, oslFileName, inputArgs.libraryOutputPath, inputArgs.oslCompileOptions, &osoQuery);
     
-            createMaterialXDefinitions(osoQuery, oslFileName, nodeDefMtlxDoc, implMtlxDoc, typeDefMtlxDoc, inputArgs.libraryOutputPath, mtlxDefinitionOptions);
+            createMaterialXDefinitions(osoQuery, oslFileName, relativeOslPath, nodeDefMtlxDoc, implMtlxDoc, typeDefMtlxDoc, inputArgs.libraryOutputPath, mtlxDefinitionOptions);
         } catch (const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;
+        }
+    }
+
+    // The headers in the autolib just point to shaders in src
+    // After duplicated shaders are flattened to root, the includes 
+    // in the headers need to be rewritten to point to the new location of the osl files.
+    if (inputArgs.autolibIncludeRewrite) {
+        for (const auto& includePath : inputArgs.oslCompileOptions.oslIncludePath) {
+            auto headerFiles = findFiles(includePath, ".h", true);
+            
+            for (const auto& relativeHeaderPath : headerFiles) {
+                mx::FilePath outputHeaderPath = inputArgs.libraryOutputPath / relativeHeaderPath;
+                
+                if (outputHeaderPath.exists()) {
+                    rewriteHeaderIncludePaths(outputHeaderPath, relativeHeaderPath);
+                }
+            }
         }
     }
 
     mx::FilePath outputNodeDefFilePath = inputArgs.libraryOutputPath / "autolib_defs.mtlx";
     mx::FilePath outputImplFilePath = inputArgs.libraryOutputPath / "autolib_genosl_impl.mtlx";
 
-    nodeDefMtlxDoc->importLibrary(typeDefMtlxDoc); // add the typdefs to the end of the file
+    nodeDefMtlxDoc->importLibrary(typeDefMtlxDoc);
 
     constexpr bool debug = false;
 

@@ -1,0 +1,293 @@
+#ifndef SOLO_SHADER   
+    #define ENTRY_TOON void 
+#endif
+    
+#ifndef ENTRY_TOON
+    #define DEFAULT_TOON(x) = x
+    #define ENTRY_TOON shader
+#else
+    #define DEFAULT_TOON(x)
+#endif
+
+#include "Pattern/HalftoneDots.h"
+#include "Utility/AmbientOcclusion.h"
+#include "ToonOutline.h"
+
+/* 
+void HalftoneDots(
+    vector UVW
+    vector scale
+    color inputValue
+    color dotsColor	
+    color backgroundColor
+
+    output color
+)
+
+void AmbientOcclusion(
+    color inColor
+    color hitColor
+    closure color closureIn
+    closure color closureHit
+    float aoAngle
+    float maxDistance 
+    vector Normalbump 
+    output color outColor 
+    output closure color closureOut 
+)
+
+void ToonOutline(
+    output float outAlpha
+    float width
+    float distanceThreadshold
+    float normalThreadshold
+    float nscale
+    float namount
+    output normal outNormal
+    output closure color Cout = 0
+);
+
+*/
+
+ENTRY_TOON ToonShader [[ 
+    string nodegroup = "autolib", 
+]] (
+    // Base
+    color baseColor DEFAULT_TOON(color(0.4))  [[ string uifolder = "Base" ]],
+    float opacity DEFAULT_TOON(1.0)  [[ string uifolder = "Base", float uimin = 0.0, float uimax = 1.0 ]],
+
+    // Lighting
+    int viewIndependent DEFAULT_TOON(0) [[ string uifolder = "Lighting", string doc = "Ignores the camera direction for specular", string widget = "checkBox"]],
+    vector lightDirection DEFAULT_TOON(vector(0, 0, -0.6))  [[ string uifolder = "Lighting" ]],
+    color lightColor DEFAULT_TOON(color(1.0))  [[ string uifolder = "Lighting" ]],
+    color ambientColor DEFAULT_TOON(0.1)  [[ string uifolder = "Lighting" ]],
+
+    // Diffuse
+    float diffuseShadowTermination DEFAULT_TOON(1.0)  [[ string uifolder = "Diffuse", string doc = "On a sphere at a value of zero the termination is at the equator", float uimin = -1.0, float uimax = 1.0 ]],
+    float diffuseSmoothness DEFAULT_TOON(0.5)  [[ string uifolder = "Diffuse", float uimin = 0.0, float uimax = 0.1 ]],
+
+    // Specular 
+    color specularColor DEFAULT_TOON(color(1))  [[ string uifolder = "Specular" ]],
+    float specularSmoothness DEFAULT_TOON(0.5)  [[ string uifolder = "Specular", float uimin = 0.0, float uimax = 0.1 ]],
+    float specularGlossiness DEFAULT_TOON(4.0)  [[ string uifolder = "Specular", float uimin = 1.0, float uimax = 256.0 ]],
+    float specularLow DEFAULT_TOON(0.005)  [[ string uifolder = "Specular", float uimin = 0.0, float uimax = 0.1 ]],
+
+    // Mid Specular + Rim
+    color rimColor DEFAULT_TOON(color(0.5)) [[ string uifolder = "Mid Specular" ]],
+    float rimAmount DEFAULT_TOON(0.7) [[ string uifolder = "Mid Specular", float uimin = 0.0, float uimax = 1.0 ]],
+    float rimThreshold DEFAULT_TOON(0.1) [[ string uifolder = "Mid Specular", float uimin = 0.0, float uimax = 1.0 ]],
+    float rimSpread DEFAULT_TOON(0.1) [[ string uifolder = "Mid Specular", float uimin = 0.0, float uimax = 0.1 ]],
+
+    color midSpecularColor DEFAULT_TOON(color(1))  [[ string uifolder = "Mid Specular" ]],
+    float midSpecularCenter DEFAULT_TOON(0.7) [[ string uifolder = "Mid Specular", float uimin = 0.0, float uimax = 1.0 ]],
+    float midSpecularWidth DEFAULT_TOON(0.2) [[ string uifolder = "Mid Specular", float uimin = 0.0, float uimax = 1.0 ]],
+    float midSpecularIntensity DEFAULT_TOON(0.5) [[ string uifolder = "Mid Specular", float uimin = 0.0, float uimax = 1.0 ]],
+
+    // Halftone Parameters
+
+    // Ambient Occlusion
+    float aoAngle DEFAULT_TOON(0.35)  [[ string uifolder = "AO", float uimin = 0.0, float uimax = 1.57 ]],
+    float aoMaxDistance DEFAULT_TOON(1.0)  [[ string uifolder = "AO", float uimin = 0.0 ]],
+    color aoColorIn DEFAULT_TOON(color(1.0))  [[ string uifolder = "AO" ]],
+    color aoHitColor DEFAULT_TOON(color(0.5))  [[ string uifolder = "AO" ]],
+
+    // Halftone AO
+    vector aoDotScale DEFAULT_TOON(vector(0,4,0))  [[ string uifolder = "Halftone AO" ]],
+    float aoDotAngle DEFAULT_TOON(45.0)  [[ string uifolder = "Halftone AO" ]],
+    float aoDotFuzz DEFAULT_TOON(0.0)  [[ string uifolder = "Halftone AO" ]],
+    color aoDotsColor DEFAULT_TOON(color(0.0))  [[ string uifolder = "Halftone AO" ]],
+    color aoBackgroundColor DEFAULT_TOON(color(1.0))  [[ string uifolder = "Halftone AO" ]],
+
+    // Halftone Diffuse
+    vector diffuseDotScale DEFAULT_TOON(vector(0,4,0))  [[ string uifolder = "Halftone Diffuse" ]],
+    float diffuseDotAngle DEFAULT_TOON(45.0)  [[ string uifolder = "Halftone Diffuse" ]],
+    float diffuseDotFuzz DEFAULT_TOON(0.0)  [[ string uifolder = "Halftone Diffuse" ]],
+    color diffuseDotsColor DEFAULT_TOON(color(0.0))  [[ string uifolder = "Halftone Diffuse" ]],
+    color diffuseBackgroundColor DEFAULT_TOON(color(1.0))  [[ string uifolder = "Halftone Diffuse" ]],
+
+    // Halftone Specular
+    vector specularDotScale DEFAULT_TOON(vector(3))  [[ string uifolder = "Halftone Specular" ]],
+    float specularDotAngle DEFAULT_TOON(45.0)  [[ string uifolder = "Halftone Specular" ]],
+    float specularDotFuzz DEFAULT_TOON(0.0)  [[ string uifolder = "Halftone Specular" ]],
+    color specularDotsColor DEFAULT_TOON(color(0.0))  [[ string uifolder = "Halftone Specular" ]],
+    color specularBackgroundColor DEFAULT_TOON(color(1.0))  [[ string uifolder = "Halftone Specular" ]],
+
+    // Halftone Mid Specular 
+    vector midSpecularDotScale DEFAULT_TOON(vector(4))  [[ string uifolder = "Halftone Specular" ]],
+    float midSpecularDotAngle DEFAULT_TOON(45.0)  [[ string uifolder = "Halftone Specular" ]],
+    float midSpecularDotFuzz DEFAULT_TOON(0.0)  [[ string uifolder = "Halftone Specular" ]],
+    color midSpecularDotsColor DEFAULT_TOON(color(0.0))  [[ string uifolder = "Halftone Specular" ]],
+    color midSpecularBackgroundColor DEFAULT_TOON(color(1.0))  [[ string uifolder = "Halftone Specular" ]],
+
+    // Outline
+    float outlineWidth DEFAULT_TOON(0.005)  [[ string uifolder = "Outline", float uimin = 0.0 ]],
+    float outlineDistanceThreshold DEFAULT_TOON(1.1)  [[ string uifolder = "Outline", float uimin = 0.0 ]],
+    float outlineNormalThreshold DEFAULT_TOON(0.1)  [[ string uifolder = "Outline", float uimin = 0.0 ]],
+
+    float emissionWeight DEFAULT_TOON(1.0)  [[ string uifolder = "Output", float uimin = 0.0, float uimax = 1.0 ]],
+    
+    // Output
+    output color outColor = 0,
+    output closure color Cout = 0
+) {
+    // Ambient Occlusion
+    closure color closureIn = 0;
+    closure color closureHit = 0;
+
+    color aoColor;
+    closure color aoClosure;
+
+    AmbientOcclusion(
+        aoColorIn, // color inColor
+        aoHitColor, // color hitColor
+        closureIn, // closure color closureIn
+        closureHit, // closure color closureHit
+        aoAngle, // float aoAngle
+        aoMaxDistance, // float maxDistance 
+        vector(0), // vector bumpNormal 
+        aoColor, // output color outColor 
+        aoClosure // output closure color closureOut 
+    );
+
+    color aoDots;
+
+    HalftoneDots(
+        transform("raster", P),
+        aoDotScale, // vector scale
+        aoDotAngle, // float angle
+        aoColor, // color inputValue
+        aoDotFuzz, // float fuzz
+        aoDotsColor, // color dotsColor	
+        aoBackgroundColor, // color backgroundColor
+        aoDots // output color dots
+    );
+
+    // Diffuse
+    vector unitLightDirection = viewIndependent ? normalize(lightDirection) : normalize(lightDirection - I);
+    vector invertedLightDir = unitLightDirection * -1;
+
+    float NdotL = 0.5 * dot(N, invertedLightDir) + 0.5 * diffuseShadowTermination;
+    float smoothGradient = smoothstep(0.0, diffuseSmoothness, NdotL);
+    color gradientLight = lightColor * smoothGradient;
+    color diffuseLayer = gradientLight + ambientColor;
+
+    color diffuseDots;
+
+    HalftoneDots(
+        transform("raster", P),
+        diffuseDotScale, // vector scale
+        diffuseDotAngle, // float angle
+        diffuseLayer * aoColor, // color inputValue
+        diffuseDotFuzz, // float fuzz
+        diffuseDotsColor, // color dotsColor	
+        diffuseBackgroundColor, // color backgroundColor
+        diffuseDots // output color dots
+    );
+
+    diffuseLayer *= diffuseDots * aoDots;
+
+    // Specular
+    vector reflectVec = reflect(-I, N);
+    float LdotV = max(dot(invertedLightDir, reflectVec), 0.0);
+    float specularBase = smoothGradient * LdotV;
+    float specularIntensityPower = pow(specularBase, specularGlossiness);
+
+    float specHigh = specularLow + specularSmoothness;
+    float specularRemap = smoothstep(specularLow, specHigh, specularIntensityPower);
+    color specularLayer = specularRemap * specularColor;
+
+    color specularDots;
+
+    HalftoneDots(
+        transform("raster", P),
+        specularDotScale, // vector scale
+        specularDotAngle, // float angle
+        specularLayer, // color inputValue
+        specularDotFuzz, // float fuzz
+        specularDotsColor, // color dotsColor	
+        specularBackgroundColor, // color backgroundColor
+        specularDots // output color dots
+    );
+
+    specularLayer *= specularDots;
+
+    // Outline
+    float outline = 0;
+    closure color outlineClosure;
+
+    ToonOutline(
+        outlineWidth, // float width
+        outlineDistanceThreshold, // float distanceThreadshold
+        outlineNormalThreshold, // float normalThreadshold
+        0, // float nscale
+        0, // float namount
+        outline, // output float outAlpha
+        outlineClosure // output closure color Cout
+    );
+
+    // Mid Specular + Rim
+    float NdotV = dot(N, I);
+    float NdotVInverted = 1.0 - NdotV;
+    float rimPower = pow(max(NdotL, 0.0), rimThreshold);
+    float rimIntensity = NdotVInverted * rimPower;
+    float rimLow = rimAmount - rimSpread;
+    float rimHigh = rimAmount + rimSpread;
+    float rimGradient = smoothstep(rimLow, rimHigh, rimIntensity);
+    color rim = rimColor * rimGradient;
+
+    float center = midSpecularCenter * 2;
+    float width = midSpecularWidth;
+    float left = smoothstep(center - width, center, NdotL);
+    float right = 1.0 - smoothstep(center, center + width, NdotL);
+    float midSpecularWeight = midSpecularIntensity * left * right;
+    color midSpecularLayer = (midSpecularColor * midSpecularWeight) + rim;
+
+    color midSpecularDots;
+
+    HalftoneDots(
+        transform("raster", P),
+        midSpecularDotScale, // vector scale
+        midSpecularDotAngle, // float angle
+        midSpecularLayer, // color inputValue
+        midSpecularDotFuzz, // float fuzz
+        midSpecularDotsColor, // color dotsColor	
+        midSpecularBackgroundColor, // color backgroundColor
+        midSpecularDots // output color dots
+    );
+
+    midSpecularLayer *= midSpecularDots;
+
+    color combinedLighting = ((diffuseLayer * aoDots) + specularLayer + midSpecularLayer);
+    color baseTone = mix(baseColor * combinedLighting, 0, outline);
+    float finalOpacity = clamp(opacity, 0.0, 1.0);
+
+    color aoInverse = 1 - aoColor;
+    float metalRoughness = 0.01 + (aoInverse.r + aoInverse.g + aoInverse.b) / 3;
+
+    outColor = baseTone;
+
+    closure color base = oren_nayar_diffuse_bsdf(N, baseTone, 1.0);
+
+    /*
+    closure color base = baseTone * conductor_bsdf(
+        N, 0, 
+        metalRoughness, // float roughness_x, 
+        metalRoughness, // float roughness_y, 
+        1000,// color ior, 
+        diffuseLayer,// color extinction, 
+        "ggx" // string distribution
+    );
+    */
+    
+    
+    int useEmission = emissionWeight > 0;
+    if (useEmission) {
+        Cout = base + emissionWeight * uniform_edf(baseTone);
+    } else {
+        Cout = base;
+    }
+
+    if (finalOpacity < 1.0) {
+        Cout = Cout * finalOpacity + transparent() * (1.0 - finalOpacity);
+    }
+}

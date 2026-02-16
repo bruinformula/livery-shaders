@@ -29,87 +29,74 @@ const std::string argOptions =
     " Options: \n"
     "    --mtlxMaterialsPath        Path to the directory containing OSL shader files.  All .osl files in this directory and its subdirectories will be processed. \n"
     "    --osoOutputPath            Path to the output directory where generated MaterialX documents and OSL shaders will be written. \n"
-    "    --oslIncludePath           OSL Include Path\n"
-    "    --oslDefine [NAME=VALUE]   Define a preprocessor macro to be used during OSL compilation.  Can be specified multiple times to define multiple macros.\n"
-    "    --writeOSLSource           Write OSL source files to disk\n"
     "    --path                     Specify an additional data search path location (e.g. '/projects/MaterialX').  This absolute path will be queried when locating data libraries, XInclude references, and referenced images.\n"
     "    --library                  Specify an additional data library folder (e.g. 'vendorlib', 'studiolib').  This relative path will be appended to each location in the data search path when loading data libraries.\n"
     "    --help                     Prints this message\n";
 
-struct CommandLineArgs {
-    enum ParseResult {
-        SUCCESS,
-        SUCCESS_AND_BUMP,
-        FAILURE,
-        EXIT
-    };
+struct OsoExporterCommandLineArgs : public CommandLineArgs {
     mx::FilePath mtlxMaterialsPath;
     mx::FilePath osoOutputPath;
-    mx::FilePath oslIncludePath;
-    std::vector<std::string> oslDefine;
-
     mx::FileSearchPath searchPath;
     std::vector<mx::FilePath> libraryFolders;
-
-    bool writeOSLSource = false;
-
-    ParseResult parse(const std::string& token, const std::string& nextToken) {
-        // yes managed to get goto in here
-        if (token == "--mtlxMaterialsPath") {
-            if (nextToken.empty()) goto expectOption;
-            if (!mtlxMaterialsPath.isEmpty()) goto alreadySet;
-            
-            mtlxMaterialsPath = nextToken;
-            return SUCCESS_AND_BUMP;
-        } else if (token == "--osoOutputPath") {
-            if (nextToken.empty()) goto expectOption;
-            if (!osoOutputPath.isEmpty()) goto alreadySet;
-
-            osoOutputPath = nextToken;
-            return SUCCESS_AND_BUMP;
-        } else if (token == "--path") {
-            if (nextToken.empty()) goto expectOption;
-            searchPath.append(mx::FileSearchPath(nextToken));
-            return SUCCESS_AND_BUMP;
-        } else if (token == "--oslIncludePath") {
-            if (nextToken.empty()) goto expectOption;
-            if (!oslIncludePath.isEmpty()) goto alreadySet;
-
-            oslIncludePath = nextToken;
-            return SUCCESS_AND_BUMP;
-        } else if (token == "--library") {
-            if (nextToken.empty()) goto expectOption;
-            
-            libraryFolders.push_back(nextToken);
-            return SUCCESS_AND_BUMP;
-        } else if (token == "--oslDefine") {
-            if (nextToken.empty()) goto expectOption;
-            oslDefine.push_back(nextToken);
-            return SUCCESS_AND_BUMP;
-        } else if (token == "--writeOSLSource") {
-            writeOSLSource = true;
-            return SUCCESS;
-        } else if (token == "--help") {
-            std::cout << argOptions << std::endl;
-            return EXIT;
-        } else {
-            std::cout << "Unrecognized command-line option: " << token << std::endl;
-            return FAILURE;
+    
+    OslCompileOptions oslCompileOptions;
+    
+    ParseResult parse(const std::string& token, const std::string& nextToken) override {
+        switch (hashString(token.c_str())) {
+            case hashString("--mtlxMaterialsPath"): {
+                if (nextToken.empty()) goto expectOption;
+                if (!mtlxMaterialsPath.isEmpty()) goto alreadySet;
+                
+                mtlxMaterialsPath = nextToken;
+                return SUCCESS_CONSUME_NEXT;
+            }
+            case hashString("--osoOutputPath"): {
+                if (nextToken.empty()) goto expectOption;
+                if (!osoOutputPath.isEmpty()) goto alreadySet;
+                osoOutputPath = nextToken;
+                return SUCCESS_CONSUME_NEXT;
+            }
+            case hashString("--path"): {
+                if (nextToken.empty()) goto expectOption;
+                searchPath.append(mx::FileSearchPath(nextToken));
+                return SUCCESS_CONSUME_NEXT;
+            }
+            case hashString("--library"): {
+                if (nextToken.empty()) goto expectOption;
+                libraryFolders.push_back(nextToken);
+                return SUCCESS_CONSUME_NEXT;
+            }
+            case hashString("--help"): {
+                std::cout << argOptions << std::endl;
+                std::cout << "\n" << oslcArgOptions << std::endl;
+                return EXIT;
+            }
+            default: {
+                // Try parsing as OSL compile option
+                ParseResult oslResult = oslCompileOptions.parse(token, nextToken);
+                if (oslResult == SUCCESS || oslResult == SUCCESS_CONSUME_NEXT) {
+                    return oslResult;
+                } else if (oslResult == FAILURE) {
+                    // OSL compiler already printed error message
+                    return FAILURE;
+                } else {
+                    std::cout << "Unrecognized command-line option: " << token << std::endl;
+                    return FAILURE;
+                }
+            }
         }
-
-        alreadySet: {
-            std::cerr << token << " is already set!" << std::endl;
-            return FAILURE;
-        }
-
-        expectOption: {
-            std::cerr << "Expected another token following command-line option: " << token << std::endl; 
-            return FAILURE;
-        }
-
+        
+    alreadySet: {
+        std::cerr << token << " is already set!" << std::endl;
+        return FAILURE;
     }
-
-    //enforces any additional rules about the input arguments
+    expectOption: {
+        std::cerr << "Expected another token following command-line option: " << token << std::endl; 
+        return FAILURE;
+    }
+    }
+    
+    // enforce additional rules about the input arguments
     bool verify() {
         if (mtlxMaterialsPath.isEmpty()) {
             std::cerr << "mtlxMaterialsPath is not set!" << std::endl;
@@ -119,20 +106,49 @@ struct CommandLineArgs {
             std::cerr << "osoOutputPath is not set!" << std::endl;
             return false;
         }
-
+        
+        // output Path
         if (!osoOutputPath.exists() || !osoOutputPath.isDirectory()) {
             osoOutputPath.createDirectory();
-
             if (!osoOutputPath.exists() || !osoOutputPath.isDirectory()) {
-                std::cerr << "Failed to find and/or create the provided output oso path:"
-                        << osoOutputPath.asString() << std::endl;
-                return 1;
+                std::cerr << "Failed to find and/or create the provided output oso path: "
+                          << osoOutputPath.asString() << std::endl;
+                return false;
             }
         }
-
+        
+        // validate materials path 
+        if (!mtlxMaterialsPath.exists()) {
+            std::cerr << "The provided MaterialX materials path does not exist: " << mtlxMaterialsPath.asString() << std::endl;
+            return false;
+        }
+        
+        // validate search paths 
+        for (const auto& path : searchPath) {
+            if (!path.exists()) {
+                std::cerr << "Search path does not exist: " << path.asString() << std::endl;
+                return false;
+            }
+        }
+        
+        // validate library paths
+        for (const auto& libFolder : libraryFolders) {
+            bool foundInSearchPath = false;
+            for (const auto& searchPathEntry : searchPath) {
+                mx::FilePath fullPath = searchPathEntry / libFolder;
+                if (fullPath.exists() && fullPath.isDirectory()) {
+                    foundInSearchPath = true;
+                    break;
+                }
+            }
+            if (!foundInSearchPath && !searchPath.isEmpty()) {
+                std::cerr << "Warning: Library folder not found in any search path: " 
+                          << libFolder.asString() << std::endl;
+            }
+        }
+        
         return true;
     }
-
 };
 
 void edgePrintout(
@@ -155,7 +171,13 @@ int main(int argc, char* const argv[]) {
         tokens.emplace_back(argv[i]);
     }
 
-    CommandLineArgs inputArgs;
+    OsoExporterCommandLineArgs inputArgs;
+
+    inputArgs.oslCompileOptions.writeSourceToDisk = false;
+    inputArgs.oslCompileOptions.writeByteCodeToDisk = true;
+    inputArgs.oslCompileOptions.embedSource = false;
+    inputArgs.oslCompileOptions.optimizationLevel = OslCompileOptions::Performance;
+
     for (size_t i = 0; i < tokens.size(); i++) {
         const std::string& token = tokens[i];
         const std::string& nextToken = i + 1 < tokens.size() ? tokens[i + 1] : mx::EMPTY_STRING;
@@ -164,7 +186,7 @@ int main(int argc, char* const argv[]) {
         switch (parseResult) {
             case CommandLineArgs::SUCCESS:
                 break;
-            case CommandLineArgs::SUCCESS_AND_BUMP:
+            case CommandLineArgs::SUCCESS_CONSUME_NEXT:
                 i++;
                 break;
             case CommandLineArgs::FAILURE:
@@ -198,9 +220,7 @@ int main(int argc, char* const argv[]) {
         std::cout << "  - " << file.asString() << std::endl;
     }
     
-    mx::FileSearchPath oslRendererIncludePaths;
-    oslRendererIncludePaths.append(inputArgs.oslIncludePath);
-    oslRendererIncludePaths.append(inputArgs.searchPath.find("libraries/stdlib/genosl/include"));
+    inputArgs.oslCompileOptions.oslIncludePath.append(inputArgs.searchPath.find("libraries/stdlib/genosl/include"));
 
     mx::ShaderGeneratorPtr oslShaderGen = mx::OslShaderGenerator::create();
 
@@ -242,17 +262,107 @@ int main(int argc, char* const argv[]) {
     context.registerSourceCodeSearchPath(inputArgs.searchPath);
     context.getOptions().addUpstreamDependencies = true;
     context.getOptions().fileTextureVerticalFlip = false;
-    context.getOptions().oslImplicitSurfaceShaderConversion = false;
+    //context.getOptions().shaderInterfaceType = mx::ShaderInterfaceType::SHADER_INTERFACE_REDUCED;
 
-    OslCompileOptions options;
-    options.oslIncludePath = oslRendererIncludePaths;
-    options.writeSourceToDisk = inputArgs.writeOSLSource;
-    options.writeByteCodeToDisk = true;
-    options.definePreprocessors = inputArgs.oslDefine;
-    options.embedSource = false;
-    options.optimizationLevel = OslCompileOptions::Performance;
 
     std::unordered_set<std::string> materialNames;
+
+    /*
+    for (const mx::DocumentPtr& doc : materialDocuments) {
+        std::cout << "Document has " << doc->getMaterialNodes().size() << " material nodes." << std::endl;
+        for (mx::NodePtr materialNode : doc->getMaterialNodes()) {
+            const std::string oslFileName = materialNode->getName();
+            std::cout << "Generating OSL shader for material: " << oslFileName << std::endl;
+            
+            std::cout << "  Material node category: " << materialNode->getCategory() << std::endl;
+            std::cout << "  Material node type: " << materialNode->getType() << std::endl;
+            
+            if (materialNames.contains(oslFileName)) {
+                std::cerr << "Duplicate material name found: " << oslFileName << ". Material names must be unique!" << std::endl;
+                return 1;
+            }
+            materialNames.insert(oslFileName);
+            
+            std::cout << "  Material has " << materialNode->getInputs().size() << " inputs:" << std::endl;
+            for (mx::InputPtr input : materialNode->getInputs()) {
+                std::cout << "    - Input: " << input->getName() 
+                        << ", Type: " << input->getType() 
+                        << ", HasValue: " << (input->hasValue() ? "yes" : "no");
+                if (input->hasNodeName()) {
+                    std::cout << ", NodeName: " << input->getNodeName();
+                }
+                std::cout << std::endl;
+            }
+            
+            std::cout << "  Checking child nodes in document:" << std::endl;
+            for (mx::NodePtr node : doc->getNodes()) {
+                std::cout << "    - Node: " << node->getName() 
+                        << ", Category: " << node->getCategory() 
+                        << ", Type: " << node->getType() << std::endl;
+                
+                for (mx::InputPtr input : node->getInputs()) {
+                    std::cout << "      Input: " << input->getName() 
+                            << ", Type: " << input->getType() << std::endl;
+                }
+                
+                std::cout << "      Outputs: " << node->getOutputs().size() << std::endl;
+                for (mx::OutputPtr output : node->getOutputs()) {
+                    std::cout << "        Output: " << output->getName() 
+                            << ", Type: " << output->getType() << std::endl;
+                }
+                
+                mx::NodeDefPtr nodeDef = node->getNodeDef();
+                if (nodeDef) {
+                    std::cout << "      NodeDef found: " << nodeDef->getName() 
+                            << ", Type: " << nodeDef->getType() << std::endl;
+                    std::cout << "      NodeDef outputs: " << nodeDef->getOutputs().size() << std::endl;
+                    for (mx::OutputPtr defOutput : nodeDef->getOutputs()) {
+                        std::cout << "        DefOutput: " << defOutput->getName() 
+                                << ", Type: " << defOutput->getType() << std::endl;
+                    }
+                    
+                    // Check if implementation exists
+                    mx::InterfaceElementPtr impl = nodeDef->getImplementation();
+                    if (impl) {
+                        std::cout << "      Implementation found: " << impl->getName() << std::endl;
+                    } else {
+                        std::cout << "      WARNING: No implementation found for NodeDef!" << std::endl;
+                    }
+                } else {
+                    std::cout << "      WARNING: No NodeDef found for node '" 
+                            << node->getName() << "' (category: " 
+                            << node->getCategory() << ")" << std::endl;
+                }
+            }
+            
+            // check registered type syntaxes in the shader generator
+            std::cout << "\n  Checking OSL shader generator type syntax:" << std::endl;
+            const mx::Syntax& oslSyntax = oslShaderGen->getSyntax();
+            std::cout << "    Registered type syntaxes:" << std::endl;
+            for (const auto& typeSyntax : oslSyntax.getTypeSyntaxes()) {
+                std::cout << "      - " << typeSyntax->getName() << std::endl;
+            }
+            
+            try {
+                mx::ShaderPtr shader = oslShaderGen->generate(
+                    "complete_material", 
+                    materialNode, 
+                    context
+                );
+                compileOSLToBytecode(
+                    shader->getSourceCode(), 
+                    oslFileName, 
+                    inputArgs.osoOutputPath, 
+                    inputArgs.oslCompileOptions
+                );
+            } catch (mx::Exception& e) {
+                std::cerr << "Error: " << e.what() << std::endl;
+                std::cerr << "  This error occurred while processing material: " << oslFileName << std::endl;
+                return 1;
+            }
+        }
+    }
+    */
 
     for (const mx::DocumentPtr& doc : materialDocuments) {
         std::cout << "Document has " << doc->getMaterialNodes().size() << " material nodes." << std::endl;
@@ -280,7 +390,7 @@ int main(int argc, char* const argv[]) {
                     shader->getSourceCode(), 
                     oslFileName, 
                     inputArgs.osoOutputPath, 
-                    options
+                    inputArgs.oslCompileOptions
                 );
                             
             } catch (mx::Exception& e) {

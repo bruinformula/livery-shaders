@@ -1,0 +1,32 @@
+#ifndef SOLO_SHADER   
+    #define ENTRY_SIMPLE_SPLATTER void 
+#endif
+
+#ifndef ENTRY_SIMPLE_SPLATTER
+    #define DEFAULT_SIMPLE_SPLATTER(x) = x
+    #define ENTRY_SIMPLE_SPLATTER shader
+#else
+    #define DEFAULT_SIMPLE_SPLATTER(x)
+#endif
+
+ENTRY_SIMPLE_SPLATTER SimpleSplatter [[ 
+    string nodegroup = "autolib", 
+]] (
+    vector UV  DEFAULT_SIMPLE_SPLATTER(vector(u, v, 0)),
+    float scale  DEFAULT_SIMPLE_SPLATTER(5.0),
+    float smoothness  DEFAULT_SIMPLE_SPLATTER(0.01),
+    float basinHeight  DEFAULT_SIMPLE_SPLATTER(0.6),
+
+    output float mask  DEFAULT_SIMPLE_SPLATTER(0.0),
+    output float height  DEFAULT_SIMPLE_SPLATTER(0.0)
+) {
+
+    float speckle = noise(transform("shader", UV) * scale);
+
+    mask = step(0.7 - smoothness, speckle);
+
+    float bigMask = smoothstep(0.7 - smoothness * 2.0, 0.7 - smoothness, speckle);
+    float smallMask = smoothstep(0.7 - smoothness, 0.7, speckle) * basinHeight;
+
+    height = bigMask - smallMask;
+}
