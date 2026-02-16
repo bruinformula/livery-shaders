@@ -399,17 +399,56 @@ bool createMaterialXDefinitions(
             continue;
         }
 
+        std::string defaultValue = parseOSLParameterValue(*param, &osoQuery, paramName);
         std::string paramType = parseOSLParameterType(*param);
 
+        for (auto metadata = param->metadata.begin(); metadata != param->metadata.end(); ++metadata) {
+            std::string attributeName = metadata->name.c_str();
+            std::string attributeType = parseOSLParameterType(*metadata);
+            std::string attributeValue = parseOSLParameterValue(*metadata);
+
+            bool attributeTypeIsString = attributeType == "string";
+
+            switch (hashString(attributeName)) {
+                case hashString("name"):  { 
+                    if (!mtlxDefinitionOptions.implicitAssignmentWarning) break;
+                    paramName = attributeValue;
+                    std::cout << "name is determined by the name of the shader function signature. Skipping" << std::endl;
+                    continue;
+                }
+                case hashString("type"): {
+                    switch (hashString(attributeValue)) { 
+                        case hashString( "filename"): {
+                            // allow filename attributes to be specified as strings 
+                            // in metadata since that's more intuitive 
+                            // TODO: actaully figure what the path semantics are for this 
+                            if (attributeTypeIsString) {
+                                paramType = "filename";
+                            }
+                            continue;
+                        }
+                        default: {
+                            if (!mtlxDefinitionOptions.implicitAssignmentWarning) break;
+                            std::cout << "type is determined from the OSL parameter type and cannot be overridden by metadata. Skipping." << std::endl;
+                            continue;
+                        }
+                    }
+                }
+                case hashString("value"): {
+                    if (!mtlxDefinitionOptions.implicitAssignmentWarning) break;
+                    std::cout << "value is determined from the OSL parameter type and cannot be overridden by metadata. Skipping." << std::endl;
+                    continue;
+                }
+            }
+        }
+
         mx::ElementPtr element;
+
         if (param->isoutput) {
             element = nodeDef->addOutput(paramName, paramType);
         } else {
             element = nodeDef->addInput(paramName, paramType);
         }
-
-        //Add Defaults 
-        std::string defaultValue = parseOSLParameterValue(*param, &osoQuery, paramName);
 
         if (paramType != "BSDF") {
             element->setAttribute("value", defaultValue);
@@ -422,27 +461,11 @@ bool createMaterialXDefinitions(
             std::string attributeType = parseOSLParameterType(*metadata);
             std::string attributeValue = parseOSLParameterValue(*metadata);
             
-            // Unescape string attributes
             if (attributeType == "string") {
                 attributeValue = unescapeString(attributeValue);
             }
 
             switch (hashString(attributeName)) {
-                case hashString("name"):  { 
-                    if (!mtlxDefinitionOptions.implicitAssignmentWarning) break;
-                    std::cout << "name is determined by the name of the shader function signature. Skipping" << std::endl;
-                    continue;
-                }
-                case hashString("type"): {
-                    if (!mtlxDefinitionOptions.implicitAssignmentWarning) break;
-                    std::cout << "type is determined from the OSL parameter type and cannot be overridden by metadata. Skipping." << std::endl;
-                    continue;
-                }
-                case hashString("value"): {
-                    if (!mtlxDefinitionOptions.implicitAssignmentWarning) break;
-                    std::cout << "value is determined from the OSL parameter type and cannot be overridden by metadata. Skipping." << std::endl;
-                    continue;
-                }
                 case hashString("uniform"): {
                     if (!mtlxDefinitionOptions.typeMismatchWarning) break;
                     if (attributeType != "integer") {
@@ -452,6 +475,20 @@ bool createMaterialXDefinitions(
                 }
                 case hashString("defaultgeomprop"): {
                     if (!mtlxDefinitionOptions.typeMismatchWarning) break;
+                    /* do i even need these
+                    switch (hashString(attributeValue)) {
+                        "Pobject"
+                        "Nobject"
+                        "Tobject"
+                        "Bobject"
+                        "Pworld"
+                        "Nworld"
+                        "Tworld"
+                        "Bworld"	
+                        "UV0"
+                    }
+                    */
+
                     if (paramType != "vector3") {
                         std::cerr << "Warning: defaultgeomprop can only be used with vector3 inputs, parameter " << paramName << " is " << paramType << std::endl;
                     }

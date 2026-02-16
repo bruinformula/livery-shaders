@@ -13,6 +13,7 @@
   </surface>
   <decal name="decal" type="multioutput" xpos="-8.797101" ypos="-4.827586">
     <output name="outColor" type="color3" />
+    <input name="filename" type="filename" value="../image.png" />
   </decal>
   <splatter_layer name="splatter_layer" type="multioutput" xpos="1.014493" ypos="-13.896552">
     <output name="splatterLayer" type="BSDF" />

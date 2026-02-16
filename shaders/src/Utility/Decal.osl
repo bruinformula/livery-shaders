@@ -13,7 +13,7 @@ ENTRY_DECAL Decal [[
     string nodegroup = "autolib", 
 ]] (
     point UV DEFAULT_DECAL(0),
-    string filename DEFAULT_DECAL(""),
+    string filename DEFAULT_DECAL("") [[ string type = "filename" ]],
     float width DEFAULT_DECAL(0.1),
     string units DEFAULT_DECAL("m"),
 
