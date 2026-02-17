@@ -27,7 +27,7 @@ const std::string argOptions =
     "    --library                  Specify an additional data library folder (e.g. 'vendorlib', 'studiolib').  This relative path will be appended to each location in the data search path when loading data libraries.\n"
     "    --help                     Prints this message\n";
 
-struct NodeQueryCommandLineArgs : public CommandLineArgs {
+struct NodeQueryArgumentHandler : public ArgumentHandler {
 
     mx::FilePath mtlxMaterialsPath;
     mx::FilePath csvOutputPath;
@@ -123,21 +123,21 @@ int main(int argc, char* const argv[]) {
         tokens.emplace_back(argv[i]);
     }
 
-    NodeQueryCommandLineArgs inputArgs;
+    NodeQueryArgumentHandler inputArgs;
     for (size_t i = 0; i < tokens.size(); i++) {
         const std::string& token = tokens[i];
         const std::string& nextToken = i + 1 < tokens.size() ? tokens[i + 1] : mx::EMPTY_STRING;
-        CommandLineArgs::ParseResult parseResult = inputArgs.parse(token, nextToken);
+        ArgumentHandler::ParseResult parseResult = inputArgs.parse(token, nextToken);
 
         switch (parseResult) {
-            case CommandLineArgs::SUCCESS:
+            case ArgumentHandler::SUCCESS:
                 break;
-            case CommandLineArgs::SUCCESS_CONSUME_NEXT:
+            case ArgumentHandler::SUCCESS_CONSUME_NEXT:
                 i++;
                 break;
-            case CommandLineArgs::FAILURE:
+            case ArgumentHandler::FAILURE:
                 return 1;
-            case CommandLineArgs::EXIT:
+            case ArgumentHandler::EXIT:
                 return 0;
         }
     }

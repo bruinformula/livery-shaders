@@ -120,7 +120,7 @@ private:
     mx::StringVec _errorLog;
 };
 
-struct CommandLineArgs {
+struct ArgumentHandler {
 
     enum ParseResult {
         SUCCESS,
@@ -132,7 +132,7 @@ struct CommandLineArgs {
     virtual ParseResult parse(const std::string& token, const std::string& nextToken) = 0;
 };
 
-struct OslCompileOptions : public CommandLineArgs {
+struct OslCompileOptions : public ArgumentHandler {
     // Standard Options
     bool verboseMode = false;
     bool quietMode = false;
