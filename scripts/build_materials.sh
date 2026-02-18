@@ -1,1 +1,2 @@
-./build/bin/MaterialXOSOExporter --mtlxMaterialsPath ./test/test_materials --osoOutputPath ./build/oso --library ./build/autolib --writeOSLSource
+#./build/bin/MaterialXLibraryBuilder --oslLibraryPath shaders/src -I shaders/include --libraryOutputPath ./build/autolib --autolib-include-rewrite 
+./build/bin/MaterialXOSOExporter --mtlxMaterialsPath ./test/materials --osoOutputPath ./build/oso --library ./build/autolib --writeOSLSource
