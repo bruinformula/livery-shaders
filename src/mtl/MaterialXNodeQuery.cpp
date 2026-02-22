@@ -185,12 +185,12 @@ int main(int argc, char* const argv[]) {
         try {
             mx::DocumentPtr doc = mx::createDocument();
             mx::readFromXmlFile(doc, file, inputArgs.searchPath);
-            //std::cout << "File " << file.asString() << " contains:" << std::endl;
-            //std::cout << "  Materials: " << doc->getMaterialNodes().size() << std::endl;
-            //std::cout << "  Nodes: " << doc->getNodes().size() << std::endl;
+            std::cout << "File " << file.asString() << " contains:" << std::endl;
+            std::cout << "  Materials: " << doc->getMaterialNodes().size() << std::endl;
+            std::cout << "  Nodes: " << doc->getNodes().size() << std::endl;
             doc->importLibrary(librariesDoc);
             materialDocuments.push_back(doc);
-            //std::cout << "Loaded: " << file.asString() << std::endl;
+            std::cout << "Loaded: " << file.asString() << std::endl;
         } catch (std::exception& e) {
             std::cerr << "Failed to load MaterialX file " << file.asString() << ": " << e.what() << std::endl;
             return 1;
