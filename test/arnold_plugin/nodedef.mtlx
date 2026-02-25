@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<materialx version="1.38">
+  <nodedef name="ND_wonderful_diffuse" node="wonderful_diffuse"
+           nodegroup="pbr" doc="Custom diffuse BSDF">
+    <input name="color" type="color3" value="0.8, 0.8, 0.8"/>
+    <output name="out" type="surfaceshader"/>
+  </nodedef>
+
+  <implementation name="IMPL_wonderful_diffuse_arnold"
+                  nodedef="ND_wonderful_diffuse"
+                  target="arnold"/>
+                  
+</materialx>

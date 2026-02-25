@@ -1,6 +1,7 @@
 find_package(OSL REQUIRED)
 find_package(OpenImageIO REQUIRED)
 find_package(MaterialX REQUIRED)
+find_package(Arnold REQUIRED)
 
 add_library(mtlShared STATIC "${CMAKE_CURRENT_SOURCE_DIR}/OSLCompiler.cpp")
 
@@ -72,3 +73,7 @@ target_link_libraries(MaterialXNodeQuery PRIVATE
 set_target_properties(MaterialXNodeQuery PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
+
+# Arnold Plugin
+
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arnold")

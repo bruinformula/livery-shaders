@@ -1,5 +1,4 @@
 shader RayTypeTest(
-    output closure color Cout = 0,
     output color outColor = 0
 ) {
     if (raytype("camera")) {
@@ -29,6 +28,4 @@ shader RayTypeTest(
     else {
         outColor = color(0.2, 0.2, 0.2);   // fallback color
     }
-
-    Cout = diffuse(N) * outColor;
 }

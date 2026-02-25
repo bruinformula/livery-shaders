@@ -1,0 +1,30 @@
+
+// For blender only
+shader RampTest(
+    color a = 0,
+    color b = 0,
+    color c = 0,
+    color d = 0,
+    color e = 0,
+    color f = 0,
+    color g = 0,
+    color h = 0,
+    int mode = 0,
+    float exponent = 20,
+    output closure color Cout = 0
+) {
+    color colors[8];
+    colors[0] = a;
+    colors[1] = b;
+    colors[2] = c;
+    colors[3] = d;
+    colors[4] = e;
+    colors[5] = f;
+    colors[6] = g;
+    colors[7] = h;
+    if (mode == 0) {
+        Cout = phong_ramp(N, exponent, colors);
+    } else {
+        Cout = diffuse_ramp(N, colors);
+    }
+}
