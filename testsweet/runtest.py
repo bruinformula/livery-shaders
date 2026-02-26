@@ -165,7 +165,7 @@ def runtest(outputs: list[str], failureok: int = 0) -> int:
 with open(os.path.join(test_source_dir, "run.py")) as f:
     exec(compile(f.read(), "run.py", "exec"))
 
-for candidate in ["out.exr", "out-arnold.exr", "out-renderman.exr", "out-blender.exr"]:
+for candidate in ["out.exr", "out-arnold.exr", "out-renderman.exr", "out-cycles.exr"]:
     ref_candidate: str = os.path.join(tmpdir, "ref", candidate)
     if os.path.exists(ref_candidate) and candidate not in outputs:
         outputs.append(candidate)
