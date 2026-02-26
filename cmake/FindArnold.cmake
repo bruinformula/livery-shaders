@@ -1,15 +1,15 @@
 find_path(ARNOLD_INCLUDE_DIR
     NAMES ai.h
     PATHS
-        $ENV{ARNOLD_ROOT}/include
+        $ENV{ARNOLD_LOCATION}/include
         /usr/local/include
 )
 
 find_library(ARNOLD_LIBRARY
     NAMES ai libai
     PATHS
-        $ENV{ARNOLD_ROOT}/bin
-        $ENV{ARNOLD_ROOT}/lib
+        $ENV{ARNOLD_LOCATION}/bin
+        $ENV{ARNOLD_LOCATION}/lib
         /usr/local/bin
         /usr/local/lib
 )
