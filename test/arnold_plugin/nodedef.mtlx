@@ -1,12 +1,20 @@
 <?xml version="1.0"?>
 <materialx version="1.38">
-  <nodedef name="ARNOLD_ND_wonderful_diffuse" node="wonderful_diffuse" nodegroup="pbr" doc="Custom diffuse BSDF">
-    <input name="color" type="color3" value="0.8, 0.8, 0.8"/>
+  <nodedef name="ARNOLD_ND_diffuse_ramp_bsdf" node="diffuse_ramp_bsdf" nodegroup="pbr" doc="Custom diffuse BSDF">
+    <input name="colorA" type="color3" value="0.8, 0.8, 0.8"/>
+    <input name="colorB" type="color3" value="0.8, 0.8, 0.8"/>
+    <input name="colorC" type="color3" value="0.8, 0.8, 0.8"/>
+    <input name="colorD" type="color3" value="0.8, 0.8, 0.8"/>
+    <input name="colorE" type="color3" value="0.8, 0.8, 0.8"/>
+    <input name="colorF" type="color3" value="0.8, 0.8, 0.8"/>
+    <input name="colorG" type="color3" value="0.8, 0.8, 0.8"/>
+    <input name="colorH" type="color3" value="0.8, 0.8, 0.8"/>
+    <input name="N" type="vector3" defaultgeomprop="Nworld"/>
     <output name="out" type="BSDF"/>
   </nodedef>
 
-  <implementation name="ARNOLD_IM_wonderful_diffuse_arnold"
-                  nodedef="ARNOLD_ND_wonderful_diffuse"
+  <implementation name="ARNOLD_IM_diffuse_ramp_bsdf_arnold"
+                  nodedef="ARNOLD_ND_diffuse_ramp_bsdf"
                   target="arnold"/>
                   
 </materialx>

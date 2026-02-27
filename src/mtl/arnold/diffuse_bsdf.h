@@ -3,4 +3,6 @@
 #include <ai_shader_bsdf.h>
 #include <ai_shaderglobals.h>
 
-AtBSDF* DiffuseBSDFCreate(const AtShaderGlobals* sg, const AtRGB& weight, const AtVector& N); 
+AtBSDF* DiffuseRampBSDFCreate(const AtShaderGlobals* sg, const AtVector& N,
+                              AtRGB colorA, AtRGB colorB, AtRGB colorC, AtRGB colorD,
+                              AtRGB colorE, AtRGB colorF, AtRGB colorG, AtRGB colorH);

@@ -1,19 +1,21 @@
 #include "diffuse_bsdf.h"
 
+#include <ai_constants.h>
 
-struct DiffuseBSDF
+
+struct DiffuseRampBSDF
 {
    /* parameters */
    AtVector N;
+   AtArray* colors;
    /* set in bsdf_init */
    AtVector Ng, Ns;
 };
 
-AI_BSDF_EXPORT_METHODS(DiffuseBSDFMtd);
+AI_BSDF_EXPORT_METHODS(DiffuseRampBSDFMtd);
 
-bsdf_init
-{
-   DiffuseBSDF *data = (DiffuseBSDF*)AiBSDFGetData(bsdf);
+bsdf_init {
+   DiffuseRampBSDF *data = (DiffuseRampBSDF*)AiBSDFGetData(bsdf);
 
    // store forward facing smooth normal for bump shadowing
    data->Ns = (sg->Ngf == sg->Ng) ? sg->Ns : -sg->Ns;
@@ -30,9 +32,22 @@ bsdf_init
    AiBSDFInitNormal(bsdf, data->N, true);
 }
 
-bsdf_sample
+static AtRGB DiffuseRampGetColor(const AtArray* colors, float pos)
 {
-   DiffuseBSDF *data = (DiffuseBSDF*)AiBSDFGetData(bsdf);
+    const int MAXCOLORS = 8;
+    const float npos = pos * (float)(MAXCOLORS - 1);
+    const int ipos = (int)npos;
+    if (ipos < 0)
+        return AiArrayGetRGB(colors, 0);
+    if (ipos >= MAXCOLORS - 1)
+        return AiArrayGetRGB(colors, MAXCOLORS - 1);
+    const float offset = npos - (float)ipos;
+    return AiArrayGetRGB(colors, ipos) * (1.0f - offset) +
+           AiArrayGetRGB(colors, ipos + 1) * offset;
+}
+
+bsdf_sample {
+   DiffuseRampBSDF *data = (DiffuseRampBSDF*)AiBSDFGetData(bsdf);
 
    // sample cosine weighted incoming light direction
    AtVector U, V;
@@ -48,6 +63,7 @@ bsdf_sample
    if (!(AiV3Dot(wi, data->Ng) > 0))
       return AI_BSDF_LOBE_MASK_NONE;
 
+   const AtRGB rampColor = DiffuseRampGetColor(data->colors, cosNI);
    // since we have perfect importance sampling, the weight (BRDF / pdf) is 1
    // except for the bump shadowing, which is used to avoid artifacts when the
    // shading normal differs significantly from the smooth surface normal
@@ -63,7 +79,7 @@ bsdf_sample
    out_lobe_index = 0;
 
    // return weight and pdf
-   out_lobes[0] = AtBSDFLobeSample(AtRGB(weight), 0.0f, pdf);
+   out_lobes[0] = AtBSDFLobeSample(rampColor * weight, 0.0f, pdf);
 
    // indicate that we have valid lobe samples for all the requested lobes,
    // which is just one lobe in this case
@@ -72,7 +88,7 @@ bsdf_sample
 
 bsdf_eval
 {
-   DiffuseBSDF *data = (DiffuseBSDF*)AiBSDFGetData(bsdf);
+   DiffuseRampBSDF *data = (DiffuseRampBSDF*)AiBSDFGetData(bsdf);
 
    // discard rays below the hemisphere
    const float cosNI = AiV3Dot(data->N, wi);
@@ -80,17 +96,23 @@ bsdf_eval
       return AI_BSDF_LOBE_MASK_NONE;
 
    // return weight and pdf, same as in bsdf_sample
+   const AtRGB rampColor = DiffuseRampGetColor(data->colors, cosNI);
    const float weight = AiBSDFBumpShadow(data->Ns, data->N, wi);
    const float pdf = cosNI * AI_ONEOVERPI;
-   out_lobes[0] = AtBSDFLobeSample(AtRGB(weight), 0.0f, pdf);
+   out_lobes[0] = AtBSDFLobeSample(rampColor * weight, 0.0f, pdf);
 
    return lobe_mask;
 }
 
-AtBSDF* DiffuseBSDFCreate(const AtShaderGlobals* sg, const AtRGB& weight, const AtVector& N)
+AtBSDF* DiffuseRampBSDFCreate(const AtShaderGlobals* sg, const AtVector& N,
+                              AtRGB colorA, AtRGB colorB, AtRGB colorC, AtRGB colorD,
+                              AtRGB colorE, AtRGB colorF, AtRGB colorG, AtRGB colorH)
 {
-   AtBSDF* bsdf = AiBSDF(sg, weight, DiffuseBSDFMtd, sizeof(DiffuseBSDF));
-   DiffuseBSDF* data = (DiffuseBSDF*)AiBSDFGetData(bsdf);
+   AtBSDF* bsdf = AiBSDF(sg, AtRGB(1.0f), DiffuseRampBSDFMtd, sizeof(DiffuseRampBSDF));
+   DiffuseRampBSDF* data = (DiffuseRampBSDF*)AiBSDFGetData(bsdf);
    data->N = N;
+   data->colors = AiArray(8, 1, AI_TYPE_RGB,
+                          colorA, colorB, colorC, colorD,
+                          colorE, colorF, colorG, colorH);
    return bsdf;
 }

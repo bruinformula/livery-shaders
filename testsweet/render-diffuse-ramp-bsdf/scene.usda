@@ -6,7 +6,7 @@
 )
 
 def "World" (
-    references = @wonderful.mtlx@</MaterialX>
+    references = @diffuse_rainbow.mtlx@</MaterialX>
 ) {
     def Scope "ShadeBalls" {
         def Xform "Ball1" (
@@ -14,7 +14,7 @@ def "World" (
             instanceable = true
             references = @sphere.usda@</ShadeBall>
         ) {
-            rel material:binding = </World/Materials/Test_Wonderful> (
+            rel material:binding = </World/Materials/Diffuse_Rainbow> (
                 bindMaterialAs = "strongerThanDescendants"
             )
 
@@ -27,7 +27,7 @@ def "World" (
             instanceable = true
             references = @sphere.usda@</ShadeBall>
         ) {
-            rel material:binding = </World/Materials/Test_Wonderful> (
+            rel material:binding = </World/Materials/Diffuse_Rainbow> (
                 bindMaterialAs = "strongerThanDescendants"
             )
 
@@ -64,9 +64,9 @@ def "World" (
         float horizontalAperture = 36
         double3 xformOp:translate = (0, 0, 8)
         uniform token[] xformOpOrder = ["xformOp:translate"]
-    }
+    } 
 
-    def Scope "Render" {
+    def Scope "Render" { 
         def RenderSettings "RenderSettings" {
             int2 resolution = (256, 256)
             rel camera = </World/Camera>
