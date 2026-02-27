@@ -112,7 +112,7 @@ def render(
         "usdrecord",
         "--renderer",               renderer,
         "--renderSettingsPrimPath", render_settings,
-        "--colorCorrectionMode", "disabled",
+        "--colorCorrectionMode",    "disabled",
         "--disableCameraLight"
     ]
     if camera:
@@ -120,12 +120,16 @@ def render(
     cmd += [scene_abs, output_abs]
 
     print("CMD:", " ".join(cmd))
-    result = subprocess.run(cmd, cwd=tmpdir)
+
+    out_txt = os.path.join(tmpdir, "out.txt")
+    with open(out_txt, "w") as f:
+        f.write(f"CMD: {' '.join(cmd)}\n")
+        result = subprocess.run(cmd, cwd=tmpdir, stdout=f, stderr=subprocess.STDOUT)
+
     if result.returncode != 0:
         raise RuntimeError(f"usdrecord failed: renderer={renderer}")
 
     return output
-
 
 def runtest(outputs: list[str], failureok: int = 0) -> int:
     if skip_diff:

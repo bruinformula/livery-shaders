@@ -62,5 +62,5 @@ function(add_usd_render_test TEST_NAME)
     )
 endfunction()
 
-
 add_usd_render_test(render-diffuse-ramp-bsdf)
+add_usd_render_test(render-phong-ramp-bsdf)

@@ -1,18 +1,11 @@
-#include "diffuse_bsdf.h"
+#include "diffuse_ramp_bsdf.h"
 
 #include <ai.h>
 
 AI_SHADER_NODE_EXPORT_METHODS(DiffuseRampMtd)
 
 enum DiffuseRampParams {
-   p_A,
-   p_B,
-   p_C,
-   p_D,
-   p_E,
-   p_F,
-   p_G,
-   p_H,
+   p_A, p_B, p_C, p_D, p_E, p_F, p_G, p_H,
    p_normal
 };
 
@@ -30,17 +23,9 @@ node_parameters
 
 }
 
-node_initialize
-{
-}
-
-node_update
-{
-}
-
-node_finish
-{
-}
+node_initialize {}
+node_update {}
+node_finish {}
 
 shader_evaluate
 {

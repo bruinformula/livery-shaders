@@ -6,7 +6,7 @@
 )
 
 def "World" (
-    references = @diffuse_rainbow.mtlx@</MaterialX>
+    references = @phong_rainbow.mtlx@</MaterialX>
 ) {
     def Scope "ShadeBalls" {
         def Xform "Ball1" (
@@ -14,7 +14,7 @@ def "World" (
             instanceable = true
             references = @sphere.usda@</ShadeBall>
         ) {
-            rel material:binding = </World/Materials/Diffuse_Ramp_Rainbow> (
+            rel material:binding = </World/Materials/Phong_Ramp_Rainbow> (
                 bindMaterialAs = "strongerThanDescendants"
             )
 
@@ -27,7 +27,7 @@ def "World" (
             instanceable = true
             references = @sphere.usda@</ShadeBall>
         ) {
-            rel material:binding = </World/Materials/Diffuse_Ramp_Rainbow> (
+            rel material:binding = </World/Materials/Phong_Ramp_Rainbow> (
                 bindMaterialAs = "strongerThanDescendants"
             )
 

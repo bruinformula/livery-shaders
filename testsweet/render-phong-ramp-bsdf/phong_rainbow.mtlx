@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<materialx version="1.38">
+  <surfacematerial name="Phong_Ramp_Rainbow" type="material">
+    <input name="surfaceshader" type="surfaceshader" nodename="surface" />
+  </surfacematerial>
+  <surface name="surface" type="surfaceshader">
+    <input name="bsdf" type="BSDF" nodename="phong_ramp_bsdf" />
+  </surface>
+    <phong_ramp_bsdf name="phong_ramp_bsdf" type="BSDF">
+      <input name="colorA" type="color3" value="1.0, 0.0, 0.0"/>
+      <input name="colorB" type="color3" value="1.0, 0.5, 0.0"/>
+      <input name="colorC" type="color3" value="1.0, 1.0, 0.0"/>
+      <input name="colorD" type="color3" value="0.0, 1.0, 0.0"/>
+      <input name="colorE" type="color3" value="0.0, 1.0, 1.0"/>
+      <input name="colorF" type="color3" value="0.0, 0.0, 1.0"/>
+      <input name="colorG" type="color3" value="0.5, 0.0, 1.0"/>
+      <input name="colorH" type="color3" value="1.0, 0.0, 1.0"/>
+      <input name="exp" type="float" value="10.0"/>
+    </phong_ramp_bsdf>
+</materialx>

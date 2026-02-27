@@ -1,7 +1,4 @@
-#include "diffuse_bsdf.h"
-
-#include <ai_constants.h>
-
+#include "diffuse_ramp_bsdf.h"
 
 struct DiffuseRampBSDF
 {
