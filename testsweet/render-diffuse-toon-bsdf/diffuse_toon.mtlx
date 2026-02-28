@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<materialx version="1.38">
+  <surfacematerial name="Diffuse_Toon_1" type="material">
+    <input name="surfaceshader" type="surfaceshader" nodename="surface1" />
+  </surfacematerial>
+  <surface name="surface1" type="surfaceshader">
+    <input name="bsdf" type="BSDF" nodename="diffuse_toon_1" />
+  </surface>
+    <diffuse_toon_bsdf name="diffuse_toon_1" type="BSDF">
+      <input name="color" type="color3" value="0.8, 0.8, 0.8"/>
+      <input name="size" type="float" value="0.5"/>
+      <input name="smooth" type="float" value="0.0"/>
+    </diffuse_toon_bsdf>
+
+  <surfacematerial name="Diffuse_Toon_2" type="material">
+    <input name="surfaceshader" type="surfaceshader" nodename="surface2" />
+  </surfacematerial>
+  <surface name="surface2" type="surfaceshader">
+    <input name="bsdf" type="BSDF" nodename="diffuse_toon_2" />
+  </surface>
+    <diffuse_toon_bsdf name="diffuse_toon_2" type="BSDF">
+      <input name="color" type="color3" value="0.8, 0.8, 0.8"/>
+      <input name="size" type="float" value="0.25"/>
+      <input name="smooth" type="float" value="0.5"/>
+    </diffuse_toon_bsdf>
+</materialx>

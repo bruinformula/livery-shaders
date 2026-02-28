@@ -3,6 +3,8 @@
 #include <ai_shader_bsdf.h>
 #include <ai_shaderglobals.h>
 
+// Based on the matching BSDFs from Cycles 
+
 AtBSDF* PhongRampBSDFCreate(const AtShaderGlobals* sg,
                              const AtVector& N,
                              float exponent,

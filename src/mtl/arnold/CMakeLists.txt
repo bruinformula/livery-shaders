@@ -19,3 +19,6 @@ endfunction()
 
 add_arnold_plugin(diffuse_ramp)
 add_arnold_plugin(phong_ramp)
+
+add_arnold_plugin(diffuse_toon)
+add_arnold_plugin(glossy_toon)

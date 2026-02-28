@@ -1,5 +1,7 @@
 #include "phong_ramp_bsdf.h"
 
+// Based on the matching BSDFs from Cycles 
+
 struct PhongRampBSDF
 {
     /* parameters */

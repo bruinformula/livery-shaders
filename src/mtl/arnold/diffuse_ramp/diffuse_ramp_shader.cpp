@@ -1,6 +1,7 @@
+#include <ai.h>
 #include "diffuse_ramp_bsdf.h"
 
-#include <ai.h>
+// Based on the matching BSDFs from Cycles 
 
 AI_SHADER_NODE_EXPORT_METHODS(DiffuseRampMtd)
 

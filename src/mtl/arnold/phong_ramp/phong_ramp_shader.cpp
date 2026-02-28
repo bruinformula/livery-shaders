@@ -1,5 +1,7 @@
-#include "phong_ramp_bsdf.h"
 #include <ai.h>
+#include "phong_ramp_bsdf.h"
+
+// Based on the matching BSDFs from Cycles 
 
 AI_SHADER_NODE_EXPORT_METHODS(PhongRampMtd)
 

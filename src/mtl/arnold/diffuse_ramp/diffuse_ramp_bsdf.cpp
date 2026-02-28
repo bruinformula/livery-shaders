@@ -1,5 +1,7 @@
 #include "diffuse_ramp_bsdf.h"
 
+// Based on the matching BSDFs from Cycles 
+
 struct DiffuseRampBSDF
 {
    /* parameters */
