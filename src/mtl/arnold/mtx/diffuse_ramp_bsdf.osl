@@ -1,0 +1,25 @@
+#include "stdcycles.h"
+
+void diffuse_ramp_bsdf(
+    color colorA,
+    color colorB,
+    color colorC,
+    color colorD,
+    color colorE,
+    color colorF,
+    color colorG,
+    color colorH,
+    normal N, 
+    output closure color Cout
+) {
+    color colors[8];
+    colors[0] = colorA;
+    colors[1] = colorB;
+    colors[2] = colorC;
+    colors[3] = colorD;
+    colors[4] = colorE;
+    colors[5] = colorF;
+    colors[6] = colorG;
+    colors[7] = colorH;
+    Cout = diffuse_ramp(N, colors);
+}

@@ -15,6 +15,6 @@
       <input name="colorF" type="color3" value="0.0, 0.0, 1.0"/>
       <input name="colorG" type="color3" value="0.5, 0.0, 1.0"/>
       <input name="colorH" type="color3" value="1.0, 0.0, 1.0"/>
-      <input name="exp" type="float" value="10.0"/>
+      <input name="exponent" type="float" value="10.0"/>
     </phong_ramp_bsdf>
 </materialx>

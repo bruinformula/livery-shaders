@@ -1,0 +1,10 @@
+#include "stdcycles.h"
+
+void glossy_toon_bsdf(
+    float size,
+    float smooth,
+    normal N,
+    output closure color Cout
+) {
+    Cout = glossy_toon(N, size, smooth);
+}

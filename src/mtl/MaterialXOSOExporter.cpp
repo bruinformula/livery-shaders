@@ -201,7 +201,7 @@ int main(int argc, char* const argv[]) {
     }
 
     // Append the standard library folder, giving it a lower precedence than user-supplied libraries.
-    inputArgs.searchPath = mx::getDefaultDataSearchPath();
+    inputArgs.searchPath.append(mx::getDefaultDataSearchPath());
     
     const char* mtlxEnvPath = std::getenv("MATERIALX_SEARCH_PATH");
 
@@ -221,6 +221,8 @@ int main(int argc, char* const argv[]) {
     }
     
     inputArgs.oslCompileOptions.oslIncludePath.append(inputArgs.searchPath.find("libraries/stdlib/genosl/include"));
+
+    std::cout << inputArgs.oslCompileOptions.oslIncludePath.size() << " OSL include paths:" << std::endl;
 
     mx::ShaderGeneratorPtr oslShaderGen = mx::OslShaderGenerator::create();
 
@@ -264,6 +266,9 @@ int main(int argc, char* const argv[]) {
     context.getOptions().fileTextureVerticalFlip = false;
     //context.getOptions().shaderInterfaceType = mx::ShaderInterfaceType::SHADER_INTERFACE_REDUCED;
 
+    for (const mx::FilePath& p : inputArgs.oslCompileOptions.oslIncludePath) {
+        context.registerSourceCodeSearchPath(p);
+    }
 
     std::unordered_set<std::string> materialNames;
 
@@ -363,7 +368,7 @@ int main(int argc, char* const argv[]) {
         }
     }
     */
-
+    
     for (const mx::DocumentPtr& doc : materialDocuments) {
         std::cout << "Document has " << doc->getMaterialNodes().size() << " material nodes." << std::endl;
 
@@ -399,5 +404,6 @@ int main(int argc, char* const argv[]) {
             }
         }
     }
+    
     return 0;
 }

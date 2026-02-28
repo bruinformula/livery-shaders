@@ -21,7 +21,7 @@ node_parameters
     AiParameterRGB("colorF", 0.8f, 0.8f, 0.8f);
     AiParameterRGB("colorG", 0.8f, 0.8f, 0.8f);
     AiParameterRGB("colorH", 0.8f, 0.8f, 0.8f);
-    AiParameterFlt("exp", 10.0f);
+    AiParameterFlt("exponent", 10.0f);
     AiParameterVec("N",   0.0f, 0.0f, 0.0f);
 }
 

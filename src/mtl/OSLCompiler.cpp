@@ -528,10 +528,6 @@ bool compileOSLToBytecode(
         }
     }
 
-    for (const std::string& def : options.definePreprocessors) {
-        oslCompilerArgs.emplace_back("-D" + def);
-    }
-
     oiio::ErrorHandler errorHandler;
     osl::OSLCompiler compiler(&errorHandler);
 

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <materialx version="1.38">
 
-  <nodedef name="ARNOLD_ND_diffuse_ramp_bsdf" node="diffuse_ramp_bsdf" nodegroup="pbr">
+  <nodedef name="ND_diffuse_ramp_bsdf" node="diffuse_ramp_bsdf" nodegroup="pbr">
     <input name="colorA" type="color3" value="0.8, 0.8, 0.8"/>
     <input name="colorB" type="color3" value="0.8, 0.8, 0.8"/>
     <input name="colorC" type="color3" value="0.8, 0.8, 0.8"/>
@@ -13,11 +13,8 @@
     <input name="N" type="vector3" defaultgeomprop="Nworld"/>
     <output name="out" type="BSDF"/>
   </nodedef>
-  <implementation name="ARNOLD_IM_diffuse_ramp_bsdf_arnold"
-                  nodedef="ARNOLD_ND_diffuse_ramp_bsdf"
-                  target="arnold"/>
 
-  <nodedef name="ARNOLD_ND_phong_ramp_bsdf" node="phong_ramp_bsdf" nodegroup="pbr">
+  <nodedef name="ND_phong_ramp_bsdf" node="phong_ramp_bsdf" nodegroup="pbr">
     <input name="colorA" type="color3" value="0.8, 0.8, 0.8"/>
     <input name="colorB" type="color3" value="0.8, 0.8, 0.8"/>
     <input name="colorC" type="color3" value="0.8, 0.8, 0.8"/>
@@ -26,34 +23,37 @@
     <input name="colorF" type="color3" value="0.8, 0.8, 0.8"/>
     <input name="colorG" type="color3" value="0.8, 0.8, 0.8"/>
     <input name="colorH" type="color3" value="0.8, 0.8, 0.8"/>
-    <input name="exp" type="float" value="10.0"/>
+    <input name="exponent" type="float" value="10.0"/>
     <input name="N" type="vector3" defaultgeomprop="Nworld"/>
     <output name="out" type="BSDF"/>
   </nodedef>
-  <implementation name="ARNOLD_IM_phong_ramp_bsdf_arnold"
-                  nodedef="ARNOLD_ND_phong_ramp_bsdf"
-                  target="arnold"/>
 
-  <nodedef name="ARNOLD_ND_diffuse_toon_bsdf" node="diffuse_toon_bsdf" nodegroup="pbr">
+  <nodedef name="ND_diffuse_toon_bsdf" node="diffuse_toon_bsdf" nodegroup="pbr">
     <input name="color" type="color3" value="0.8, 0.8, 0.8"/>
     <input name="size" type="float" value="0.5"/>
     <input name="smooth" type="float" value="0.0"/>
     <input name="N" type="vector3" defaultgeomprop="Nworld"/>
     <output name="out" type="BSDF"/>
   </nodedef>
-  <implementation name="ARNOLD_IM_diffuse_toon_bsdf_arnold"
-                  nodedef="ARNOLD_ND_diffuse_toon_bsdf"
-                  target="arnold"/>
 
-  <nodedef name="ARNOLD_ND_glossy_toon_bsdf" node="glossy_toon_bsdf" nodegroup="pbr">
+  <nodedef name="ND_glossy_toon_bsdf" node="glossy_toon_bsdf" nodegroup="pbr">
     <input name="color" type="color3" value="1.0, 1.0, 1.0"/>
     <input name="size" type="float" value="0.5"/>
     <input name="smooth" type="float" value="0.0"/>
     <input name="N" type="vector3" defaultgeomprop="Nworld"/>
     <output name="out" type="BSDF"/>
   </nodedef>
-  <implementation name="ARNOLD_IM_glossy_toon_bsdf_arnold"
-                  nodedef="ARNOLD_ND_glossy_toon_bsdf"
-                  target="arnold"/>
+
+  <implementation name="IM_diffuse_ramp_bsdf_genosl" nodedef="ND_diffuse_ramp_bsdf" file="diffuse_ramp_bsdf.osl" function="diffuse_ramp_bsdf" target="genosl"/>
+  <implementation name="ARNOLD_IM_diffuse_ramp_bsdf_arnold" nodedef="ARNOLD_ND_diffuse_ramp_bsdf" target="arnold"/>
+
+  <implementation name="IM_phong_ramp_bsdf_genosl" nodedef="ND_phong_ramp_bsdf" file="phong_ramp_bsdf.osl" function="phong_ramp_bsdf" target="genosl"/>
+  <implementation name="ARNOLD_IM_phong_ramp_bsdf_arnold" nodedef="ARNOLD_ND_phong_ramp_bsdf" target="arnold"/>
+
+  <implementation name="IM_diffuse_toon_bsdf_genosl" nodedef="ND_diffuse_toon_bsdf" file="diffuse_toon_bsdf.osl" function="diffuse_toon_bsdf" target="genosl"/>
+  <implementation name="ARNOLD_IM_diffuse_toon_bsdf_arnold" nodedef="ARNOLD_ND_diffuse_toon_bsdf" target="arnold"/>
+
+  <implementation name="IM_glossy_toon_bsdf_genosl" nodedef="ND_glossy_toon_bsdf" file="glossy_toon_bsdf.osl" function="glossy_toon_bsdf" target="genosl"/>
+  <implementation name="ARNOLD_IM_glossy_toon_bsdf_arnold" nodedef="ARNOLD_ND_glossy_toon_bsdf" target="arnold"/>
 
 </materialx>

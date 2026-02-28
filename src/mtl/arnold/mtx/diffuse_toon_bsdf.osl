@@ -1,0 +1,10 @@
+#include "stdcycles.h"
+
+void diffuse_toon_bsdf(
+    float size,
+    float smooth,
+    normal N,
+    output closure color Cout
+) {
+    Cout = diffuse_toon(N, size, smooth);
+}
