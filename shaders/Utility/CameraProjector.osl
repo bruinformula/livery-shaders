@@ -9,17 +9,10 @@
     #define  DEFAULT_CAMERA_PROJECTOR(x)
 #endif
 
-#include "Utility/Decal.h"
-
 ENTRY_CAMERA_PROJECTOR CameraProjector [[ 
     string nodegroup = "autolib", 
 ]] (
     string filename DEFAULT_CAMERA_PROJECTOR("") [[ string uifolder = "Decal" ]],
-    float width DEFAULT_CAMERA_PROJECTOR(0.1) [[ string uifolder = "Decal" ]],
-    string units DEFAULT_CAMERA_PROJECTOR("m") [[ string uifolder = "Decal" ]],
-
-    // Texture
-    int stickerMode  DEFAULT_CAMERA_PROJECTOR(0) [[ int uimin = 0, int uimax = 1, string doc = "UV sizing correction for images to maintain their size in world space" ]],
     vector aspect  DEFAULT_CAMERA_PROJECTOR(vector(1, 1, 0)) [[ string doc = "Aspect ratio (width/height) of the projection" ]],
     int useWidthImageAspect  DEFAULT_CAMERA_PROJECTOR(1) [[ int uimin = 0, int uimax = 1 ]],
     int autoGamma  DEFAULT_CAMERA_PROJECTOR(1) [[ int uimin = 0, int uimax = 1 ]],
@@ -28,38 +21,36 @@ ENTRY_CAMERA_PROJECTOR CameraProjector [[
     // Camera parameters
     point cameraPosition   DEFAULT_CAMERA_PROJECTOR(0),
     point targetPosition   DEFAULT_CAMERA_PROJECTOR(0),
-    vector rightDirection   DEFAULT_CAMERA_PROJECTOR(vector(0,1,0)),
-    vector upDirection   DEFAULT_CAMERA_PROJECTOR(vector(0,0,1)),
+    vector rightDirection  DEFAULT_CAMERA_PROJECTOR(vector(0,1,0)),
+    vector upDirection     DEFAULT_CAMERA_PROJECTOR(vector(0,0,1)),
 
     // Projection controls
-    float fov   DEFAULT_CAMERA_PROJECTOR(1) [[ float uimin = 0 ]],
+    float fov        DEFAULT_CAMERA_PROJECTOR(1) [[ float uimin = 0 ]],
     float overScan   DEFAULT_CAMERA_PROJECTOR(0.0) [[ float uimin = 0 ]],
-    int backface   DEFAULT_CAMERA_PROJECTOR(0) [[ string uiname = "Project on Back", int uimin = 0, int uimax = 1 ]],
+    int backface     DEFAULT_CAMERA_PROJECTOR(0) [[ string uiname = "Project on Back", int uimin = 0, int uimax = 1 ]],
     int objectSpace  DEFAULT_CAMERA_PROJECTOR(0) [[ int uimin = 0, int uimax = 1 ]],
 
     // Outputs
-    output point outUV   DEFAULT_CAMERA_PROJECTOR(0),
-    output float outAlpha  DEFAULT_CAMERA_PROJECTOR(0),
-    output color outColor  DEFAULT_CAMERA_PROJECTOR(0),
+    output point outUV    DEFAULT_CAMERA_PROJECTOR(0),
+    output float outAlpha DEFAULT_CAMERA_PROJECTOR(0),
+    output color outColor DEFAULT_CAMERA_PROJECTOR(0)
 ) {
     point camPos, targetPos, surfacePos;
     vector rightDir, upDir, surfaceNormal;
     
     if (objectSpace) {
-        // initializes camera parameters in object space
-        camPos = transform("", "object", cameraPosition);
-        targetPos = transform("", "object", targetPosition);
-        rightDir = normalize(transform("", "object", rightDirection));
-        upDir = normalize(transform("", "object", upDirection));
-        surfacePos = transform("object", P);  // P is in "common" space
+        camPos        = transform("", "object", cameraPosition);
+        targetPos     = transform("", "object", targetPosition);
+        rightDir      = normalize(transform("", "object", rightDirection));
+        upDir         = normalize(transform("", "object", upDirection));
+        surfacePos    = transform("object", P);
         surfaceNormal = normalize(transform("", "object", N));
     } else {
-        // common space by default
-        camPos = cameraPosition;
-        targetPos = targetPosition;
-        rightDir = normalize(rightDirection);
-        upDir = normalize(upDirection);
-        surfacePos = P;
+        camPos        = cameraPosition;
+        targetPos     = targetPosition;
+        rightDir      = normalize(rightDirection);
+        upDir         = normalize(upDirection);
+        surfacePos    = P;
         surfaceNormal = N;
     }
 
@@ -75,16 +66,14 @@ ENTRY_CAMERA_PROJECTOR CameraProjector [[
     vector toPoint = normalize(surfacePos - camPos);
     float dotTarget = dot(toTarget, toPoint);
 
-    // Must be in front of cameraPosition
     if (dotTarget <= 0.0)
         return;
 
-    // Project to unit distance
     toPoint /= dotTarget;
 
-    float aspectRatio;         
+    float aspectRatio;
     if (useWidthImageAspect) {
-        int resolution[2]; // X, Y
+        int resolution[2];
         gettextureinfo(filename, "resolution", resolution);
         aspectRatio = (float)resolution[1] / (float)resolution[0];
     } else {
@@ -100,24 +89,31 @@ ENTRY_CAMERA_PROJECTOR CameraProjector [[
     U *= invTan / (1.0 + overScan / 100.0);
     V *= invTan / (1.0 + overScan / 100.0);
 
-    // Convert to 0–1 UV space
     U = (U + 1.0) * 0.5;
     V = (V + 1.0) * 0.5;
 
+    if (U < 0.0 || U > 1.0 || V < 0.0 || V > 1.0)
+        return;
+
     outUV = point(U, V, 0);
 
-    vector decalTest;
+    outColor = texture(filename, U, 1.0 - V, "alpha", outAlpha);
 
-    Decal(
-        outUV,
-        filename, 
-        width, 
-        units,
-        0, // stretchCorrection – projector already handles sizing
-        autoGamma,
-        manualGamma,
-        outColor,
-        outAlpha,
-        decalTest
-    );
+    int channels = 0;
+    gettextureinfo(filename, "channels", channels);
+    if (channels < 4)
+        outAlpha = 1.0;
+
+    if (autoGamma) {
+        if (!endswith(filename, ".exr") &&
+            !endswith(filename, ".EXR") &&
+            !endswith(filename, ".hdr") &&
+            !endswith(filename, ".HDR") &&
+            !endswith(filename, ".tx")  &&
+            !endswith(filename, ".TX")) {
+            outColor = pow(outColor, 2.2);
+        }
+    } else if (manualGamma != 1.0) {
+        outColor = pow(outColor, manualGamma);
+    }
 }

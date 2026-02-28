@@ -1,1 +1,1 @@
-./build/bin/MaterialXLibraryBuilder --oslLibraryPath shaders/src -I shaders/include --libraryOutputPath ./build/autolib --autolib-include-rewrite 
+./build/bin/MaterialXLibraryBuilder --oslLibraryPath shaders --libraryOutputPath ./build/autolib

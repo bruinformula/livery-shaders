@@ -34,6 +34,90 @@ float smoothMin(float a, float b, float k) {
     return res;
 }
 
+struct SplatterLayerParams {
+    float scale;
+    int seed;
+    float jitter;
+    float scaleRadius;
+    float minRadius;
+    float maxRadius;
+    float unionSmoothness;
+
+    float spikeAmount;
+    float spikePeak;
+    float spikeFrequency;
+    float spikePerimeterSmoothness;
+    float spikeTrimWidth;
+
+    float basinHeight;
+    float basinCenter;
+    float basinSmoothness;
+
+    //paint
+    float splatterBumpStrength;
+    color primerColor;
+    
+    //base layer params
+    float baseWeight;
+    color baseColor;
+    float baseRoughness;
+    float baseIOR;
+    
+    //metallic/flake layer params
+    float flakeWeight;
+    color flakeReflectivity;
+    color flakeEdgeTint;
+    float flakeRoughness;
+};
+
+SplatterLayerParams jitterSplatterParams(
+    SplatterLayerParams baseParams,
+    int sublayerIndex,
+    float jitterAmount
+) {
+    SplatterLayerParams jittered = baseParams;
+    
+    float rand1 = noise("hash", vector(baseParams.seed + sublayerIndex, 0, 0));
+    float rand2 = noise("hash", vector(baseParams.seed + sublayerIndex, 1, 0));
+    float rand3 = noise("hash", vector(baseParams.seed + sublayerIndex, 2, 0));
+    float rand4 = noise("hash", vector(baseParams.seed + sublayerIndex, 3, 0));
+    float rand5 = noise("hash", vector(baseParams.seed + sublayerIndex, 4, 0));
+    
+    // geometric properties
+    jittered.seed = baseParams.seed + sublayerIndex;
+    jittered.scaleRadius = baseParams.scaleRadius * (1.0 + (rand1 - 0.5) * jitterAmount * 0.2);
+    jittered.minRadius = baseParams.minRadius * (1.0 + (rand2 - 0.5) * jitterAmount * 0.3);
+    jittered.maxRadius = baseParams.maxRadius * (1.0 + (rand3 - 0.5) * jitterAmount * 0.3);
+    
+    // spike properties
+    jittered.spikeAmount = clamp(baseParams.spikeAmount + (rand4 - 0.5) * jitterAmount * 0.2, 0.0, 1.0);
+    jittered.spikePeak = baseParams.spikePeak * (1.0 + (rand5 - 0.5) * jitterAmount * 0.4);
+    
+    // basin properties
+    float rand6 = noise("hash", vector(baseParams.seed + sublayerIndex, 5, 0));
+    jittered.basinHeight = clamp(baseParams.basinHeight + (rand6 - 0.5) * jitterAmount * 0.15, 0.0, 1.0);
+    
+    // paint properties slightly
+    float rand7 = noise("hash", vector(baseParams.seed + sublayerIndex, 6, 0));
+    float rand8 = noise("hash", vector(baseParams.seed + sublayerIndex, 7, 0));
+    float rand9 = noise("hash", vector(baseParams.seed + sublayerIndex, 8, 0));
+    
+    jittered.baseRoughness = clamp(baseParams.baseRoughness + (rand7 - 0.5) * jitterAmount * 0.1, 0.0, 1.0);
+    jittered.flakeRoughness = clamp(baseParams.flakeRoughness + (rand8 - 0.5) * jitterAmount * 0.1, 0.0, 1.0);
+    
+    // Subtle color variation
+    color colorJitter = color(
+        (rand7 - 0.5) * jitterAmount * 0.05,
+        (rand8 - 0.5) * jitterAmount * 0.05,
+        (rand9 - 0.5) * jitterAmount * 0.05
+    );
+    jittered.baseColor = clamp(baseParams.baseColor + colorJitter, color(0), color(1));
+    jittered.flakeReflectivity = clamp(baseParams.flakeReflectivity + colorJitter, color(0), color(1));
+    jittered.flakeEdgeTint = clamp(baseParams.flakeEdgeTint + colorJitter, color(0), color(1));
+    
+    return jittered;
+}
+
 ENTRY_SPLATTER Splatter [[ 
     string nodegroup = "autolib", 
     int isdefaultversion = 1, 

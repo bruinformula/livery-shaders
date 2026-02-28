@@ -45,7 +45,6 @@ struct LibraryArgumentHandler : public ArgumentHandler {
     mx::FilePath oslLibraryPath;
     mx::FilePath libraryOutputPath;
     bool skipWritingMtlxHeaders = false;
-    bool autolibIncludeRewrite = false;
     
     OslCompileOptions oslCompileOptions;
     
@@ -65,10 +64,6 @@ struct LibraryArgumentHandler : public ArgumentHandler {
             }
             case hashString("--skipWritingMtlxHeaders"): {
                 skipWritingMtlxHeaders = true;
-                return SUCCESS;
-            }
-            case hashString("--autolib-include-rewrite"): {
-                autolibIncludeRewrite = true;
                 return SUCCESS;
             }
             case hashString("--help"): {
@@ -769,23 +764,6 @@ int main(int argc, char* const argv[]) {
             createMaterialXDefinitions(osoQuery, oslFileName, relativeOslPath, nodeDefMtlxDoc, implMtlxDoc, typeDefMtlxDoc, inputArgs.libraryOutputPath, mtlxDefinitionOptions);
         } catch (const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;
-        }
-    }
-
-    // The headers in the autolib just point to shaders in src
-    // After duplicated shaders are flattened to root, the includes 
-    // in the headers need to be rewritten to point to the new location of the osl files.
-    if (inputArgs.autolibIncludeRewrite) {
-        for (const auto& includePath : inputArgs.oslCompileOptions.oslIncludePath) {
-            auto headerFiles = findFiles(includePath, ".h", true);
-            
-            for (const auto& relativeHeaderPath : headerFiles) {
-                mx::FilePath outputHeaderPath = inputArgs.libraryOutputPath / relativeHeaderPath;
-                
-                if (outputHeaderPath.exists()) {
-                    rewriteHeaderIncludePaths(outputHeaderPath, relativeHeaderPath);
-                }
-            }
         }
     }
 

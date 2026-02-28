@@ -4,7 +4,7 @@
 
 #ifndef ENTRY_FLAKES
     #define  DEFAULT_FLAKES(x) = x
-	#define ENTRY_FLAKESsurface
+	#define ENTRY_FLAKES shader
 #else
     #define  DEFAULT_FLAKES(x)
 #endif
@@ -41,15 +41,17 @@ ENTRY_FLAKES Flakes [[
     int isdefaultversion = 1, 
 	string version = "0.1" 
 ]] ( 
-    point p DEFAULT_FLAKES(P) [[ string doc = "The input point used to generate the flakes" defaultgeomprop = "PWorld"]], 
+    point position DEFAULT_FLAKES(P) [[ string doc = "The input point used to generate the flakes" ]], 
+    float scale DEFAULT_FLAKES(0.1) [[ string doc = "The density of the flakes" ]],
     int seed DEFAULT_FLAKES(0),
-    float flakeDensity DEFAULT_FLAKES(0.1),
+    float density DEFAULT_FLAKES(0.1) [[ float uimin = 0.0, float uimax = 1.0, string doc = "Ratio of flakes to non-flakes. 1.0 is 100 percent flake`" ]],
     output float rehash DEFAULT_FLAKES(0),
     output float outAlpha DEFAULT_FLAKES(1),
     output normal outNormal DEFAULT_FLAKES(normal(0.5, 0.5, 1.0))  
 ) {
+    point scaledPosition = scale * position;
 
-	vector k = ID(p, seed);
+	vector k = ID(scaledPosition, seed);
 
     float angle = k.y * M_2PI;
 
@@ -72,7 +74,7 @@ ENTRY_FLAKES Flakes [[
     h = int(trunc(h));
     rehash = noise("cell", vector(abs(h), 16, 11));
 
-	if (flakeDensity <= rehash) {
+	if (density <= rehash) {
         outNormal = vector(0.5, 0.5, 1.0);
     }
 
