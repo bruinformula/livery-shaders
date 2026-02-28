@@ -11,6 +11,8 @@
 
 ENTRY_SIMPLE_SPLATTER SimpleSplatter [[ 
     string nodegroup = "autolib", 
+    int isdefaultversion = 1, 
+	string version = "0.1" 
 ]] (
     vector UV  DEFAULT_SIMPLE_SPLATTER(vector(u, v, 0)),
     float scale  DEFAULT_SIMPLE_SPLATTER(5.0),

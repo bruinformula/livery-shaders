@@ -4,7 +4,7 @@
 
 #ifndef ENTRY_WHEEL
     #define  DEFAULT_WHEEL(x) = x
-    #define ENTRY_WHEEL shader
+    #define ENTRY_WHEEL surface
 #else
     #define  DEFAULT_WHEEL(x)
 #endif

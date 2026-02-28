@@ -4,7 +4,7 @@
 
 #ifndef ENTRY_SPLATTER_PAINT
     #define  DEFAULT_SPLATTER_PAINT(x) = x
-	#define ENTRY_SPLATTER_PAINT shader
+	#define ENTRY_SPLATTER_PAINT surface
 #else
     #define  DEFAULT_SPLATTER_PAINT(x)
 #endif

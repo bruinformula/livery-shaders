@@ -4,7 +4,7 @@
     
 #ifndef ENTRY_TOON
     #define DEFAULT_TOON(x) = x
-    #define ENTRY_TOON shader
+    #define ENTRY_TOON surface
 #else
     #define DEFAULT_TOON(x)
 #endif

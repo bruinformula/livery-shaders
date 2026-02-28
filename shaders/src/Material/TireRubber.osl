@@ -4,13 +4,13 @@
 
 #ifndef ENTRY_TIRE_RUBBER
     #define DEFAULT_TIRE_RUBBER(x) = x
-	#define ENTRY_TIRE_RUBBER shader
+	#define ENTRY_TIRE_RUBBER surface
 #else
     #define DEFAULT_TIRE_RUBBER(x)
 #endif
 
 #include "Utility/MTX.h"
-
+/*
 ENTRY_TIRE_RUBBER TireRubber [[ 
     string nodegroup = "autolib", 
 ]] (
@@ -83,3 +83,4 @@ ENTRY_TIRE_RUBBER TireRubber [[
     Cout = layer(specular, base);
     //Cout = emission() * color(worley);
 }
+*/

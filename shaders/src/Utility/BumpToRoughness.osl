@@ -9,9 +9,11 @@
     #define  DEFAULT_BUMP_TO_ROUGHNESS(x)
 #endif
 
-void computePartialDerivs(vector Q, float a, float b,
-                          output vector dQda, output vector dQdb)
-{
+void computePartialDerivs(
+    vector Q, float a, float b,           
+    output vector dQda, 
+    output vector dQdb
+) {
     vector dQdx = Dx(Q);
     vector dQdy = Dy(Q);
     
@@ -26,12 +28,13 @@ void computePartialDerivs(vector Q, float a, float b,
     dQdb = (dQdy*A - dQdx*C) * invdet;
 }
 
-void covarianceToEigen( float a, float b, float c,
-                        output float l1, 
-                        output float l2,
-                        output vector v1, 
-                        output vector v2 )
-{
+void covarianceToEigen( 
+    float a, float b, float c,
+    output float l1, 
+    output float l2,
+    output vector v1, 
+    output vector v2
+) {
     float discriminant = sqrt(a*a + 4*b*b - 2*a*c + c*c);
     
     l1 = 0.5 * (a + c + discriminant);
@@ -50,6 +53,8 @@ void covarianceToEigen( float a, float b, float c,
 
 ENTRY_BUMP_TO_ROUGHNESS BumpToRoughness [[ 
     string nodegroup = "autolib", 
+    int isdefaultversion = 1, 
+	string version = "0.1" 
 ]] (    
     vector UV  DEFAULT_BUMP_TO_ROUGHNESS(vector(u, v, 0)) [[ string doc = "UV coordinates for the surface" ]],
     vector bumpNormal  DEFAULT_BUMP_TO_ROUGHNESS(vector(0, 0, 1)) [[ string doc = "Input bump/normal vector (in tangent space or world space)" ]],
@@ -66,8 +71,7 @@ ENTRY_BUMP_TO_ROUGHNESS BumpToRoughness [[
     output vector outAnisotropyDirection  DEFAULT_BUMP_TO_ROUGHNESS(vector(0)) [[ string doc = "Direction of anisotropy in world space" ]],
     output float outRoughnessU  DEFAULT_BUMP_TO_ROUGHNESS(0.0) [[ string doc = "Roughness in U direction (major axis)" ]],
     output float outRoughnessV  DEFAULT_BUMP_TO_ROUGHNESS(0.0) [[ string doc = "Roughness in V direction (minor axis)" ]]
-)
-{
+) {
     vector pPps, pPpt;
     computePartialDerivs(P, UV.x, UV.y, pPps, pPpt);
     

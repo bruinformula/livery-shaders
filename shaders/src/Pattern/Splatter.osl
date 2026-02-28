@@ -36,6 +36,8 @@ float smoothMin(float a, float b, float k) {
 
 ENTRY_SPLATTER Splatter [[ 
     string nodegroup = "autolib", 
+    int isdefaultversion = 1, 
+	string version = "0.1" 
 ]] (
     point UV  DEFAULT_SPLATTER(0),
     int seed DEFAULT_SPLATTER(433) [[ string uifolder = "Pattern" ]],

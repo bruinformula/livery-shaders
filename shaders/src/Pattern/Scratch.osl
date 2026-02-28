@@ -11,6 +11,8 @@
 
 ENTRY_SCRATCH Scratch [[ 
     string nodegroup = "autolib", 
+    int isdefaultversion = 1, 
+	string version = "0.1" 
 ]] (
     vector UV  DEFAULT_SCRATCH(vector(u, v, 0)),
     float density  DEFAULT_SCRATCH(0.1),

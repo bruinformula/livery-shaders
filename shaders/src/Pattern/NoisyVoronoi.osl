@@ -22,6 +22,8 @@ point fract(point p) {
 
 ENTRY_NOISY_VORONOI NoisyVoronoi [[ 
     string nodegroup = "autolib", 
+    int isdefaultversion = 1, 
+	string version = "0.1" 
 ]] (
     // Color 
     color color1 DEFAULT_NOISY_VORONOI(1),

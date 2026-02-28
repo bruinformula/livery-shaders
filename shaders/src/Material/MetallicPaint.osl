@@ -4,7 +4,7 @@
 
 #ifndef ENTRY_METALLIC_PAINT
     #define  DEFAULT_METALLIC_PAINT(x) = x
-	#define ENTRY_METALLIC_PAINT shader
+	#define ENTRY_METALLIC_PAINT surface
 #else
     #define  DEFAULT_METALLIC_PAINT(x)
 #endif
@@ -150,9 +150,6 @@ ENTRY_METALLIC_PAINT MetallicPaint [[
 
 	//Metallic Flake and Base Layers
 	closure color baseLayer = 0;
-
-
-	//float shadowingFactor = 0.0;
 
 	for (int i = 0; i < numMetallicLayers; i++) {
 		

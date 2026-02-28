@@ -1,0 +1,80 @@
+#ifndef SOLO_SHADER   
+    #define ENTRY_FLAKES void 
+#endif
+
+#ifndef ENTRY_FLAKES
+    #define  DEFAULT_FLAKES(x) = x
+	#define ENTRY_FLAKESsurface
+#else
+    #define  DEFAULT_FLAKES(x)
+#endif
+
+vector ID(vector x, int flakeSeed) {
+    vector n = floor(x);
+    vector f = x-floor(x);
+    vector m = vector(8);
+    for( int k = -1; k <= 1; k++ ) {
+		for( int j = -1; j <= 1; j++ ) {
+			for( int i = -1; i <= 1; i++ ) {
+				vector g = vector( float(i), float(j),float(k) );  	
+				vector o = noise("hash",n + g,flakeSeed);
+				vector r = g - f + (0.5 + (0.5 * sin(M_2PI * o)));
+				float s = dot(r, r);      
+				s < m.x ? m = vector(s, o.x, o.y) : 0;
+			}
+		}
+	}  
+	
+    return vector( sqrt(m.x), m.y + m.z, m.y + m.x);
+}
+
+float IDs( output float x, int flakeSeed ) { 
+	x = -1000 + x * 2000;
+	x = int(trunc(x));	
+	float xRatio = noise("cell", vector(abs(x), abs(flakeSeed), 11)); 
+	
+	return mix(0, 1, xRatio);
+}	
+
+ENTRY_FLAKES Flakes [[ 
+    string nodegroup = "autolib", 
+    int isdefaultversion = 1, 
+	string version = "0.1" 
+]] ( 
+    point p DEFAULT_FLAKES(P) [[ string doc = "The input point used to generate the flakes" defaultgeomprop = "PWorld"]], 
+    int seed DEFAULT_FLAKES(0),
+    float flakeDensity DEFAULT_FLAKES(0.1),
+    output float rehash DEFAULT_FLAKES(0),
+    output float outAlpha DEFAULT_FLAKES(1),
+    output normal outNormal DEFAULT_FLAKES(normal(0.5, 0.5, 1.0))  
+) {
+
+	vector k = ID(p, seed);
+
+    float angle = k.y * M_2PI;
+
+    float x = 0.5 + 0.5 * cos(angle);
+    float y = 0.5 + 0.5 * sin(angle);
+    float z = 0.5 + 0.5 * tan(angle);
+
+	outNormal = normalize(vector(x, y, z) * 2.0 - 1.0);
+    outNormal = outNormal * 0.5 + 0.5;
+
+	int seeds[3] = {4, 4, 1};
+
+	for (int i = 0; i < 3; i++) {
+		outNormal[i] = IDs(outNormal[i], seeds[i]);
+	}
+
+    outNormal.z = 0.5 + 0.5 * outNormal.z;
+
+    float h = -1000.0 + outNormal.x * 2000.0;
+    h = int(trunc(h));
+    rehash = noise("cell", vector(abs(h), 16, 11));
+
+	if (flakeDensity <= rehash) {
+        outNormal = vector(0.5, 0.5, 1.0);
+    }
+
+	outAlpha = (outNormal.x != 0.5) ? 1.0 : 0.0;
+}

@@ -3,7 +3,7 @@
 #endif
 
 #ifndef ENTRY_CARBON_FIBER
-	#define ENTRY_CARBON_FIBER shader
+	#define ENTRY_CARBON_FIBER surface
     #define  DEFAULT_CARBON_FIBER(x) = x
 #else
     #define  DEFAULT_CARBON_FIBER(x)
