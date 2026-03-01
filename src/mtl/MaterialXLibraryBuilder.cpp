@@ -46,6 +46,7 @@ struct LibraryArgumentHandler : public ArgumentHandler {
     mx::FilePath oslLibraryPath;
     mx::FilePath mtlxNodeGraphsPath;
     mx::FilePath libraryOutputPath;
+    mx::FilePath copyFilesOfPath;
     bool skipWritingMtlxHeaders = false;
     
     OslCompileOptions oslCompileOptions;
@@ -56,6 +57,12 @@ struct LibraryArgumentHandler : public ArgumentHandler {
                 if (nextToken.empty()) goto expectOption;
                 if (!oslLibraryPath.isEmpty()) goto alreadySet;
                 oslLibraryPath = mx::FilePath(nextToken);
+                return SUCCESS_CONSUME_NEXT;
+            }
+            case hashString("--copyFilesOfPath"): {
+                if (nextToken.empty()) goto expectOption;
+                if (!copyFilesOfPath.isEmpty()) goto alreadySet;
+                copyFilesOfPath = mx::FilePath(nextToken);
                 return SUCCESS_CONSUME_NEXT;
             }
             case hashString("--mtlxNodeGraphsPath"): {
@@ -772,7 +779,35 @@ int main(int argc, char* const argv[]) {
     }
 
     if (!inputArgs.skipWritingMtlxHeaders) {
+        std::string nodeGraphMessage;
+        bool isCopyValid = nodeGraphMtlxDoc->validate(&nodeGraphMessage);
+
+        if (!isCopyValid) {
+            std::cerr << "Node Graph Validation failed:\n" << nodeGraphMessage << std::endl;
+            return 1;
+        }
+        
         mx::writeToXmlFile(nodeGraphMtlxDoc, outputNodeGraphFilePath);
+    }
+
+    if (!inputArgs.copyFilesOfPath.isEmpty()) {
+        fs::path sourcePath(inputArgs.copyFilesOfPath.asString());
+        fs::path outputRoot(inputArgs.libraryOutputPath.asString());
+
+        for (const fs::directory_entry& entry : fs::recursive_directory_iterator(sourcePath)) {
+            if (!entry.is_regular_file()) continue;
+
+            try {
+                fs::path relativePath = fs::relative(entry.path(), sourcePath);
+                fs::path outputFile = outputRoot / relativePath;
+
+                fs::create_directories(outputFile.parent_path());
+                fs::copy_file(entry.path(), outputFile, fs::copy_options::overwrite_existing);
+            } catch (const std::exception& e) {
+                std::cerr << "Failed to copy file " << entry.path() << ": " << e.what() << std::endl;
+                return 1;
+            }
+        }
     }
 
     return 0;

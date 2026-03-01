@@ -1,39 +1,27 @@
 <?xml version="1.0"?>
 <materialx version="1.39" colorspace="lin_rec709">
-  <nodegraph name="metallic_paint" xpos="13.217391" ypos="0.120690">
-    <metallic_flake_layer name="metallic_flake_layer" type="BSDF" xpos="8.898551" ypos="-1.000000">
+  <nodegraph name="metallic_paint" xpos="-5.789855" ypos="2.508621">
+    <burley_diffuse_bsdf name="burley_diffuse_bsdf" type="BSDF" xpos="-5.789855" ypos="2.508621">
+      <input name="color" type="color3" interfacename="base_color" />
+    </burley_diffuse_bsdf>
+    <input name="base_color" type="color3" value="0.923892, 0.00329489, 0.00329489" xpos="-8.108696" ypos="1.258621" />
+    <metallic_flake_layer name="metallic_flake_layer" type="BSDF" xpos="-0.840580" ypos="0.284483">
       <input name="underlayer" type="BSDF" nodename="burley_diffuse_bsdf" />
-      <input name="baseWeight" type="float" output="outAlpha" nodename="flakes" />
-      <input name="flakeAlpha" type="float" output="outAlpha" nodename="flakes" />
-      <input name="flakeNormal" type="vector3" output="outNormal" nodename="flakes" />
+      <input name="flakeReflectivity" type="color3" interfacename="flake_color" />
       <input name="flakeEdgeTint" type="color3" interfacename="flake_color" />
-      <input name="flakeReflectivity" type="color3" interfacename="input_color3" />
       <input name="baseColor" type="color3" value="1, 1, 1" />
       <input name="baseRoughness" type="float" interfacename="base_roughness" />
     </metallic_flake_layer>
-    <output name="output_surfaceshader" type="surfaceshader" nodename="surface" xpos="17.514492" ypos="-1.344828" />
-    <surface name="metallic_paint" type="surfaceshader" xpos="14.971014" ypos="-0.396552">
+    <surface name="surface" type="surfaceshader" xpos="4.826087" ypos="1.422414">
       <input name="bsdf" type="BSDF" nodename="clearcoat_layer" />
     </surface>
-    <burley_diffuse_bsdf name="burley_diffuse_bsdf" type="BSDF" xpos="5.108696" ypos="2.370690">
-      <input name="color" type="color3" interfacename="base_color" />
-    </burley_diffuse_bsdf>
-    <clearcoat_layer name="clearcoat_layer" type="BSDF" xpos="12.260870" ypos="-0.500000">
+    <output name="output_surfaceshader" type="surfaceshader" nodename="surface" xpos="6.615942" ypos="1.396552" />
+    <input name="flake_color" type="color3" value="0, 0, 0" xpos="-8.101449" ypos="-0.112069" />
+    <clearcoat_layer name="clearcoat_layer" type="BSDF" xpos="2.268116" ypos="-0.732759">
       <input name="underlayer" type="BSDF" nodename="metallic_flake_layer" />
       <input name="roughness" type="float" interfacename="clearcoat_roughness" />
     </clearcoat_layer>
-    <flakes name="flakes" type="multioutput" xpos="5.826087" ypos="-2.482759">
-      <output name="outAlpha" type="float" />
-      <output name="rehash" type="float" />
-      <output name="outNormal" type="vector3" />
-      <input name="density" type="float" interfacename="flake_density" />
-      <input name="scale" type="float" interfacename="flake_scale" />
-    </flakes>
-    <input name="base_color" type="color3" value="1, 1, 1" xpos="2.094203" ypos="1.965517" />
-    <input name="flake_density" type="float" value="0" xpos="2.101449" ypos="-0.534483" />
-    <input name="flake_color" type="color3" value="1, 1, 1" xpos="2.094203" ypos="0.715517" />
-    <input name="clearcoat_roughness" type="float" value="0.1" xpos="1.978261" ypos="4.862069" />
-    <input name="base_roughness" type="float" value="0.1" xpos="1.985507" ypos="3.206897" />
-    <input name="flake_scale" type="float" value="85.6" xpos="2.101449" ypos="-1.767241" />
+    <input name="clearcoat_roughness" type="float" value="0" xpos="-7.992754" ypos="-2.043103" />
+    <input name="base_roughness" type="float" value="0" xpos="-8.057971" ypos="3.068965" />
   </nodegraph>
 </materialx>

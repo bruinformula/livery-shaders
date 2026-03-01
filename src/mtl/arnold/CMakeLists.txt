@@ -1,4 +1,4 @@
-set(AUTOLIB_ARNOLD_PLUGIN_DIR "${CMAKE_BINARY_DIR}/autolib_arnold_plugin")
+set(AUTOLIB_ARNOLD_PLUGIN_DIR "${CMAKE_BINARY_DIR}/autolib/arnold_plugin")
 
 function(add_arnold_plugin PLUGIN_NAME)
     set(ARNOLD_PLUGIN_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}")

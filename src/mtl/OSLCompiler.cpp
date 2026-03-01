@@ -262,12 +262,13 @@ std::vector<std::string> OslCompileOptions::getArgs(const mx::FilePath& osoFileP
     for (mx::FilePath p : oslIncludePath) {
         oslCompilerArgs.emplace_back("-I" + p.asString() + "");
     }
-    
+    /*
     std::cout << "oslc ";
     for (const auto& arg : oslCompilerArgs) {
         std::cout << arg << " ";
     }
     std::cout << "\n";
+     */
     return oslCompilerArgs;
 }
 
