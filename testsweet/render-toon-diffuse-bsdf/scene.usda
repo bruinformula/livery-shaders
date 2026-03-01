@@ -6,7 +6,7 @@
 )
 
 def "World" (
-    references = @glossy_toon.mtlx@</MaterialX>
+    references = @diffuse_toon.mtlx@</MaterialX>
 ) {
     def Scope "ShadeBalls" {
         def Xform "Ball1" (
@@ -14,7 +14,7 @@ def "World" (
             instanceable = true
             references = @sphere.usda@</ShadeBall>
         ) {
-            rel material:binding = </World/Materials/Glossy_Toon_1> (
+            rel material:binding = </World/Materials/Diffuse_Toon_1> (
                 bindMaterialAs = "strongerThanDescendants"
             )
 
@@ -27,7 +27,7 @@ def "World" (
             instanceable = true
             references = @sphere.usda@</ShadeBall>
         ) {
-            rel material:binding = </World/Materials/Glossy_Toon_2> (
+            rel material:binding = </World/Materials/Diffuse_Toon_2> (
                 bindMaterialAs = "strongerThanDescendants"
             )
 
@@ -75,7 +75,7 @@ def "World" (
         def Scope "Products" {
             def RenderProduct "Beauty" {
                 token productType = "raster"
-                token productName = "out-arnold.exr"
+                token productName = "out.exr"
             }
         }
     }

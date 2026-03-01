@@ -6,7 +6,7 @@
 )
 
 def "World" (
-    references = @diffuse_rainbow.mtlx@</MaterialX>
+    references = @wonderful_material.mtlx@</MaterialX>
 ) {
     def Scope "ShadeBalls" {
         def Xform "Ball1" (
@@ -14,7 +14,7 @@ def "World" (
             instanceable = true
             references = @sphere.usda@</ShadeBall>
         ) {
-            rel material:binding = </World/Materials/Diffuse_Ramp_Rainbow> (
+            rel material:binding = </World/Materials/Wonderful_Material_1> (
                 bindMaterialAs = "strongerThanDescendants"
             )
 
@@ -27,7 +27,7 @@ def "World" (
             instanceable = true
             references = @sphere.usda@</ShadeBall>
         ) {
-            rel material:binding = </World/Materials/Diffuse_Ramp_Rainbow> (
+            rel material:binding = </World/Materials/Wonderful_Material_2> (
                 bindMaterialAs = "strongerThanDescendants"
             )
 
@@ -75,7 +75,7 @@ def "World" (
         def Scope "Products" {
             def RenderProduct "Beauty" {
                 token productType = "raster"
-                token productName = "out-arnold.exr"
+                token productName = "out.exr"
             }
         }
     }

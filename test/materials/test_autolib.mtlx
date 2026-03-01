@@ -3,26 +3,19 @@
   <surfacematerial name="Test_AutoLib1" type="material" xpos="17.014492" ypos="-0.646552">
     <input name="surfaceshader" type="surfaceshader" nodename="surface" />
   </surfacematerial>
-  <splatter_paint name="splatter_paint" type="BSDF" xpos="9.333333" ypos="-1.620690">
-    <input name="splatterLayer1" type="BSDF" output="splatterLayer" nodename="splatter_layer3" />
-    <input name="splatterLayer2" type="BSDF" output="splatterLayer" nodename="splatter_layer" />
-    <input name="splatterLayer3" type="BSDF" output="splatterLayer" nodename="splatter_layer2" />
-  </splatter_paint>
   <surface name="surface" type="surfaceshader" xpos="12.608696" ypos="-0.112069">
-    <input name="bsdf" type="BSDF" nodename="splatter_paint" />
+    <input name="bsdf" type="BSDF" nodename="carbon_fiber_material" />
   </surface>
-  <splatter_layer name="splatter_layer" type="multioutput" xpos="1.826087" ypos="-9.224138">
-    <output name="splatterLayer" type="BSDF" />
-  </splatter_layer>
-  <splatter_layer name="splatter_layer2" type="multioutput" xpos="-1.318841" ypos="-7.275862">
-    <output name="splatterLayer" type="BSDF" />
-    <input name="baseColor" type="color3" output="outColor" nodename="decal" />
-  </splatter_layer>
-  <splatter_layer name="splatter_layer3" type="multioutput" xpos="5.420290" ypos="-10.982759">
-    <output name="splatterLayer" type="BSDF" />
-  </splatter_layer>
-  <decal name="decal" type="multioutput" xpos="-4.898551" ypos="-6.844828">
-    <output name="outColor" type="color3" />
-    <input name="filename" type="string" value="../image.png" />
-  </decal>
+  <carbon_fiber_material name="carbon_fiber_material" type="BSDF" xpos="8.318841" ypos="-3.344828">
+    <input name="fiberNoise" type="float" output="outNoise" nodename="carbon_fiber_weave" />
+    <input name="fiberBump" type="float" output="outBump" nodename="carbon_fiber_weave" />
+    <input name="fiberBumpedNormal" type="vector3" output="outBumpedNormal" nodename="carbon_fiber_weave" />
+    <input name="fiberRotation" type="vector3" output="outRotation" nodename="carbon_fiber_weave" />
+  </carbon_fiber_material>
+  <carbon_fiber_weave name="carbon_fiber_weave" type="multioutput" xpos="4.376812" ypos="-4.258621">
+    <output name="outNoise" type="float" />
+    <output name="outBump" type="float" />
+    <output name="outBumpedNormal" type="vector3" />
+    <output name="outRotation" type="vector3" />
+  </carbon_fiber_weave>
 </materialx>
