@@ -1,3 +1,4 @@
+#include <MaterialXFormat/XmlIo.h>
 #include <MaterialXGenShader/Library.h>
 #include <iostream>
 #include <string>
@@ -43,6 +44,7 @@ const std::string argOptions =
 
 struct LibraryArgumentHandler : public ArgumentHandler {
     mx::FilePath oslLibraryPath;
+    mx::FilePath mtlxNodeGraphsPath;
     mx::FilePath libraryOutputPath;
     bool skipWritingMtlxHeaders = false;
     
@@ -54,6 +56,12 @@ struct LibraryArgumentHandler : public ArgumentHandler {
                 if (nextToken.empty()) goto expectOption;
                 if (!oslLibraryPath.isEmpty()) goto alreadySet;
                 oslLibraryPath = mx::FilePath(nextToken);
+                return SUCCESS_CONSUME_NEXT;
+            }
+            case hashString("--mtlxNodeGraphsPath"): {
+                if (nextToken.empty()) goto expectOption;
+                if (!mtlxNodeGraphsPath.isEmpty()) goto alreadySet;
+                mtlxNodeGraphsPath = mx::FilePath(nextToken);
                 return SUCCESS_CONSUME_NEXT;
             }
             case hashString("--libraryOutputPath"): {
@@ -638,58 +646,6 @@ bool createMaterialXDefinitions(
     return true;
 }
 
-void dumpElement(mx::ElementPtr elem, int indent = 0) {
-    std::string padding(indent, ' ');
-
-    std::cout << padding
-              << elem->getCategory()
-              << " name=\"" << elem->getName() << "\""
-              << " path=\"" << elem->getNamePath() << "\"";
-
-    // only TypedElement has getType()
-    if (auto typed = elem->asA<mx::TypedElement>()) {
-        if (!typed->getType().empty())
-            std::cout << " type=\"" << typed->getType() << "\"";
-    }
-
-    // only ValueElement has getValueString()
-    if (auto valueElem = elem->asA<mx::ValueElement>()) {
-        if (valueElem->hasValue())
-            std::cout << " value=\"" << valueElem->getValueString() << "\"";
-    }
-
-    std::cout << std::endl;
-
-    if (auto node = elem->asA<mx::Node>()) {
-        for (auto input : node->getInputs()) {
-            std::cout << padding << "  INPUT "
-                      << input->getName()
-                      << " type=" << input->getType();
-
-            if (input->getConnectedOutput()) {
-                std::cout << " -> "
-                          << input->getConnectedOutput()->getNamePath();
-            } else if (input->hasValue()) {
-                std::cout << " value="
-                          << input->getValueString();
-            }
-
-            std::cout << std::endl;
-        }
-
-        for (auto output : node->getOutputs()) {
-            std::cout << padding << "  OUTPUT "
-                      << output->getName()
-                      << " type=" << output->getType()
-                      << std::endl;
-        }
-    }
-
-    for (auto child : elem->getChildren()) {
-        dumpElement(child, indent + 2);
-    }
-}
-
 int main(int argc, char* const argv[]) {
     std::vector<std::string> tokens;
 
@@ -769,34 +725,10 @@ int main(int argc, char* const argv[]) {
 
     mx::FilePath outputNodeDefFilePath = inputArgs.libraryOutputPath / "autolib_defs.mtlx";
     mx::FilePath outputImplFilePath = inputArgs.libraryOutputPath / "autolib_genosl_impl.mtlx";
+    mx::FilePath outputNodeGraphFilePath = inputArgs.libraryOutputPath / "autolib_nodegraphs.mtlx";
 
     nodeDefMtlxDoc->importLibrary(typeDefMtlxDoc);
 
-    constexpr bool debug = false;
-
-    if (debug) {
-        for (auto elem : nodeDefMtlxDoc->traverseTree()) {
-            //dumpElement(elem);
-        }
-
-        for (auto elem : implMtlxDoc->traverseTree()) {
-            //dumpElement(elem);
-        }
-
-        for (auto elem : nodeDefMtlxDoc->traverseTree()) {
-            if (auto valueElem = elem->asA<mx::ValueElement>()) {
-                if (valueElem->hasValue()) {
-                    std::cout << valueElem->getNamePath()
-                            << " type=" << valueElem->getType()
-                            << " value=\"" << valueElem->getValueString()
-                            << "\"" << std::endl;
-                }
-                valueElem->validate();
-            }
-        }
-    }
-
-    
     std::string nodeDefMessage;
     bool isNodeDefValid = nodeDefMtlxDoc->validate(&nodeDefMessage);
 
@@ -816,6 +748,31 @@ int main(int argc, char* const argv[]) {
     if (!inputArgs.skipWritingMtlxHeaders) {
         mx::writeToXmlFile(nodeDefMtlxDoc, outputNodeDefFilePath);
         mx::writeToXmlFile(implMtlxDoc, outputImplFilePath);
+    }
+
+    mx::DocumentPtr nodeGraphMtlxDoc = mx::createDocument();
+
+    if (!inputArgs.mtlxNodeGraphsPath.isEmpty()) {
+        std::vector<mx::FilePath> files = findFiles(inputArgs.mtlxNodeGraphsPath, ".mtlx");
+
+        for (const mx::FilePath& file : files) {
+            try {
+                mx::DocumentPtr nodeGraphDoc = mx::createDocument();
+                mx::readFromXmlFile(nodeGraphDoc, file);
+
+                for (const mx::ElementPtr& child : nodeGraphDoc->getChildren()) {
+                    mx::ElementPtr copy = nodeGraphMtlxDoc->addChildOfCategory(child->getCategory(), child->getName());
+                    copy->copyContentFrom(child);
+                }
+            } catch (const std::exception& e) {
+                std::cerr << "Failed to read node graph MaterialX document: " << e.what() << std::endl;
+                return 1;
+            }
+        }
+    }
+
+    if (!inputArgs.skipWritingMtlxHeaders) {
+        mx::writeToXmlFile(nodeGraphMtlxDoc, outputNodeGraphFilePath);
     }
 
     return 0;

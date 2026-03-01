@@ -10,11 +10,12 @@
 #endif
 
 // retrieves name, hit point and normal of a probe ray
-int probeForOutline( vector rayDir, 
-                     point rayOrigin, 
-                     output string hitGeomName,
-                     output point hitPoint, 
-                     output normal hitNormal 
+int probeForOutline( 
+    vector rayDir, 
+    point rayOrigin, 
+    output string hitGeomName,
+    output point hitPoint, 
+    output normal hitNormal 
 ) {
     int hit = trace(rayOrigin, rayDir);   
 
@@ -32,7 +33,6 @@ int probeForOutline( vector rayDir,
 
 }
 
-
 ENTRY_TOON_OUTLINE ToonOutline [[ 
     string nodegroup = "autolib", 
 ]] (
@@ -45,7 +45,7 @@ ENTRY_TOON_OUTLINE ToonOutline [[
     output closure color Cout  DEFAULT_TOON_OUTLINE(0)
 ) {
 
-    for(int i = -1; i <= 1; i++){
+    for (int i = -1; i <= 1; i++) {
         float noisedWidth = width * noise("perlin", P * noiseScale) * noiseAmount;
 
         float eps = 1e-4;
@@ -85,7 +85,6 @@ ENTRY_TOON_OUTLINE ToonOutline [[
             outAlpha = 1;
             break;
         }
-        
     }
 
     if (outAlpha > 0) {
@@ -96,16 +95,3 @@ ENTRY_TOON_OUTLINE ToonOutline [[
     }
 
 }
-
-/* 
-
-ENTRY_TOON Toon(
-    color Color = 1,
-    float Angle = 50,
-    output color Cout = 0
-) {
-    float angle = cos(radians(Angle));
-    if(abs(dot(-I,N)) > angle) Cout = Color;
-}
-
-*/
