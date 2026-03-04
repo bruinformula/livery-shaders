@@ -1,0 +1,1 @@
+blender --background test/blender_scene/import_test.blend --python scripts/blender_import_oso.py 2>&1
