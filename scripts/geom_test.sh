@@ -4,4 +4,4 @@
 ./build/bin/STEPConvertUSD --inputSTEPFile ./test/step/model4.STEP --outputFile ./build/model4.usdc
 
 #./build/bin/STEPConvertUSD --inputSTEPFile ../../Mk10/MK10.STEP --outputFile ./build/Mk10.usdc
-#./build/bin/STEPConvertUSD --inputSTEPFile ../livery/car/step_files/MK11-TOP-001-A-TOP_ASSEMBLY.STP --outputFile ./build/Mk11.usdc
+./build/bin/STEPConvertUSD --inputSTEPFile ../livery/car/step_files/MK11-TOP-001-A-TOP_ASSEMBLY.STP --outputFile ./build/Mk11.usdc
