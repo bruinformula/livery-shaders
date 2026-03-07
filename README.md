@@ -11,4 +11,4 @@ Contains
 - Generation of MaterialX impl bindings of said shaders
 - Flattening MaterialX documents into oso files 
 - Querying of MaterialX documents to retrieve and consolidate node data (super handy for manufacturing)
-- A STEP to USD exporter that embeds some extra CADy info.
+- A Step to Usd exporter that embeds some extra CADy info.

@@ -53,7 +53,7 @@ function(add_usd_render_test TEST_NAME)
         ENVIRONMENT
             "
             AUTOLIB_TESTSWEET_DIR=${AUTOLIB_TESTSWEET_DIR};\
-            USD_TESTSUITE_SRC=${TEST_SRC_DIR};\
+            Usd_TESTSUITE_SRC=${TEST_SRC_DIR};\
             AUTOLIB_BUILD_DIR=${AUTOLIB_BUILD_DIR};\
             ARNOLD_PLUGIN_PATH=$ENV{ARNOLD_PLUGIN_PATH};\
             PXR_PLUGINPATH_NAME=$ENV{PXR_PLUGINPATH_NAME};\

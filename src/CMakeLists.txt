@@ -6,3 +6,6 @@ if(BUILD_AUTOLIB_MTL)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/mtl")
 endif()
 
+if(BUILD_AUTOLIB_SIM)
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/sim")
+endif()

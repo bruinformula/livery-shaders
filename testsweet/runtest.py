@@ -51,7 +51,7 @@ hardfail:         float          = 0.01
 failpercent:      float          = 0.02
 failureok:        int            = 0
 filter_re:        Optional[str]  = None
-skip_diff:        int            = int(os.environ.get("USD_TESTSUITE_SKIP_DIFF", "0"))
+skip_diff:        int            = int(os.environ.get("Usd_TESTSUITE_SKIP_DIFF", "0"))
 image_extensions: list[str]      = [".tif", ".tx", ".exr", ".jpg", ".png"]
 
 
