@@ -1,11 +1,12 @@
 #pragma once
 
-#include <pxr/usd/usd/common.h>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include <pxr/usd/usd/stage.h>
 #include <pxr/usd/usdGeom/xformOp.h>
+#include <pxr/usd/usd/common.h>
 
 #include <chrono/physics/ChBody.h>
 

@@ -1,7 +1,7 @@
 find_package(OSL REQUIRED)
 find_package(OpenImageIO REQUIRED)
 find_package(MaterialX REQUIRED)
-find_package(Arnold REQUIRED)
+
 
 add_library(mtlShared STATIC "${CMAKE_CURRENT_SOURCE_DIR}/OSLCompiler.cpp")
 

@@ -33,7 +33,7 @@ void traceIncomingRadiance(point pos,
         // Try different possible output names
         if (getmessage("trace", "Ci", radiance)) {
             result = radiance;
-        } else if (getmessage("trace", "Cout", radiance)) {
+        } else if (getmessage("trace", "out", radiance)) {
             result = radiance;
         } else if (getmessage("trace", "emission", emission)) {
             result = emission;  // Got emission directly!

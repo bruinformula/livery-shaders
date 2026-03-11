@@ -11,7 +11,7 @@ void phong_ramp_bsdf(
     color colorH,
     float exponent,
     normal N, 
-    output closure color Cout
+    output closure color out
 ) {
     color colors[8];
     colors[0] = colorA;
@@ -22,5 +22,5 @@ void phong_ramp_bsdf(
     colors[5] = colorF;
     colors[6] = colorG;
     colors[7] = colorH;
-    Cout = phong_ramp(N, exponent, colors);
+    out = phong_ramp(N, exponent, colors);
 }

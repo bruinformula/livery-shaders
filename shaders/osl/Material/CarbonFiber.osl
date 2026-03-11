@@ -30,7 +30,7 @@ ENTRY_CARBON_FIBER_MATERIAL CarbonFiberMaterial [[
 	float resinIOR  DEFAULT_CARBON_FIBER_MATERIAL(1.4) [[ string uifolder = "Clearcoat", float uimin = 1.0, float uimax = 3.0 ]],
 	float resinExponent  DEFAULT_CARBON_FIBER_MATERIAL(5) [[ string uifolder = "Clearcoat", float uimin = 0.0, float uimax = 10.0 ]],
 
-    output closure color Cout  DEFAULT_CARBON_FIBER_MATERIAL(0)
+    output closure color out  DEFAULT_CARBON_FIBER_MATERIAL(0)
 ) {
     float fiberBumpiness = fiberBump * pow(fiberNoise, fiberStrandBoost);
 
@@ -77,5 +77,5 @@ ENTRY_CARBON_FIBER_MATERIAL CarbonFiberMaterial [[
 		"ggx"
 	);
 
-    Cout = layer(layer(resinTop, resinBase), fiberLayer);
+    out = layer(layer(resinTop, resinBase), fiberLayer);
 }

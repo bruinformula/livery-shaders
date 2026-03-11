@@ -6,7 +6,7 @@ float wireframe(string edge_type) { return wireframe(edge_type, 1.0, 1); }
 float wireframe() { return wireframe("polygons", 1.0, 1); }
 
 shader KuwaharaFilterTest(
-    output closure color Cout = 0
+    output closure color out = 0
 ) {
-    Cout = diffuse(N) * wireframe("polygons", 0.5, 0);
+    out = diffuse(N) * wireframe("polygons", 0.5, 0);
 }

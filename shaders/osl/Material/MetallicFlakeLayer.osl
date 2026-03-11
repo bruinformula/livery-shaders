@@ -33,7 +33,7 @@ ENTRY_METALLIC_FLAKE_LAYER MetallicFlakeLayer [[
     // Layer beneath this one
     closure color underlayer DEFAULT_METALLIC_FLAKE_LAYER(0),
 
-    output closure color Cout DEFAULT_METALLIC_FLAKE_LAYER(0)
+    output closure color out DEFAULT_METALLIC_FLAKE_LAYER(0)
 ) {
     normal finalNormal = mix(Ng, flakeNormal, flakeRandomize);
 
@@ -63,5 +63,5 @@ ENTRY_METALLIC_FLAKE_LAYER MetallicFlakeLayer [[
         );
     }
 
-    Cout = layer(thisLayer, underlayer);
+    out = layer(thisLayer, underlayer);
 }

@@ -170,7 +170,8 @@ struct OslCompileOptions : public ArgumentHandler {
 bool compileOSLToBytecode(
     const std::string& oslSourceCode, 
     const std::string& oslFileName, 
-    const mx::FilePath& outputDir, 
+    const mx::FilePath& oslOutputDir, 
+    const mx::FilePath& osoOutputDir,
     const OslCompileOptions& options,
     osl::OSLQuery* osoQuery = nullptr
 );

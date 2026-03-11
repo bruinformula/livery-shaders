@@ -10,7 +10,7 @@ void diffuse_ramp_bsdf(
     color colorG,
     color colorH,
     normal N, 
-    output closure color Cout
+    output closure color out
 ) {
     color colors[8];
     colors[0] = colorA;
@@ -21,5 +21,5 @@ void diffuse_ramp_bsdf(
     colors[5] = colorF;
     colors[6] = colorG;
     colors[7] = colorH;
-    Cout = diffuse_ramp(N, colors);
+    out = diffuse_ramp(N, colors);
 }

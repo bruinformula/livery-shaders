@@ -12,7 +12,7 @@ void phong_ramp_bsdf(
     vec3 colorH,
     float exponent,
     vec3 N, 
-    inout BSDF Cout
+    inout BSDF out
 ) {
     return;
 }

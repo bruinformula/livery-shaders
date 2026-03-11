@@ -11,7 +11,7 @@ shader BumpToRoughnessTestShader(
     float gain = 1.0,
     float anisotropyGain = 1.0,
     
-    output closure color Cout = 0,
+    output closure color out = 0,
     output normal outNormal = normal(0, 0, 1)
 ) {
     float noiseTest = noise("perlin", coordinates);
@@ -58,8 +58,8 @@ shader BumpToRoughnessTestShader(
         "ggx"
     );
 
-    Cout = base;
-    Cout = layer(specular, base);
+    out = base;
+    out = layer(specular, base);
 
 
     outNormal = bumpNormal;

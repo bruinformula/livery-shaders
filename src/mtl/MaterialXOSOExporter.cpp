@@ -395,6 +395,7 @@ int main(int argc, char* const argv[]) {
                     shader->getSourceCode(), 
                     oslFileName, 
                     inputArgs.osoOutputPath, 
+                    inputArgs.osoOutputPath,
                     inputArgs.oslCompileOptions
                 );
                             

@@ -4,7 +4,7 @@ void glossy_toon_bsdf(
     float size,
     float smooth,
     normal N,
-    output closure color Cout
+    output closure color out
 ) {
-    Cout = glossy_toon(N, size, smooth);
+    out = glossy_toon(N, size, smooth);
 }

@@ -11,7 +11,7 @@ shader RampTest(
     color h = 0,
     int mode = 0,
     float exponent = 20,
-    output closure color Cout = 0
+    output closure color out = 0
 ) {
     color colors[8];
     colors[0] = a;
@@ -23,8 +23,8 @@ shader RampTest(
     colors[6] = g;
     colors[7] = h;
     if (mode == 0) {
-        Cout = phong_ramp(N, exponent, colors);
+        out = phong_ramp(N, exponent, colors);
     } else {
-        Cout = diffuse_ramp(N, colors);
+        out = diffuse_ramp(N, colors);
     }
 }

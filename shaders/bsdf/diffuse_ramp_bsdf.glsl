@@ -11,7 +11,7 @@ void diffuse_ramp_bsdf(
     vec3 colorG,
     vec3 colorH,
     vec3 N, 
-    inout BSDF Cout
+    inout BSDF out
 ) {
     return;
 }

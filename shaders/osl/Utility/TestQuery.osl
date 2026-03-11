@@ -43,7 +43,7 @@ ENTRY_TEST_QUERY TestQuery [[
     //myvec mv2 = { 0.25, 1.0, 2.0 },
     //mystruct ms = { 3.14, "world", 99, point(0,1,1) },
     //arraystruct as = { {1,2,3}, {2, 1} }, 
-    output color Cout = 0,
+    output color out = 0,
     output closure color bsdf = 0,
 
     // Test array params

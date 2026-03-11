@@ -72,6 +72,8 @@ ENTRY_BUMP_TO_ROUGHNESS BumpToRoughness [[
     output float outRoughnessU  DEFAULT_BUMP_TO_ROUGHNESS(0.0) [[ string doc = "Roughness in U direction (major axis)" ]],
     output float outRoughnessV  DEFAULT_BUMP_TO_ROUGHNESS(0.0) [[ string doc = "Roughness in V direction (minor axis)" ]]
 ) {
+
+    outNormal = N;
     vector pPps, pPpt;
     computePartialDerivs(P, UV.x, UV.y, pPps, pPpt);
     
@@ -137,8 +139,8 @@ ENTRY_BUMP_TO_ROUGHNESS BumpToRoughness [[
     covarianceToEigen(sxx, sxy, syy, l1, l2, v1, v2);
     
     // Project eigenvectors to surface tangent space
-    vector _pPpu = pPps * v1[0] + pPpt * v1[1];
-    vector _pPpv = pPps * v2[0] + pPpt * v2[1];
+    vector _pPpu = -pPps * v1[0] + pPpt * v1[1];
+    vector _pPpv = -pPps * v2[0] + pPpt * v2[1];
     
     // Compute roughness from variance
     float base_roughsqr = baseRoughness * baseRoughness;

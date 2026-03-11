@@ -4,7 +4,7 @@ void diffuse_toon_bsdf(
     float size,
     float smooth,
     normal N,
-    output closure color Cout
+    output closure color out
 ) {
-    Cout = diffuse_toon(N, size, smooth);
+    out = diffuse_toon(N, size, smooth);
 }

@@ -37,7 +37,8 @@ const std::string argOptions =
     "    --oslLibraryPath           Path to the directory containing OSL shader files.  All .osl files in this directory and its subdirectories will be processed. \n"
     "    --libraryOutputPath        Path to the output directory where generated MaterialX documents and OSL shaders will be written. \n"
     "    --skipWritingMtlxHeaders   Skip generating MaterialX implementation files to the libraryOutputPath. \n"
-    "    --autolib-include-rewrite  Rewrite #include paths in header files to point to flattened OSL files in root directory. \n"
+    "    --arnold-impl              Add Arnold implementation to nodes. \n"
+    "    --genosl-impl              Generate OSL implementation files. \n"
     "    --path                     Specify an additional data search path location (e.g. '/projects/MaterialX').  This absolute path will be queried when locating data libraries, XInclude references, and referenced images.\n"
     "    --library                  Specify an additional data library folder (e.g. 'vendorlib', 'studiolib').  This relative path will be appended to each location in the data search path when loading data libraries.\n"
     "    --help                     Prints this message\n";
@@ -48,6 +49,8 @@ struct LibraryArgumentHandler : public ArgumentHandler {
     mx::FilePath libraryOutputPath;
     mx::FilePath copyFilesOfPath;
     bool skipWritingMtlxHeaders = false;
+    bool writeArnoldImpl = false;
+    bool writeGenOSLImpl = false;
     
     OslCompileOptions oslCompileOptions;
     
@@ -79,6 +82,14 @@ struct LibraryArgumentHandler : public ArgumentHandler {
             }
             case hashString("--skipWritingMtlxHeaders"): {
                 skipWritingMtlxHeaders = true;
+                return SUCCESS;
+            }
+            case hashString("--arnold-impl"): {
+                writeArnoldImpl = true;
+                return SUCCESS;
+            }
+            case hashString("--genosl-impl"): {
+                writeGenOSLImpl = true;
                 return SUCCESS;
             }
             case hashString("--help"): {
@@ -129,6 +140,13 @@ struct LibraryArgumentHandler : public ArgumentHandler {
                 return false;
             }
         }
+
+        bool atLeastOne = !writeArnoldImpl || !writeGenOSLImpl;
+
+        if (!atLeastOne) {
+            std::cerr << "must specify a gen target (eg: genosl)" << std::endl;
+            return false;
+        }
         
         // validate osl library path
         if (!oslLibraryPath.exists() || !oslLibraryPath.isDirectory()) {
@@ -157,6 +175,8 @@ public:
     bool unknownAttributeWarning = false;
     bool typeMismatchWarning = true;
     bool implicitAssignmentWarning = true;
+    bool writeArnoldImpl = false;
+    bool writeGenOSLImpl = true;
 };
 
 std::string getRelativePathToRoot(const mx::FilePath& headerPath) {
@@ -253,10 +273,21 @@ bool createMaterialXDefinitions(
     }
     
     std::string shaderName = osoQuery.shadername().c_str();
-    std::string nodeName = toSnakeCase(shaderName);
+    //std::string nodeName = toSnakeCase(shaderName);
+    std::string nodeName = shaderName;
+
+
+    std::string nodeDefName;
+
+    // there is some Arnold bug where nodes must be resgistered with the ARNOLD_ or there'll be a string_view something something error 
+    if (mtlxDefinitionOptions.writeArnoldImpl) {
+        nodeDefName = "ARNOLD_ND_" + nodeName;
+    } else {
+        nodeDefName = "ND_" + nodeName;
+    }
 
     mx::NodeDefPtr nodeDef = nodeDefMtlxDoc->addNodeDef(
-        "ND_" + nodeName,
+        nodeDefName,
         "",
         nodeName
     );
@@ -485,20 +516,6 @@ bool createMaterialXDefinitions(
                 }
                 case hashString("defaultgeomprop"): {
                     if (!mtlxDefinitionOptions.typeMismatchWarning) break;
-                    /* do i even need these
-                    switch (hashString(attributeValue)) {
-                        "Pobject"
-                        "Nobject"
-                        "Tobject"
-                        "Bobject"
-                        "Pworld"
-                        "Nworld"
-                        "Tworld"
-                        "Bworld"	
-                        "UV0"
-                    }
-                    */
-
                     if (paramType != "vector3") {
                         std::cerr << "Warning: defaultgeomprop can only be used with vector3 inputs, parameter " << paramName << " is " << paramType << std::endl;
                     }
@@ -588,18 +605,43 @@ bool createMaterialXDefinitions(
 
     try {
         // OSL Implementation
-        std::string implNameOSL = "IM_" + nodeName + "_genosl";
-        auto implOSL = implMtlxDoc->addImplementation(implNameOSL);
+        
+        std::string implBaseName;
 
-        if (!implOSL) {
-            std::cerr << "Failed to create Implementation for node: " << nodeName << std::endl;
-            return false;
+        if (mtlxDefinitionOptions.writeArnoldImpl) {
+            implBaseName = "ARNOLD_IM_" + nodeName;
+        } else {
+            implBaseName = "IM_" + nodeName;
         }
+        if (mtlxDefinitionOptions.writeGenOSLImpl) {
+            std::string implNameOSL = implBaseName + nodeName + "_genosl";
+            auto implOSL = implMtlxDoc->addImplementation(implNameOSL);
 
-        implOSL->setNodeDef(nodeDef);
-        implOSL->setFile(oslFilePath);
-        implOSL->setFunction(shaderName);
-        implOSL->setTarget("genosl");
+            if (!implOSL) {
+                std::cerr << "Failed to create Implementation for node: " << nodeName << std::endl;
+                return false;
+            }
+
+            implOSL->setNodeDef(nodeDef);
+            implOSL->setFile(oslFilePath);
+            implOSL->setFunction(shaderName);
+            implOSL->setTarget("genosl");
+        }
+        
+        // Arnold Implementation (registered through ARNOLD_PLUGIN_PATH)
+
+        if (mtlxDefinitionOptions.writeArnoldImpl) {
+            std::string implNameArnold = implBaseName + nodeName + "_arnold";
+            auto implArnold = implMtlxDoc->addImplementation(implNameArnold);
+
+            if (!implArnold) {
+                std::cerr << "Failed to create Implementation for node: " << nodeName << std::endl;
+                return false;
+            }
+
+            implArnold->setNodeDef(nodeDef);
+            implArnold->setTarget("arnold");
+        }
 
         // GLSL Stub Implementation
         mx::FilePath glslFilePath = oslFileName;
@@ -609,7 +651,7 @@ bool createMaterialXDefinitions(
         if (!generateGLSLStub(oslFileName, shaderName, nodeDef, outputDir, nodeDefMtlxDoc, typeDefMtlxDoc)) {
             std::cerr << "Failed to generate GLSL stub for node: " << nodeName << std::endl;
         } else {
-            std::string implNameGLSL = "IM_" + nodeName + "_genglsl";
+            std::string implNameGLSL = implBaseName + nodeName + "_genglsl";
             auto implGLSL = implMtlxDoc->addImplementation(implNameGLSL);
 
             if (!implGLSL) {
@@ -694,11 +736,19 @@ int main(int argc, char* const argv[]) {
     inputArgs.oslCompileOptions.definePreprocessors.emplace_back("SOLO_SHADER");
 
     MaterialXDefinitionOptions mtlxDefinitionOptions;
+    mtlxDefinitionOptions.writeArnoldImpl = inputArgs.writeArnoldImpl;
+    mtlxDefinitionOptions.writeGenOSLImpl = inputArgs.writeGenOSLImpl;
 
     mx::DocumentPtr implMtlxDoc = mx::createDocument();
     mx::DocumentPtr typeDefMtlxDoc = mx::createDocument();
     mx::DocumentPtr nodeDefMtlxDoc = mx::createDocument();
 
+    mx::FilePath osoOutputPath = inputArgs.libraryOutputPath / "oso";
+
+    if (!osoOutputPath.exists()) {
+        std::filesystem::create_directory(osoOutputPath.asString());
+    }
+            
     for (int i = 0; i < files.size(); i++) {
         const std::string oslFileName = files[i].getBaseName();
         
@@ -721,10 +771,26 @@ int main(int argc, char* const argv[]) {
             oslFileInput.close();
 
             osl::OSLQuery osoQuery;
-            
-            compileOSLToBytecode(oslFileContent, oslFileName, inputArgs.libraryOutputPath, inputArgs.oslCompileOptions, &osoQuery);
+
+            compileOSLToBytecode(
+                oslFileContent, 
+                oslFileName, 
+                inputArgs.libraryOutputPath, 
+                osoOutputPath, 
+                inputArgs.oslCompileOptions, 
+                &osoQuery
+            );
     
-            createMaterialXDefinitions(osoQuery, oslFileName, relativeOslPath, nodeDefMtlxDoc, implMtlxDoc, typeDefMtlxDoc, inputArgs.libraryOutputPath, mtlxDefinitionOptions);
+            createMaterialXDefinitions(
+                osoQuery, 
+                oslFileName, 
+                relativeOslPath, 
+                nodeDefMtlxDoc, 
+                implMtlxDoc, 
+                typeDefMtlxDoc, 
+                inputArgs.libraryOutputPath, 
+                mtlxDefinitionOptions
+            );
         } catch (const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;
         }

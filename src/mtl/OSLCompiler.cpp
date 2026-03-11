@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include <OSL/oslquery.h>
 #include <OSL/oslcomp.h>
@@ -473,12 +474,13 @@ std::string parseOSLParameterType(const osl::OSLQuery::Parameter& param) {
 bool compileOSLToBytecode(
     const std::string& oslSourceCode, 
     const std::string& oslFileName, 
-    const mx::FilePath& outputDir, 
+    const mx::FilePath& oslOutputDir, 
+    const mx::FilePath& osoOutputDir,
     const OslCompileOptions& options,
     osl::OSLQuery* osoQuery
 ) {
     // we compile the shader to get attributes and metadata
-    mx::FilePath oslFilePath = outputDir / oslFileName;
+    mx::FilePath oslFilePath = oslOutputDir / oslFileName;
     oslFilePath.removeExtension();
     oslFilePath.addExtension("osl");
 
@@ -489,7 +491,7 @@ bool compileOSLToBytecode(
         oslFile.close();
     }
 
-    mx::FilePath osoFilePath = outputDir / oslFileName;
+    mx::FilePath osoFilePath = osoOutputDir / oslFileName;
     osoFilePath.removeExtension();
     osoFilePath.addExtension("oso");
 
@@ -513,7 +515,7 @@ bool compileOSLToBytecode(
                 std::string headerSourceCode = buffer.str();
                 headerInput.close();
 
-                mx::FilePath headerOutputPath = outputDir / *header;
+                mx::FilePath headerOutputPath = oslOutputDir / *header;
                 
                 // header directories are created if they don't exist
                 mx::FilePath parentPath = headerOutputPath.getParentPath();
