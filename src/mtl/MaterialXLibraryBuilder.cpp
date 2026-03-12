@@ -5,7 +5,6 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
-#include <regex>
 #include <filesystem>
 
 #include <OSL/oslquery.h>
@@ -37,11 +36,25 @@ const std::string argOptions =
     "    --oslLibraryPath           Path to the directory containing OSL shader files.  All .osl files in this directory and its subdirectories will be processed. \n"
     "    --libraryOutputPath        Path to the output directory where generated MaterialX documents and OSL shaders will be written. \n"
     "    --skipWritingMtlxHeaders   Skip generating MaterialX implementation files to the libraryOutputPath. \n"
-    "    --arnold-impl              Add Arnold implementation to nodes. \n"
-    "    --genosl-impl              Generate OSL implementation files. \n"
+    "    --arnold-impl              Add Arnold implementation. \n"
+    "    --genosl-impl              Add Arnold implementation. \n"
+    "    --genglsl-dummy-impl       Add genglsl dummy implementation. \n"
     "    --path                     Specify an additional data search path location (e.g. '/projects/MaterialX').  This absolute path will be queried when locating data libraries, XInclude references, and referenced images.\n"
     "    --library                  Specify an additional data library folder (e.g. 'vendorlib', 'studiolib').  This relative path will be appended to each location in the data search path when loading data libraries.\n"
     "    --help                     Prints this message\n";
+
+class MaterialXDefinitionOptions {
+public:
+    MaterialXDefinitionOptions() = default;
+    ~MaterialXDefinitionOptions() = default;
+
+    bool unknownAttributeWarning = false;
+    bool typeMismatchWarning = true;
+    bool implicitAssignmentWarning = true;
+    bool writeArnoldImpl = false;
+    bool writeGenOSLImpl = false;
+    bool writeGenGLSLDummy = false;
+};
 
 struct LibraryArgumentHandler : public ArgumentHandler {
     mx::FilePath oslLibraryPath;
@@ -49,9 +62,8 @@ struct LibraryArgumentHandler : public ArgumentHandler {
     mx::FilePath libraryOutputPath;
     mx::FilePath copyFilesOfPath;
     bool skipWritingMtlxHeaders = false;
-    bool writeArnoldImpl = false;
-    bool writeGenOSLImpl = false;
-    
+    MaterialXDefinitionOptions mtlxOptions;
+
     OslCompileOptions oslCompileOptions;
     
     ParseResult parse(const std::string& token, const std::string& nextToken) override {
@@ -85,11 +97,15 @@ struct LibraryArgumentHandler : public ArgumentHandler {
                 return SUCCESS;
             }
             case hashString("--arnold-impl"): {
-                writeArnoldImpl = true;
+                mtlxOptions.writeArnoldImpl = true;
                 return SUCCESS;
             }
             case hashString("--genosl-impl"): {
-                writeGenOSLImpl = true;
+                mtlxOptions.writeGenOSLImpl = true;
+                return SUCCESS;
+            }
+            case hashString("--genglsl-dummy-impl"): {
+                mtlxOptions.writeGenGLSLDummy = true;
                 return SUCCESS;
             }
             case hashString("--help"): {
@@ -141,10 +157,10 @@ struct LibraryArgumentHandler : public ArgumentHandler {
             }
         }
 
-        bool atLeastOne = !writeArnoldImpl || !writeGenOSLImpl;
+        bool atLeastOne = mtlxOptions.writeArnoldImpl || mtlxOptions.writeGenOSLImpl;
 
         if (!atLeastOne) {
-            std::cerr << "must specify a gen target (eg: genosl)" << std::endl;
+            std::cerr << "Must specify a gen target (eg: genosl)" << std::endl;
             return false;
         }
         
@@ -167,18 +183,6 @@ struct LibraryArgumentHandler : public ArgumentHandler {
     }
 };
 
-class MaterialXDefinitionOptions {
-public:
-    MaterialXDefinitionOptions() = default;
-    ~MaterialXDefinitionOptions() = default;
-
-    bool unknownAttributeWarning = false;
-    bool typeMismatchWarning = true;
-    bool implicitAssignmentWarning = true;
-    bool writeArnoldImpl = false;
-    bool writeGenOSLImpl = true;
-};
-
 std::string getRelativePathToRoot(const mx::FilePath& headerPath) {
     fs::path path(headerPath.asString());
     
@@ -198,56 +202,6 @@ std::string getRelativePathToRoot(const mx::FilePath& headerPath) {
     return prefix;
 }
 
-bool rewriteHeaderIncludePaths(const mx::FilePath& headerFilePath, const mx::FilePath& relativeHeaderPath) {
-    fs::path fsHeaderPath(headerFilePath.asString());
-    
-    std::ifstream headerInput(fsHeaderPath);
-    if (!headerInput.is_open()) {
-        std::cerr << "Failed to open header file for rewriting: " << headerFilePath.asString() << std::endl;
-        return false;
-    }
-    
-    std::stringstream buffer;
-    buffer << headerInput.rdbuf();
-    std::string headerContent = buffer.str();
-    headerInput.close();
-    
-    std::string relativePrefix = getRelativePathToRoot(relativeHeaderPath);
-    
-    // regex to match #include "path/to/file.osl" and capture just the filename
-    std::regex includeRegex("#include\\s+\"(?:[^\"]*/)?([\\w]+\\.osl)\"");
-    
-    // replace with #include "../filename.osl" (or appropriate depth)
-    std::string modifiedContent;
-    std::string::const_iterator searchStart(headerContent.cbegin());
-    std::smatch match;
-    
-    while (std::regex_search(searchStart, headerContent.cend(), match, includeRegex)) {
-        modifiedContent.append(searchStart, searchStart + match.position());
-        
-        std::string filename = match[1].str();
-        modifiedContent.append("#include \"");
-        modifiedContent.append(relativePrefix);
-        modifiedContent.append(filename);
-        modifiedContent.append("\"");
-        
-        searchStart += match.position() + match.length();
-    }
-    
-    modifiedContent.append(searchStart, headerContent.cend());
-    
-    std::ofstream headerOutput(fsHeaderPath);
-    if (!headerOutput.is_open()) {
-        std::cerr << "Failed to open header file for writing: " << headerFilePath.asString() << std::endl;
-        return false;
-    }
-    
-    headerOutput << modifiedContent;
-    headerOutput.close();
-    
-    return true;
-}
-
 bool createMaterialXDefinitions(
     osl::OSLQuery& osoQuery,
     const std::string& oslFileName,
@@ -263,19 +217,12 @@ bool createMaterialXDefinitions(
     oslFilePath.removeExtension();
     oslFilePath.addExtension("osl");
 
-    mx::FilePath osoFilePath = oslFileName;
-    osoFilePath.removeExtension();
-    osoFilePath.addExtension("oso");
-
     if (osoQuery.shadername().empty()) {
         std::cerr << "OSLQuery is empty for file: " << oslFileName << std::endl;
         return false;
     }
-    
-    std::string shaderName = osoQuery.shadername().c_str();
-    //std::string nodeName = toSnakeCase(shaderName);
-    std::string nodeName = shaderName;
 
+    std::string nodeName = osoQuery.shadername().c_str();
 
     std::string nodeDefName;
 
@@ -327,7 +274,7 @@ bool createMaterialXDefinitions(
             case hashString("inherit"): {
                 if (!mtlxDefinitionOptions.typeMismatchWarning) break;
                 if (attributeType != "string") {
-                    std::cerr << "Warning: inherit attribute must be string type, got " << attributeType << " for nodedef " << shaderName << std::endl;
+                    std::cerr << "Warning: inherit attribute must be string type, got " << attributeType << " for nodedef " << nodeName << std::endl;
                 }
                 break;
             }
@@ -335,7 +282,7 @@ bool createMaterialXDefinitions(
             case hashString("nodegroup"): {
                 if (!mtlxDefinitionOptions.typeMismatchWarning) break;
                 if (attributeType != "string") {
-                    std::cerr << "Warning: nodegroup attribute must be string type, got " << attributeType << " for nodedef " << shaderName << std::endl;
+                    std::cerr << "Warning: nodegroup attribute must be string type, got " << attributeType << " for nodedef " << nodeName << std::endl;
                 }
                 break;
             }
@@ -343,7 +290,7 @@ bool createMaterialXDefinitions(
             case hashString("version"): {
                 if (!mtlxDefinitionOptions.typeMismatchWarning) break;
                 if (attributeType != "string") {
-                    std::cerr << "Warning: version attribute must be string type formatted as " << "major[.minor], got " << attributeType << " for nodedef " << shaderName << std::endl;
+                    std::cerr << "Warning: version attribute must be string type formatted as " << "major[.minor], got " << attributeType << " for nodedef " << nodeName << std::endl;
                 }
                 break;
             }
@@ -351,7 +298,7 @@ bool createMaterialXDefinitions(
             case hashString("isdefaultversion"): {
                 if (!mtlxDefinitionOptions.typeMismatchWarning) break;
                 if (attributeType != "integer") {
-                    std::cerr << "Warning: isdefaultversion must be boolean (integer), got " << attributeType << " for nodedef " << shaderName << std::endl;
+                    std::cerr << "Warning: isdefaultversion must be boolean (integer), got " << attributeType << " for nodedef " << nodeName << std::endl;
                 }
                 
                 if (attributeValue == "1") {
@@ -359,7 +306,7 @@ bool createMaterialXDefinitions(
                 } else if (attributeValue == "0") {
                     attributeValue = "false";
                 } else {
-                    std::cerr << "Warning: isdefaultversion should be boolean (1 or 0), got " << attributeValue << " for nodedef " << shaderName << std::endl;
+                    std::cerr << "Warning: isdefaultversion should be boolean (1 or 0), got " << attributeValue << " for nodedef " << nodeName << std::endl;
                 }
 
                 break;
@@ -368,21 +315,21 @@ bool createMaterialXDefinitions(
             case hashString("target"): {
                 if (!mtlxDefinitionOptions.typeMismatchWarning) break;
                 if (attributeType != "stringarray") {
-                    std::cerr << "Warning: target attribute must be stringarray type, got " << attributeType << " for nodedef " << shaderName << std::endl;
+                    std::cerr << "Warning: target attribute must be stringarray type, got " << attributeType << " for nodedef " << nodeName << std::endl;
                 }
                 break;
             }
             case hashString("uiname"): {
                 if (!mtlxDefinitionOptions.typeMismatchWarning) break;
                 if (attributeType != "string") {
-                    std::cerr << "Warning: uiname attribute must be string type, got " << attributeType << " for nodedef " << shaderName << std::endl;
+                    std::cerr << "Warning: uiname attribute must be string type, got " << attributeType << " for nodedef " << nodeName << std::endl;
                 }
                 break;
             }
             case hashString("internalgeomprops"): {
                 if (!mtlxDefinitionOptions.typeMismatchWarning) break;
                 if (attributeType != "stringarray") {
-                    std::cerr << "Warning: internalgeomprops must be stringarray type, got " << attributeType << " for nodedef " << shaderName << std::endl;
+                    std::cerr << "Warning: internalgeomprops must be stringarray type, got " << attributeType << " for nodedef " << nodeName << std::endl;
                 }
                 break;
             }
@@ -391,7 +338,7 @@ bool createMaterialXDefinitions(
             case hashString("help"):
             default: {
                 if (!mtlxDefinitionOptions.unknownAttributeWarning) break;
-                std::cout << "Warning: Unknown attribute '" << attributeName << "' for nodedef " << shaderName << std::endl;
+                std::cout << "Warning: Unknown attribute '" << attributeName << "' for nodedef " << nodeName << std::endl;
                 break;
             }
         }
@@ -604,8 +551,6 @@ bool createMaterialXDefinitions(
     }
 
     try {
-        // OSL Implementation
-        
         std::string implBaseName;
 
         if (mtlxDefinitionOptions.writeArnoldImpl) {
@@ -613,6 +558,8 @@ bool createMaterialXDefinitions(
         } else {
             implBaseName = "IM_" + nodeName;
         }
+
+        // OSL Implementation
         if (mtlxDefinitionOptions.writeGenOSLImpl) {
             std::string implNameOSL = implBaseName + nodeName + "_genosl";
             auto implOSL = implMtlxDoc->addImplementation(implNameOSL);
@@ -624,12 +571,11 @@ bool createMaterialXDefinitions(
 
             implOSL->setNodeDef(nodeDef);
             implOSL->setFile(oslFilePath);
-            implOSL->setFunction(shaderName);
+            implOSL->setFunction(nodeName);
             implOSL->setTarget("genosl");
         }
         
         // Arnold Implementation (registered through ARNOLD_PLUGIN_PATH)
-
         if (mtlxDefinitionOptions.writeArnoldImpl) {
             std::string implNameArnold = implBaseName + nodeName + "_arnold";
             auto implArnold = implMtlxDoc->addImplementation(implNameArnold);
@@ -644,25 +590,27 @@ bool createMaterialXDefinitions(
         }
 
         // GLSL Stub Implementation
-        mx::FilePath glslFilePath = oslFileName;
-        glslFilePath.removeExtension();
-        glslFilePath.addExtension("glsl");
-        
-        if (!generateGLSLStub(oslFileName, shaderName, nodeDef, outputDir, nodeDefMtlxDoc, typeDefMtlxDoc)) {
-            std::cerr << "Failed to generate GLSL stub for node: " << nodeName << std::endl;
-        } else {
-            std::string implNameGLSL = implBaseName + nodeName + "_genglsl";
-            auto implGLSL = implMtlxDoc->addImplementation(implNameGLSL);
+        if (mtlxDefinitionOptions.writeGenGLSLDummy) {
+            mx::FilePath glslFilePath = oslFileName;
+            glslFilePath.removeExtension();
+            glslFilePath.addExtension("glsl");
+            
+            if (!generateGLSLStub(oslFileName, nodeName, nodeDef, outputDir, nodeDefMtlxDoc, typeDefMtlxDoc)) {
+                std::cerr << "Failed to generate GLSL stub for node: " << nodeName << std::endl;
+            } else {
+                std::string implNameGLSL = implBaseName + nodeName + "_genglsl";
+                auto implGLSL = implMtlxDoc->addImplementation(implNameGLSL);
 
-            if (!implGLSL) {
-                std::cerr << "Failed to create GLSL Implementation for node: " << nodeName << std::endl;
-                return false;
+                if (!implGLSL) {
+                    std::cerr << "Failed to create GLSL Implementation for node: " << nodeName << std::endl;
+                    return false;
+                }
+
+                implGLSL->setNodeDef(nodeDef);
+                implGLSL->setFile(glslFilePath);
+                implGLSL->setFunction(nodeName);
+                implGLSL->setTarget("genglsl");
             }
-
-            implGLSL->setNodeDef(nodeDef);
-            implGLSL->setFile(glslFilePath);
-            implGLSL->setFunction(shaderName);
-            implGLSL->setTarget("genglsl");
         }
     } catch (ExceptionCompileError& exc) {
         std::cerr << "Uh oh! There was error for the following node: "
@@ -735,10 +683,6 @@ int main(int argc, char* const argv[]) {
     // SOLO_SHADER enables shader entry points 
     inputArgs.oslCompileOptions.definePreprocessors.emplace_back("SOLO_SHADER");
 
-    MaterialXDefinitionOptions mtlxDefinitionOptions;
-    mtlxDefinitionOptions.writeArnoldImpl = inputArgs.writeArnoldImpl;
-    mtlxDefinitionOptions.writeGenOSLImpl = inputArgs.writeGenOSLImpl;
-
     mx::DocumentPtr implMtlxDoc = mx::createDocument();
     mx::DocumentPtr typeDefMtlxDoc = mx::createDocument();
     mx::DocumentPtr nodeDefMtlxDoc = mx::createDocument();
@@ -789,7 +733,7 @@ int main(int argc, char* const argv[]) {
                 implMtlxDoc, 
                 typeDefMtlxDoc, 
                 inputArgs.libraryOutputPath, 
-                mtlxDefinitionOptions
+                inputArgs.mtlxOptions
             );
         } catch (const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;

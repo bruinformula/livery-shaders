@@ -542,8 +542,19 @@ bool compileOSLToBytecode(
     }
 
     if (options.writeByteCodeToDisk) {
+        mx::FilePath namedOsoFilePath = osoOutputDir;
+        
+        if (osoQuery != nullptr && !osoQuery->shadername().empty()) {
+            namedOsoFilePath = osoOutputDir / osoQuery->shadername().c_str();
+        } else {
+            namedOsoFilePath = osoOutputDir / oslFileName;
+            namedOsoFilePath.removeExtension();
+        }
+
+        namedOsoFilePath.addExtension("oso");
+
         std::ofstream osoFile;
-        osoFile.open(osoFilePath.asString());
+        osoFile.open(namedOsoFilePath.asString());
         osoFile << osoBuffer;
         osoFile.close();
     }

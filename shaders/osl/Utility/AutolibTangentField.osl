@@ -9,7 +9,7 @@
     #define  DEFAULT_TANGENT_FIELD(x)
 #endif
 
-ENTRY_TANGENT_FIELD TangentField [[ 
+ENTRY_TANGENT_FIELD AutolibTangentField [[ 
     string nodegroup = "autolib", 
 ]] (
     float inputRotation  DEFAULT_TANGENT_FIELD(0) [[ string uiname = "Input Rotation", string doc = "A single float value to rotate the shading tangent. Takes precedence over inputVector."]],
@@ -22,7 +22,7 @@ ENTRY_TANGENT_FIELD TangentField [[
 ) {
     float rotationAngle = 0;
 
-    if (inputRotation != 0 || isconnected(inputRotation)) {
+    if (isconnected(inputRotation)) {
         rotationAngle = inputRotation;
     } else {
         float vecX = inputVector.x;

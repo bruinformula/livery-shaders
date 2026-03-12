@@ -51,7 +51,7 @@ void covarianceToEigen(
     v2 = normalize(v2);
 }
 
-ENTRY_BUMP_TO_ROUGHNESS BumpToRoughness [[ 
+ENTRY_BUMP_TO_ROUGHNESS AutolibBumpToRoughness [[ 
     string nodegroup = "autolib", 
     int isdefaultversion = 1, 
 	string version = "0.1" 

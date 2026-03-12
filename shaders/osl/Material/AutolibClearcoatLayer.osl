@@ -9,7 +9,7 @@
     #define DEFAULT_CLEARCOAT_LAYER(x)
 #endif
 
-ENTRY_CLEARCOAT_LAYER ClearcoatLayer [[
+ENTRY_CLEARCOAT_LAYER AutolibClearcoatLayer [[
     string nodegroup = "autolib",
     int isdefaultversion = 1,
     string version = "0.1"

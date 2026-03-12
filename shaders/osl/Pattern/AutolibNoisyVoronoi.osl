@@ -20,7 +20,7 @@ point fract(point p) {
     return fractional;
 }
 
-ENTRY_NOISY_VORONOI NoisyVoronoi [[ 
+ENTRY_NOISY_VORONOI AutolibNoisyVoronoi [[ 
     string nodegroup = "autolib", 
     int isdefaultversion = 1, 
 	string version = "0.1" 

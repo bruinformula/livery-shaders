@@ -26,7 +26,7 @@ struct arraystruct {
     //string sarray[3]; this causes a crash
 };
 
-ENTRY_TEST_QUERY TestQuery [[ 
+ENTRY_TEST_QUERY AutolibTestQuery [[ 
     string nodegroup = "autolib", 
     int isdefaultversion = 1, 
     string version = "0.1" 

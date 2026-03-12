@@ -9,7 +9,7 @@
     #define DEFAULT_CARBON_FIBER_MATERIAL(x)
 #endif
 
-ENTRY_CARBON_FIBER_MATERIAL CarbonFiberMaterial [[ 
+ENTRY_CARBON_FIBER_MATERIAL AutolibCarbonFiberMaterial [[ 
     string nodegroup = "autolib",
     int isdefaultversion = 1,
     string version = "0.1"
@@ -34,7 +34,7 @@ ENTRY_CARBON_FIBER_MATERIAL CarbonFiberMaterial [[
 ) {
     float fiberBumpiness = fiberBump * pow(fiberNoise, fiberStrandBoost);
 
-    closure color fiberBase = burley_diffuse_bsdf(Ng, color(0.01), 1.0);
+    closure color fiberBase = oren_nayar_diffuse_bsdf(Ng, color(0.01), 1.0);
 
     float roughnessAlong = 0.1 * fiberBumpiness; // Very smooth along fiber direction
     float roughnessAcross = 0.95 * fiberBumpiness; // Rougher across fiber direction

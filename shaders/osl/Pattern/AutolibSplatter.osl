@@ -118,7 +118,7 @@ SplatterLayerParams jitterSplatterParams(
     return jittered;
 }
 
-ENTRY_SPLATTER Splatter [[ 
+ENTRY_SPLATTER AutolibSplatter [[ 
     string nodegroup = "autolib", 
     int isdefaultversion = 1, 
 	string version = "0.1" 

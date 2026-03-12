@@ -9,7 +9,7 @@
     #define DEFAULT_KUWAHARA_FILTER(x)
 #endif
 
-ENTRY_KUWAHARA_FILTER KuwaharaFilter [[ 
+ENTRY_KUWAHARA_FILTER AutolibKuwaharaFilter [[ 
     string nodegroup = "autolib", 
 ]] (
     vector UV = vector(u, v, 0),

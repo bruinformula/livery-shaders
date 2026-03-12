@@ -9,7 +9,7 @@
     #define  DEFAULT_CAMERA_PROJECTOR(x)
 #endif
 
-ENTRY_CAMERA_PROJECTOR CameraProjector [[ 
+ENTRY_CAMERA_PROJECTOR AutolibCameraProjector [[ 
     string nodegroup = "autolib", 
 ]] (
     string filename DEFAULT_CAMERA_PROJECTOR("") [[ string uifolder = "Decal" ]],

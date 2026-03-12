@@ -9,7 +9,7 @@
     #define DEFAULT_AMBIENT_OCCLUSION(x)
 #endif
 
-ENTRY_AMBIENT_OCCLUSION AmbientOcclusion [[ 
+ENTRY_AMBIENT_OCCLUSION AutolibAmbientOcclusion [[ 
     string nodegroup = "autolib", 
 ]] (
     color inColor  DEFAULT_AMBIENT_OCCLUSION(1),

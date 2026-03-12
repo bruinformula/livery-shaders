@@ -9,7 +9,7 @@
     #define DEFAULT_SIMPLE_SPLATTER(x)
 #endif
 
-ENTRY_SIMPLE_SPLATTER SimpleSplatter [[ 
+ENTRY_SIMPLE_SPLATTER AutolibSimpleSplatter [[ 
     string nodegroup = "autolib", 
     int isdefaultversion = 1, 
 	string version = "0.1" 

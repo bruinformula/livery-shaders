@@ -9,7 +9,7 @@
     #define DEFAULT_JITTER_SPLATTER_PARAMS(x)
 #endif
 
-ENTRY_JITTER_SPLATTER_PARAMS JitterSplatterParams [[
+ENTRY_JITTER_SPLATTER_PARAMS AutolibJitterSplatterParams [[
     string nodegroup = "autolib",
 ]] (
     int sublayerIndex  DEFAULT_JITTER_SPLATTER_PARAMS(0),

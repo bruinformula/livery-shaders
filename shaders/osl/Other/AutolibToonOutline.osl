@@ -33,7 +33,7 @@ int probeForOutline(
 
 }
 
-ENTRY_TOON_OUTLINE ToonOutline [[ 
+ENTRY_TOON_OUTLINE AutolibToonOutline [[ 
     string nodegroup = "autolib", 
 ]] (
     float width  DEFAULT_TOON_OUTLINE(0.01),

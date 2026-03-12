@@ -9,7 +9,7 @@
     #define DEFAULT_METALLIC_FLAKE_LAYER(x)
 #endif
 
-ENTRY_METALLIC_FLAKE_LAYER MetallicFlakeLayer [[
+ENTRY_METALLIC_FLAKE_LAYER AutolibMetallicFlakeLayer [[
     string nodegroup = "autolib",
     int isdefaultversion = 1,
     string version = "0.1"

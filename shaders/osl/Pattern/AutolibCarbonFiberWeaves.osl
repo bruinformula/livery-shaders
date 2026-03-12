@@ -1,9 +1,9 @@
 #ifndef SOLO_SHADER   
-    #define ENTRY_CARBON_FIBER_WEAVE void 
+    #define ENTRY_CARBON_FIBER_WEAVES void 
 #endif
 
-#ifndef ENTRY_CARBON_FIBER_WEAVE
-	#define ENTRY_CARBON_FIBER_WEAVE surface
+#ifndef ENTRY_CARBON_FIBER_WEAVES
+	#define ENTRY_CARBON_FIBER_WEAVES surface
     #define DEFAULT_CARBON_FIBER_WEAVE(x) = x
 #else
     #define DEFAULT_CARBON_FIBER_WEAVE(x)
@@ -129,12 +129,12 @@ normal getBumpedNormal(
     return normalize(ddu * worldTangent + ddv * worldBitangent + inverseBumpAmount * worldNormal);
 }
 
-ENTRY_CARBON_FIBER_WEAVE CarbonFiberWeave [[ 
+ENTRY_CARBON_FIBER_WEAVES AutolibCarbonFiberWeaves [[ 
     string nodegroup = "autolib", 
     int isdefaultversion = 1, 
 	string version = "0.1" 
 ]] (
-    point UV  DEFAULT_CARBON_FIBER_WEAVE(point(u, v, 0)),
+    point UV  DEFAULT_CARBON_FIBER_WEAVE(0),
 
     vector fiberScale  DEFAULT_CARBON_FIBER_WEAVE(vector(64, 32, 0)) [[ string doc = "Scale axis of the carbon fiber pattern", vector uimin = vector(64, 32, 0) ]],
     float fiberZGamma  DEFAULT_CARBON_FIBER_WEAVE(1.5) [[ string doc = "Controls the sharpness of the fiber strands", float uimin = 0.1, float uimax = 4.0 ]],
@@ -163,7 +163,7 @@ ENTRY_CARBON_FIBER_WEAVE CarbonFiberWeave [[
     float fiberNoiseU, fiberNoiseV;
     vector fiberRotationU, fiberRotationV;
 
-    displacedWeaves(weaveParams, weaveControlData,                    weaveData, outNoise,    outBump,    outRotation);
+    displacedWeaves(weaveParams, weaveControlData, weaveData, outNoise, outBump, outRotation);
     displacedWeaves(weaveParams, createWeaves(weaveControlDataCoordinatesU), weaveData, fiberNoiseU, fiberBumpU, fiberRotationU);
     displacedWeaves(weaveParams, createWeaves(weaveControlDataCoordinatesV), weaveData, fiberNoiseV, fiberBumpV, fiberRotationV);
 

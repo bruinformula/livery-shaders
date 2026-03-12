@@ -9,7 +9,7 @@
     #define  DEFAULT_SCRATCH(x)
 #endif
 
-ENTRY_SCRATCH Scratch [[ 
+ENTRY_SCRATCH AutolibScratch [[ 
     string nodegroup = "autolib", 
     int isdefaultversion = 1, 
     string version = "0.1" 

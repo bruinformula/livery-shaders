@@ -9,7 +9,7 @@
     #define DEFAULT_DECAL(x)
 #endif
 
-ENTRY_DECAL Decal [[ 
+ENTRY_DECAL AutolibDecal [[ 
     string nodegroup = "autolib", 
 ]] (
     point UV DEFAULT_DECAL(0),

@@ -9,7 +9,7 @@
     #define  DEFAULT_HALFTONE_DOTS(x)
 #endif
 
-ENTRY_HALFTONE_DOTS HalftoneDots [[ 
+ENTRY_HALFTONE_DOTS AutolibHalftoneDots [[ 
 	string nodegroup = "autolib", 
 	int isdefaultversion = 1, 
 	string version = "0.1" 

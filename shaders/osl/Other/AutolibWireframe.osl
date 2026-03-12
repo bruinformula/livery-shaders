@@ -9,7 +9,7 @@
     #define DEFAULT_WIREFRAME(x)
 #endif
 
-ENTRY_WIREFRAME Wireframe [[ 
+ENTRY_WIREFRAME AutolibWireframe [[ 
     string nodegroup = "autolib", 
 ]] (
     int edgeType  DEFAULT_WIREFRAME(1) [[ string options = "triangles|polygons|patches" ]], 

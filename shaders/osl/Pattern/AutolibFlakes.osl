@@ -36,7 +36,7 @@ float IDs( output float x, int flakeSeed ) {
 	return mix(0, 1, xRatio);
 }	
 
-ENTRY_FLAKES Flakes [[ 
+ENTRY_FLAKES AutolibFlakes [[ 
     string nodegroup = "autolib", 
     int isdefaultversion = 1, 
 	string version = "0.1" 
