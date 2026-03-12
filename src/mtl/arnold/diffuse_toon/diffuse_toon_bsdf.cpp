@@ -1,7 +1,12 @@
 #include "diffuse_toon_bsdf.h"
-#include <ai.h>
 
 // Based on the Toon BSDFs from Blender/Cycles
+
+struct DiffuseToonBSDF
+{
+    AtVector N, Ng, Ns;
+    float    size, smooth;
+};
 
 static void toon_setup_params(float& size, float& smooth)
 {
@@ -47,12 +52,6 @@ static AtVector sample_uniform_cone(const AtVector& N,
     pdf_out = (omc > 0.0f) ? AI_ONEOVER2PI / omc : 0.0f;
     return wi;
 }
-
-struct DiffuseToonBSDF
-{
-    AtVector N, Ng, Ns;
-    float    size, smooth;
-};
 
 AI_BSDF_EXPORT_METHODS(DiffuseToonBSDFMtd);
 

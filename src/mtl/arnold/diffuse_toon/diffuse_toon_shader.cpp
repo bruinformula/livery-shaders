@@ -1,4 +1,3 @@
-#include <ai.h>
 #include "diffuse_toon_bsdf.h"
 
 // Based on the Toon BSDFs from Blender/Cycles

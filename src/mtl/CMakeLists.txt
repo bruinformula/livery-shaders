@@ -75,6 +75,6 @@ set_target_properties(MaterialXNodeQuery PROPERTIES
 )
 
 # Arnold Plugin
-if (${BUILD_AUTOLIB_MTL_ARNOLD_BSDFS})
+if (${BUILD_AUTOLIB_MTL_ARNOLD})
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arnold")
 endif()

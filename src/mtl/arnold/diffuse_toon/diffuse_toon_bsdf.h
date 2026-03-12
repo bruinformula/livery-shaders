@@ -1,6 +1,6 @@
 #pragma once
-#include <ai_shader_bsdf.h>
-#include <ai_shaderglobals.h>
+
+#include <ai.h>
 
 // Based on the Toon BSDFs from Blender/Cycles
 

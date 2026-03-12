@@ -6,7 +6,7 @@ struct DiffuseRampBSDF
 {
    /* parameters */
    AtVector N;
-   AtArray* colors;
+   AtRGB colors[8];
    /* set in bsdf_init */
    AtVector Ng, Ns;
 };
@@ -31,18 +31,18 @@ bsdf_init {
    AiBSDFInitNormal(bsdf, data->N, true);
 }
 
-static AtRGB DiffuseRampGetColor(const AtArray* colors, float pos)
+static AtRGB DiffuseRampGetColor(const AtRGB colors[8], float pos)
 {
     const int MAXCOLORS = 8;
     const float npos = pos * (float)(MAXCOLORS - 1);
     const int ipos = (int)npos;
     if (ipos < 0)
-        return AiArrayGetRGB(colors, 0);
+        return colors[0];
     if (ipos >= MAXCOLORS - 1)
-        return AiArrayGetRGB(colors, MAXCOLORS - 1);
+        return colors[MAXCOLORS - 1];
     const float offset = npos - (float)ipos;
-    return AiArrayGetRGB(colors, ipos) * (1.0f - offset) +
-           AiArrayGetRGB(colors, ipos + 1) * offset;
+    return colors[ipos] * (1.0f - offset) +
+           colors[ipos + 1] * offset;
 }
 
 bsdf_sample {
@@ -110,8 +110,13 @@ AtBSDF* DiffuseRampBSDFCreate(const AtShaderGlobals* sg, const AtVector& N,
    AtBSDF* bsdf = AiBSDF(sg, AtRGB(1.0f), DiffuseRampBSDFMtd, sizeof(DiffuseRampBSDF));
    DiffuseRampBSDF* data = (DiffuseRampBSDF*)AiBSDFGetData(bsdf);
    data->N = N;
-   data->colors = AiArray(8, 1, AI_TYPE_RGB,
-                          colorA, colorB, colorC, colorD,
-                          colorE, colorF, colorG, colorH);
+   data->colors[0] = colorA;
+   data->colors[1] = colorB;
+   data->colors[2] = colorC;
+   data->colors[3] = colorD;
+   data->colors[4] = colorE;
+   data->colors[5] = colorF;
+   data->colors[6] = colorG;
+   data->colors[7] = colorH;
    return bsdf;
 }
