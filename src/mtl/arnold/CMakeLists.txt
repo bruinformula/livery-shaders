@@ -1,14 +1,4 @@
 find_package(Arnold REQUIRED)
-find_package(CUDAToolkit REQUIRED)
-
-if (BUILD_AUTOLIB_MTL_ARNOLD_GPU)
-    if (CUDAToolkit_NVCC_EXECUTABLE)
-        set (NVCC ${CUDAToolkit_NVCC_EXECUTABLE})
-    else ()
-        find_program (NVCC nvcc HINTS "${CUDAToolkit_BIN_DIR}" REQUIRED)
-    endif ()
-    message (STATUS "Arnold GPU: using nvcc at ${NVCC}")
-endif ()
 
 set(AUTOLIB_ARNOLD_PLUGIN_DIR "${CMAKE_BINARY_DIR}/autolib/arnold_plugin")
 
