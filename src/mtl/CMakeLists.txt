@@ -3,17 +3,17 @@ find_package(OpenImageIO REQUIRED)
 find_package(MaterialX REQUIRED)
 
 
-add_library(mtlShared STATIC "${CMAKE_CURRENT_SOURCE_DIR}/OSLCompiler.cpp")
+add_library(AutolibMtl STATIC "${CMAKE_CURRENT_SOURCE_DIR}/OSLCompiler.cpp")
 
-target_include_directories(mtlShared BEFORE PRIVATE ${OpenImageIO_INCLUDES})
-target_include_directories(mtlShared BEFORE PRIVATE ${OSL_INCLUDES})
-target_include_directories(mtlShared BEFORE PRIVATE ${MaterialX_INCLUDES})
+target_include_directories(AutolibMtl BEFORE PRIVATE ${OpenImageIO_INCLUDES})
+target_include_directories(AutolibMtl BEFORE PRIVATE ${OSL_INCLUDES})
+target_include_directories(AutolibMtl BEFORE PRIVATE ${MaterialX_INCLUDES})
 
-target_link_libraries(mtlShared PRIVATE
+target_link_libraries(AutolibMtl PRIVATE
     OSL::oslquery
     OSL::oslcomp
 )
-target_link_libraries(mtlShared PRIVATE
+target_link_libraries(AutolibMtl PRIVATE
     MaterialXGenOsl
 )
 
@@ -29,7 +29,7 @@ target_link_libraries(MaterialXOSOExporter PRIVATE
 )
 
 target_link_libraries(MaterialXOSOExporter PRIVATE
-    mtlShared
+    AutolibMtl
 )
 
 set_target_properties(MaterialXOSOExporter PROPERTIES
@@ -48,7 +48,7 @@ target_link_libraries(MaterialXLibraryBuilder PRIVATE
 )
 
 target_link_libraries(MaterialXLibraryBuilder PRIVATE
-    mtlShared
+    AutolibMtl
 )
 
 set_target_properties(MaterialXLibraryBuilder PROPERTIES
@@ -67,7 +67,7 @@ target_link_libraries(MaterialXNodeQuery PRIVATE
 )
 
 target_link_libraries(MaterialXNodeQuery PRIVATE
-    mtlShared
+    AutolibMtl
 )
 
 set_target_properties(MaterialXNodeQuery PROPERTIES
