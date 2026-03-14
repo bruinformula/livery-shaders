@@ -1,5 +1,6 @@
 
 find_package(pxr REQUIRED)
+find_package(OpenMP REQUIRED)
 find_package(Chrono REQUIRED COMPONENTS vehicle)
 
 add_executable(ChronoSimTest
