@@ -73,7 +73,6 @@ ENTRY_BUMP_TO_ROUGHNESS AutolibBumpToRoughness [[
     output float outRoughnessV  DEFAULT_BUMP_TO_ROUGHNESS(0.0) [[ string doc = "Roughness in V direction (minor axis)" ]]
 ) {
 
-    outNormal = N;
     vector pPps, pPpt;
     computePartialDerivs(P, UV.x, UV.y, pPps, pPpt);
     
@@ -124,14 +123,22 @@ ENTRY_BUMP_TO_ROUGHNESS AutolibBumpToRoughness [[
     dNdv = dNdv - PN * dot(dNdv, PN);
     
     // Compute variance in slope
-    float dx = length(dNdu);
-    float dy = length(dNdv);
-    
-    // Build covariance matrix from surface curvature
+    float dxdu = dot(dNdu, pPps);
+    float dxdv = dot(dNdv, pPps);
+    float dydu = dot(dNdu, pPpt);
+    float dydv = dot(dNdv, pPpt);
+
+    float dx = dxdu; 
+    float dy = dydv;
+
+    float dxdx = dx*dx + dxdv*dxdv;
+    float dydy = dy*dy + dydu*dydu;
+    float dxdy = dx*dy + dxdv*dydu;
+
     float vargain = gain * gain;
-    float sxx = vargain * dx * dx;
-    float syy = vargain * dy * dy;
-    float sxy = vargain * dot(dNdu, dNdv);
+    float sxx = 2*vargain*(dxdx - dx*dx);
+    float sxy = 2*vargain*(dxdy - dx*dy);
+    float syy = 2*vargain*(dydy - dy*dy);
     
     // Convert covariance to eigenspace
     float l1, l2;

@@ -19,6 +19,7 @@ ENTRY_SCRATCH AutolibScratch [[
     float width  DEFAULT_SCRATCH(0.001),
     float normalStrength DEFAULT_SCRATCH(1.0),
     output normal outNormal DEFAULT_SCRATCH(normal(0, 0, 1)),
+    output float outHeight DEFAULT_SCRATCH(0.0),
     output float outAlpha DEFAULT_SCRATCH(0.0)
 ) {
 
@@ -48,6 +49,7 @@ ENTRY_SCRATCH AutolibScratch [[
 
                 outNormal = normalize(normal(0,0,1) - bitangent * t * normalStrength);
                 outAlpha = 1.0;
+                outHeight = 1.0 - (t * t); // smooth parabolic dip across scratch width
                 found = 1;
             }
         }
