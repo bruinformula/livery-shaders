@@ -32,10 +32,6 @@ target_link_libraries(MaterialXOSOExporter PRIVATE
     AutolibMtl
 )
 
-set_target_properties(MaterialXOSOExporter PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-)
-
 # MaterialXLibraryBuilder
 add_executable(MaterialXLibraryBuilder "${CMAKE_CURRENT_SOURCE_DIR}/MaterialXLibraryBuilder.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/GLSLStubs.cpp")
 
@@ -51,10 +47,6 @@ target_link_libraries(MaterialXLibraryBuilder PRIVATE
     AutolibMtl
 )
 
-set_target_properties(MaterialXLibraryBuilder PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-)
-
 # MaterialXQuery
 add_executable(MaterialXNodeQuery "${CMAKE_CURRENT_SOURCE_DIR}/MaterialXNodeQuery.cpp")
 
@@ -68,10 +60,6 @@ target_link_libraries(MaterialXNodeQuery PRIVATE
 
 target_link_libraries(MaterialXNodeQuery PRIVATE
     AutolibMtl
-)
-
-set_target_properties(MaterialXNodeQuery PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 
 # Arnold Plugin
