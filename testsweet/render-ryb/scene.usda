@@ -1,0 +1,147 @@
+#usda 1.0
+(
+    metersPerUnit = 0.1
+    upAxis = "Y"
+    defaultPrim = "World"
+)
+
+def "World" (
+    references = @ryb_diffuse.mtlx@</MaterialX>
+) {
+
+    # kick is unable to resolve the material bindings with 'instanceable = true' for some reason
+    # usdrecord works either way
+def Scope "ShadeBalls" {
+
+        def Xform "Red_Top" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+            references=@sphere.usda@</ShadeBall>
+        ) {
+            rel material:binding = </World/Materials/RYB_Red_Gossett>
+            double3 xformOp:translate = (-6, 1.5, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+        def Xform "Red_Bot" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+            references=@sphere.usda@</ShadeBall>
+        ) {
+            rel material:binding = </World/Materials/RYB_Red_Sugita>
+            double3 xformOp:translate = (-6, -1.5, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def Xform "Orange_Top" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+            references=@sphere.usda@</ShadeBall>
+        ) {
+            rel material:binding = </World/Materials/RYB_Orange_Gossett>
+            double3 xformOp:translate = (-3, 1.5, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+        def Xform "Orange_Bot" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+            references=@sphere.usda@</ShadeBall>
+        ) {
+            rel material:binding = </World/Materials/RYB_Orange_Sugita>
+            double3 xformOp:translate = (-3, -1.5, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def Xform "Yellow_Top" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+            references=@sphere.usda@</ShadeBall>
+        ) {
+            rel material:binding = </World/Materials/RYB_Yellow_Gossett>
+            double3 xformOp:translate = (0, 1.5, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+        def Xform "Yellow_Bot" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+            references=@sphere.usda@</ShadeBall>
+        ) {
+            rel material:binding = </World/Materials/RYB_Yellow_Sugita>
+            double3 xformOp:translate = (0, -1.5, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def Xform "Green_Top" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+            references=@sphere.usda@</ShadeBall>
+        ) {
+            rel material:binding = </World/Materials/RYB_Green_Gossett>
+            double3 xformOp:translate = (3, 1.5, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+        def Xform "Green_Bot" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+            references=@sphere.usda@</ShadeBall>
+        ) {
+            rel material:binding = </World/Materials/RYB_Green_Sugita>
+            double3 xformOp:translate = (3, -1.5, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+
+        def Xform "Blue_Top" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+            references=@sphere.usda@</ShadeBall>
+        ) {
+            rel material:binding = </World/Materials/RYB_Blue_Gossett>
+            double3 xformOp:translate = (6, 1.5, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+        def Xform "Blue_Bot" (
+            
+            prepend apiSchemas = ["MaterialBindingAPI"]
+                        references=@sphere.usda@</ShadeBall>
+                    
+        ) {
+            rel material:binding = </World/Materials/RYB_Blue_Sugita>
+            double3 xformOp:translate = (6, -1.5, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+    }
+
+    def Mesh "Background" {
+        int[] faceVertexCounts  = [4]
+        int[] faceVertexIndices = [0, 1, 2, 3]
+        point3f[] points = [(-10, -5, 0), (10, -5, 0), (10, 5, 0), (-10, 5, 0)]
+        color3f[] primvars:displayColor = [(0.5, 0.5, 0.5)]
+
+        double3 xformOp:translate = (0, 0, -2)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+
+    def DistantLight "KeyLight" {
+        float inputs:intensity  = 1.0
+        float inputs:exposure   = 0.0
+        color3f inputs:color    = (1.0, 1.0, 1.0)
+        float inputs:angle      = 0.53
+        bool inputs:normalize   = 1
+
+        double3 xformOp:rotateXYZ = (-45, 45, 0)
+        uniform token[] xformOpOrder = ["xformOp:rotateXYZ"]
+    }
+
+    def Camera "Camera" {
+        float2 clippingRange = (0.01, 100000)
+        float focalLength = 36
+        float verticalAperture = 36
+        float horizontalAperture = 36
+        double3 xformOp:translate = (0, 0, 16)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    } 
+
+    def Scope "Render" { 
+        def RenderSettings "RenderSettings" {
+            int2 resolution = (512, 256)
+            rel camera = </World/Camera>
+            rel products = </World/Render/Products/Beauty>
+        }
+        def Scope "Products" {
+            def RenderProduct "Beauty" {
+                token productType = "raster"
+                token productName = "out.exr"
+            }
+        }
+    }
+}

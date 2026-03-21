@@ -69,3 +69,5 @@ if (${BUILD_AUTOLIB_MTL_ARNOLD_BSDFS})
     add_usd_render_test(render-toon-glossy-bsdf)
     add_usd_render_test(render-layer)
 endif()
+
+add_usd_render_test(render-ryb)

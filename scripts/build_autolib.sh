@@ -1,2 +1,2 @@
-./build/bin/MaterialXLibraryBuilder --oslLibraryPath shaders/osl --mtlxNodeGraphsPath shaders/mtlx --copyFilesOfPath shaders/bsdf --libraryOutputPath ./build/autolib --writeByteCode --arnold-impl
+./build/bin/MaterialXLibraryBuilder --oslLibraryPath shaders/osl --mtlxNodeGraphsPath shaders/mtlx --copyFilesOfPath shaders/bsdf --libraryOutputPath ./build/autolib --writeByteCode --genosl-impl --genglsl-dummy-impl
 cp -r ./build/autolib $VIRTUAL_ENV/autolib
