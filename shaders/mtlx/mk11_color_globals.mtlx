@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<materialx version="1.39" colorspace="lin_rec709">
+  <nodegraph name="Mk11ColorGlobals" xpos="14.594203" ypos="-6.732759">
+    <output name="RVinylOlympicBlue" type="color3" xpos="17.811594" ypos="-6.862069" nodename="constant_color3_1" />
+    <constant name="constant_color3_1" type="color3" xpos="14.594203" ypos="-6.732759">
+      <input name="value" type="color3" value="0.0356013, 0.194618, 0.502887" />
+    </constant>
+    <constant name="constant_color3_2" type="color3" xpos="14.644928" ypos="-4.922414">
+      <input name="value" type="color3" value="0.0231534, 0.127438, 0.533276" />
+    </constant>
+    <output name="RVinylOceanBlue" type="color3" nodename="constant_color3_2" xpos="17.811594" ypos="-4.931035" />
+    <constant name="constant_color3_3" type="color3" xpos="14.695652" ypos="-3.137931">
+      <input name="value" type="color3" value="0.0103298, 0.0561285, 0.266356" />
+    </constant>
+    <output name="RVinylVividBlue" type="color3" nodename="constant_color3_3" xpos="17.818840" ypos="-3.008621" />
+    <constant name="constant_color3_4" type="color3" xpos="14.478261" ypos="0.594828">
+      <input name="value" type="color3" value="0.904661, 0.491021, 0.0512695" />
+    </constant>
+    <output name="RVinylYellow" type="color3" nodename="constant_color3_4" xpos="17.978260" ypos="0.448276" />
+    <constant name="constant_color3_5" type="color3" xpos="14.478261" ypos="-1.206897">
+      <input name="value" type="color3" value="0.896269, 0.533276, 0.0561285" />
+    </constant>
+    <output name="RVinylMediumYellow" type="color3" nodename="constant_color3_5" xpos="17.746376" ypos="-1.206897" />
+    <constant name="constant_color3_6" type="color3" xpos="14.579710" ypos="1.956897">
+      <input name="value" type="color3" value="0.896269, 0.445201, 0.0481718" />
+    </constant>
+    <output name="RVinylDarkYellow" type="color3" nodename="constant_color3_6" xpos="17.746376" ypos="1.956897" />
+    <constant name="constant_color3_7" type="color3" xpos="14.478261" ypos="3.612069">
+      <input name="value" type="color3" value="0.00273174, 0.0144438, 0.0528607" />
+    </constant>
+    <output name="ChassisRAL5011" type="color3" nodename="constant_color3_7" xpos="17.862318" ypos="3.612069" />
+    <constant name="constant_color3_8" type="color3" xpos="14.463768" ypos="5.405172">
+      <input name="value" type="color3" value="0.0612461, 0.23074, 0.496933" />
+    </constant>
+    <output name="SuspensionRAL5015" type="color3" nodename="constant_color3_8" xpos="17.898550" ypos="5.413793" />
+  </nodegraph>
+</materialx>
