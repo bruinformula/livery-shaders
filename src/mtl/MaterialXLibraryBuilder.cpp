@@ -740,11 +740,63 @@ int main(int argc, char* const argv[]) {
         }
     }
 
+    mx::DocumentPtr nodeGraphMtlxDoc = mx::createDocument();
+
+    if (!inputArgs.mtlxNodeGraphsPath.isEmpty()) {
+        std::vector<mx::FilePath> files = findFiles(inputArgs.mtlxNodeGraphsPath, ".mtlx");
+
+        for (const mx::FilePath& file : files) {
+            try {
+                mx::DocumentPtr nodeGraphDoc = mx::createDocument();
+                mx::readFromXmlFile(nodeGraphDoc, file);
+
+                for (const mx::NodeGraphPtr& nodeGraph : nodeGraphDoc->getNodeGraphs()) {
+
+                    if (!nodeGraph->getNodeDefString().empty()) continue;
+
+                    const std::string graphName = nodeGraph->getName();
+
+                    // Guard against duplicates across multiple files
+                    if (nodeGraphMtlxDoc->getNodeDef("ND_" + graphName)) {
+                        std::cout << "Skipping duplicate: " << graphName << std::endl;
+                        continue;
+                    }
+
+                    // Call on nodeGraphMtlxDoc — it internally calls addNodeGraph + addNodeDef
+                    // on itself, and copyContentFrom(nodeGraph) works cross-document
+                    // No copy loop needed — NG_ and ND_ land directly in nodeGraphMtlxDoc
+                    mx::NodeDefPtr nodeDef = nodeGraphMtlxDoc->addNodeDefFromGraph(
+                        nodeGraph,
+                        "ND_" + graphName,
+                        graphName,
+                        "NG_" + graphName
+                    );
+
+                    if (!nodeDef) {
+                        std::cerr << "Failed to create nodedef for: " << graphName << std::endl;
+                        continue;
+                    }
+
+                    mx::NodeDefPtr sourceNodeDef = nodeGraph->getNodeDef();
+                    if (sourceNodeDef && sourceNodeDef->hasNodeGroup()) {
+                        nodeDef->setNodeGroup(sourceNodeDef->getNodeGroup());
+                    }
+
+                    std::cout << "Registered: " << nodeDef->getName() << std::endl;
+                }
+
+            } catch (const std::exception& e) {
+                std::cerr << "Failed to read: " << e.what() << std::endl;
+                return 1;
+            }
+        }
+    }
+    
     mx::FilePath outputNodeDefFilePath = inputArgs.libraryOutputPath / "autolib_defs.mtlx";
     mx::FilePath outputImplFilePath = inputArgs.libraryOutputPath / "autolib_genosl_impl.mtlx";
-    mx::FilePath outputNodeGraphFilePath = inputArgs.libraryOutputPath / "autolib_nodegraphs.mtlx";
 
     nodeDefMtlxDoc->importLibrary(typeDefMtlxDoc);
+    nodeDefMtlxDoc->importLibrary(nodeGraphMtlxDoc);
 
     std::string nodeDefMessage;
     bool isNodeDefValid = nodeDefMtlxDoc->validate(&nodeDefMessage);
@@ -765,39 +817,6 @@ int main(int argc, char* const argv[]) {
     if (!inputArgs.skipWritingMtlxHeaders) {
         mx::writeToXmlFile(nodeDefMtlxDoc, outputNodeDefFilePath);
         mx::writeToXmlFile(implMtlxDoc, outputImplFilePath);
-    }
-
-    mx::DocumentPtr nodeGraphMtlxDoc = mx::createDocument();
-
-    if (!inputArgs.mtlxNodeGraphsPath.isEmpty()) {
-        std::vector<mx::FilePath> files = findFiles(inputArgs.mtlxNodeGraphsPath, ".mtlx");
-
-        for (const mx::FilePath& file : files) {
-            try {
-                mx::DocumentPtr nodeGraphDoc = mx::createDocument();
-                mx::readFromXmlFile(nodeGraphDoc, file);
-
-                for (const mx::ElementPtr& child : nodeGraphDoc->getChildren()) {
-                    mx::ElementPtr copy = nodeGraphMtlxDoc->addChildOfCategory(child->getCategory(), child->getName());
-                    copy->copyContentFrom(child);
-                }
-            } catch (const std::exception& e) {
-                std::cerr << "Failed to read node graph MaterialX document: " << e.what() << std::endl;
-                return 1;
-            }
-        }
-    }
-
-    if (!inputArgs.skipWritingMtlxHeaders) {
-        std::string nodeGraphMessage;
-        bool isCopyValid = nodeGraphMtlxDoc->validate(&nodeGraphMessage);
-
-        if (!isCopyValid) {
-            std::cerr << "Node Graph Validation failed:\n" << nodeGraphMessage << std::endl;
-            return 1;
-        }
-        
-        mx::writeToXmlFile(nodeGraphMtlxDoc, outputNodeGraphFilePath);
     }
 
     if (!inputArgs.copyFilesOfPath.isEmpty()) {

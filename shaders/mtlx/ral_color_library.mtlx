@@ -1,0 +1,865 @@
+<?xml version="1.0"?>
+<materialx version="1.39" colorspace="lin_rec709">
+  <nodegraph name="RALColorGlobals" nodegroup="autolib">
+    <constant name="constant_color3_1" type="color3">
+      <input name="value" type="color3" value="0.6104956, 0.4910208, 0.2462013"/>
+    </constant>
+    <output name="RAL_1000_GreenBeige" type="color3" nodename="constant_color3_1" doc="RAL 1000 | Green beige | #CDBA88"/>
+    <constant name="constant_color3_2" type="color3">
+      <input name="value" type="color3" value="0.6307571, 0.4341536, 0.2307400"/>
+    </constant>
+    <output name="RAL_1001_Beige" type="color3" nodename="constant_color3_2" doc="RAL 1001 | Beige | #D0B084"/>
+    <constant name="constant_color3_3" type="color3">
+      <input name="value" type="color3" value="0.6444797, 0.4019778, 0.1529262"/>
+    </constant>
+    <output name="RAL_1002_SandYellow" type="color3" nodename="constant_color3_3" doc="RAL 1002 | Sand yellow | #D2AA6D"/>
+    <constant name="constant_color3_4" type="color3">
+      <input name="value" type="color3" value="0.9473065, 0.3915725, 0.0000000"/>
+    </constant>
+    <output name="RAL_1003_SignalYellow" type="color3" nodename="constant_color3_4" doc="RAL 1003 | Signal yellow | #F9A800"/>
+    <constant name="constant_color3_5" type="color3">
+      <input name="value" type="color3" value="0.7758222, 0.3419144, 0.0000000"/>
+    </constant>
+    <output name="RAL_1004_GoldenYellow" type="color3" nodename="constant_color3_5" doc="RAL 1004 | Golden yellow | #E49E00"/>
+    <constant name="constant_color3_6" type="color3">
+      <input name="value" type="color3" value="0.5972018, 0.2704978, 0.0000000"/>
+    </constant>
+    <output name="RAL_1005_HoneyYellow" type="color3" nodename="constant_color3_6" doc="RAL 1005 | Honey yellow | #CB8E00"/>
+    <constant name="constant_color3_7" type="color3">
+      <input name="value" type="color3" value="0.7605245, 0.2788943, 0.0000000"/>
+    </constant>
+    <output name="RAL_1006_MaizeYellow" type="color3" nodename="constant_color3_7" doc="RAL 1006 | Maize yellow | #E29000"/>
+    <constant name="constant_color3_8" type="color3">
+      <input name="value" type="color3" value="0.8069523, 0.2622507, 0.0000000"/>
+    </constant>
+    <output name="RAL_1007_DaffodilYellow" type="color3" nodename="constant_color3_8" doc="RAL 1007 | Daffodil yellow | #E88C00"/>
+    <constant name="constant_color3_9" type="color3">
+      <input name="value" type="color3" value="0.4286905, 0.2158605, 0.0781874"/>
+    </constant>
+    <output name="RAL_1011_BrownBeige" type="color3" nodename="constant_color3_9" doc="RAL 1011 | Brown beige | #AF804F"/>
+    <constant name="constant_color3_10" type="color3">
+      <input name="value" type="color3" value="0.7230551, 0.4286905, 0.0202886"/>
+    </constant>
+    <output name="RAL_1012_LemonYellow" type="color3" nodename="constant_color3_10" doc="RAL 1012 | Lemon yellow | #DDAF27"/>
+    <constant name="constant_color3_11" type="color3">
+      <input name="value" type="color3" value="0.7681511, 0.6938718, 0.5647115"/>
+    </constant>
+    <output name="RAL_1013_OysterWhite" type="color3" nodename="constant_color3_11" doc="RAL 1013 | Oyster white | #E3D9C6"/>
+    <constant name="constant_color3_12" type="color3">
+      <input name="value" type="color3" value="0.7230551, 0.5520114, 0.3231432"/>
+    </constant>
+    <output name="RAL_1014_Ivory" type="color3" nodename="constant_color3_12" doc="RAL 1014 | Ivory | #DDC49A"/>
+    <constant name="constant_color3_13" type="color3">
+      <input name="value" type="color3" value="0.7912979, 0.6444797, 0.4620770"/>
+    </constant>
+    <output name="RAL_1015_LightIvory" type="color3" nodename="constant_color3_13" doc="RAL 1015 | Light ivory | #E6D2B5"/>
+    <constant name="constant_color3_14" type="color3">
+      <input name="value" type="color3" value="0.8796224, 0.7230551, 0.0395462"/>
+    </constant>
+    <output name="RAL_1016_SulfurYellow" type="color3" nodename="constant_color3_14" doc="RAL 1016 | Sulfur yellow | #F1DD38"/>
+    <constant name="constant_color3_15" type="color3">
+      <input name="value" type="color3" value="0.9215819, 0.3967552, 0.0802198"/>
+    </constant>
+    <output name="RAL_1017_SaffronYellow" type="color3" nodename="constant_color3_15" doc="RAL 1017 | Saffron yellow | #F6A950"/>
+    <constant name="constant_color3_16" type="color3">
+      <input name="value" type="color3" value="0.9559734, 0.5906188, 0.0295568"/>
+    </constant>
+    <output name="RAL_1018_ZincYellow" type="color3" nodename="constant_color3_16" doc="RAL 1018 | Zinc yellow | #FACA30"/>
+    <constant name="constant_color3_17" type="color3">
+      <input name="value" type="color3" value="0.3712377, 0.2746773, 0.1946178"/>
+    </constant>
+    <output name="RAL_1019_GreyBeige" type="color3" nodename="constant_color3_17" doc="RAL 1019 | Grey beige | #A48F7A"/>
+    <constant name="constant_color3_18" type="color3">
+      <input name="value" type="color3" value="0.3515326, 0.2746773, 0.1301365"/>
+    </constant>
+    <output name="RAL_1020_OliveYellow" type="color3" nodename="constant_color3_18" doc="RAL 1020 | Olive yellow | #A08F65"/>
+    <constant name="constant_color3_19" type="color3">
+      <input name="value" type="color3" value="0.9215819, 0.4677838, 0.0000000"/>
+    </constant>
+    <output name="RAL_1021_ColzaYellow" type="color3" nodename="constant_color3_19" doc="RAL 1021 | Colza yellow | #F6B600"/>
+    <constant name="constant_color3_20" type="color3">
+      <input name="value" type="color3" value="0.9301109, 0.4620770, 0.0000000"/>
+    </constant>
+    <output name="RAL_1023_TrafficYellow" type="color3" nodename="constant_color3_20" doc="RAL 1023 | Traffic yellow | #F7B500"/>
+    <constant name="constant_color3_21" type="color3">
+      <input name="value" type="color3" value="0.4910208, 0.2746773, 0.0722719"/>
+    </constant>
+    <output name="RAL_1024_OchreYellow" type="color3" nodename="constant_color3_21" doc="RAL 1024 | Ochre yellow | #BA8F4C"/>
+    <constant name="constant_color3_22" type="color3">
+      <input name="value" type="color3" value="1.0000000, 1.0000000, 0.0000000"/>
+    </constant>
+    <output name="RAL_1026_LuminousYellow" type="color3" nodename="constant_color3_22" doc="RAL 1026 | Luminous yellow | #FFFF00"/>
+    <constant name="constant_color3_23" type="color3">
+      <input name="value" type="color3" value="0.3864294, 0.2122308, 0.0043914"/>
+    </constant>
+    <output name="RAL_1027_Curry" type="color3" nodename="constant_color3_23" doc="RAL 1027 | Curry | #A77F0E"/>
+    <constant name="constant_color3_24" type="color3">
+      <input name="value" type="color3" value="1.0000000, 0.3277781, 0.0000000"/>
+    </constant>
+    <output name="RAL_1028_MelonYellow" type="color3" nodename="constant_color3_24" doc="RAL 1028 | Melon yellow | #FF9B00"/>
+    <constant name="constant_color3_25" type="color3">
+      <input name="value" type="color3" value="0.7605245, 0.3662526, 0.0000000"/>
+    </constant>
+    <output name="RAL_1032_BroomYellow" type="color3" nodename="constant_color3_25" doc="RAL 1032 | Broom yellow | #E2A300"/>
+    <constant name="constant_color3_26" type="color3">
+      <input name="value" type="color3" value="0.9473065, 0.3231432, 0.0116122"/>
+    </constant>
+    <output name="RAL_1033_DahliaYellow" type="color3" nodename="constant_color3_26" doc="RAL 1033 | Dahlia yellow | #F99A1C"/>
+    <constant name="constant_color3_27" type="color3">
+      <input name="value" type="color3" value="0.8307699, 0.3324515, 0.0843762"/>
+    </constant>
+    <output name="RAL_1034_PastelYellow" type="color3" nodename="constant_color3_27" doc="RAL 1034 | Pastel yellow | #EB9C52"/>
+    <constant name="constant_color3_28" type="color3">
+      <input name="value" type="color3" value="0.2788943, 0.2269659, 0.1620294"/>
+    </constant>
+    <output name="RAL_1035_PearlBeige" type="color3" nodename="constant_color3_28" doc="RAL 1035 | Pearl beige | #908370"/>
+    <constant name="constant_color3_29" type="color3">
+      <input name="value" type="color3" value="0.2158605, 0.1274377, 0.0497066"/>
+    </constant>
+    <output name="RAL_1036_PearlGold" type="color3" nodename="constant_color3_29" doc="RAL 1036 | Pearl gold | #80643F"/>
+    <constant name="constant_color3_30" type="color3">
+      <input name="value" type="color3" value="0.8713671, 0.2874408, 0.0000000"/>
+    </constant>
+    <output name="RAL_1037_SunYellow" type="color3" nodename="constant_color3_30" doc="RAL 1037 | Sun yellow | #F09200"/>
+    <constant name="constant_color3_31" type="color3">
+      <input name="value" type="color3" value="0.7230551, 0.1912017, 0.0021247"/>
+    </constant>
+    <output name="RAL_2000_YellowOrange" type="color3" nodename="constant_color3_31" doc="RAL 2000 | Yellow orange | #DD7907"/>
+    <constant name="constant_color3_32" type="color3">
+      <input name="value" type="color3" value="0.5149177, 0.0761854, 0.0144438"/>
+    </constant>
+    <output name="RAL_2001_RedOrange" type="color3" nodename="constant_color3_32" doc="RAL 2001 | Red orange | #BE4E20"/>
+    <constant name="constant_color3_33" type="color3">
+      <input name="value" type="color3" value="0.5647115, 0.0409152, 0.0202886"/>
+    </constant>
+    <output name="RAL_2002_Vermilion" type="color3" nodename="constant_color3_33" doc="RAL 2002 | Vermilion | #C63927"/>
+    <constant name="constant_color3_34" type="color3">
+      <input name="value" type="color3" value="0.9559734, 0.2307400, 0.0241576"/>
+    </constant>
+    <output name="RAL_2003_PastelOrange" type="color3" nodename="constant_color3_34" doc="RAL 2003 | Pastel orange | #FA842B"/>
+    <constant name="constant_color3_35" type="color3">
+      <input name="value" type="color3" value="0.7991027, 0.1046165, 0.0060488"/>
+    </constant>
+    <output name="RAL_2004_PureOrange" type="color3" nodename="constant_color3_35" doc="RAL 2004 | Pure orange | #E75B12"/>
+    <constant name="constant_color3_36" type="color3">
+      <input name="value" type="color3" value="1.0000000, 0.0168074, 0.0000000"/>
+    </constant>
+    <output name="RAL_2005_LuminousOrange" type="color3" nodename="constant_color3_36" doc="RAL 2005 | Luminous orange | #FF2300"/>
+    <constant name="constant_color3_37" type="color3">
+      <input name="value" type="color3" value="1.0000000, 0.3712377, 0.0152085"/>
+    </constant>
+    <output name="RAL_2007_LuminousBrightOrange" type="color3" nodename="constant_color3_37" doc="RAL 2007 | Luminous bright orange | #FFA421"/>
+    <constant name="constant_color3_38" type="color3">
+      <input name="value" type="color3" value="0.8962694, 0.1778884, 0.0251869"/>
+    </constant>
+    <output name="RAL_2008_BrightRedOrange" type="color3" nodename="constant_color3_38" doc="RAL 2008 | Bright red orange | #F3752C"/>
+    <constant name="constant_color3_39" type="color3">
+      <input name="value" type="color3" value="0.7529422, 0.0908417, 0.0003035"/>
+    </constant>
+    <output name="RAL_2009_TrafficOrange" type="color3" nodename="constant_color3_39" doc="RAL 2009 | Traffic orange | #E15501"/>
+    <constant name="constant_color3_40" type="color3">
+      <input name="value" type="color3" value="0.6583748, 0.1301365, 0.0284260"/>
+    </constant>
+    <output name="RAL_2010_SignalOrange" type="color3" nodename="constant_color3_40" doc="RAL 2010 | Signal orange | #D4652F"/>
+    <constant name="constant_color3_41" type="color3">
+      <input name="value" type="color3" value="0.8387990, 0.2015563, 0.0185002"/>
+    </constant>
+    <output name="RAL_2011_DeepOrange" type="color3" nodename="constant_color3_41" doc="RAL 2011 | Deep orange | #EC7C25"/>
+    <constant name="constant_color3_42" type="color3">
+      <input name="value" type="color3" value="0.7083758, 0.1441285, 0.0802198"/>
+    </constant>
+    <output name="RAL_2012_SalmonOrange" type="color3" nodename="constant_color3_42" doc="RAL 2012 | Salmon orange | #DB6A50"/>
+    <constant name="constant_color3_43" type="color3">
+      <input name="value" type="color3" value="0.3005438, 0.0595112, 0.0202886"/>
+    </constant>
+    <output name="RAL_2013_PearlOrange" type="color3" nodename="constant_color3_43" doc="RAL 2013 | Pearl orange | #954527"/>
+    <constant name="constant_color3_44" type="color3">
+      <input name="value" type="color3" value="0.9559734, 0.0578054, 0.0006071"/>
+    </constant>
+    <output name="RAL_2017_RalOrange" type="color3" nodename="constant_color3_44" doc="RAL 2017 | RAL orange | #FA4402"/>
+    <constant name="constant_color3_45" type="color3">
+      <input name="value" type="color3" value="0.4072402, 0.0185002, 0.0176420"/>
+    </constant>
+    <output name="RAL_3000_FlameRed" type="color3" nodename="constant_color3_45" doc="RAL 3000 | Flame red | #AB2524"/>
+    <constant name="constant_color3_46" type="color3">
+      <input name="value" type="color3" value="0.3515326, 0.0152085, 0.0212190"/>
+    </constant>
+    <output name="RAL_3001_SignalRed" type="color3" nodename="constant_color3_46" doc="RAL 3001 | Signal red | #A02128"/>
+    <constant name="constant_color3_47" type="color3">
+      <input name="value" type="color3" value="0.3564001, 0.0168074, 0.0241576"/>
+    </constant>
+    <output name="RAL_3002_CarmineRed" type="color3" nodename="constant_color3_47" doc="RAL 3002 | Carmine red | #A1232B"/>
+    <constant name="constant_color3_48" type="color3">
+      <input name="value" type="color3" value="0.2663556, 0.0122865, 0.0251869"/>
+    </constant>
+    <output name="RAL_3003_RubyRed" type="color3" nodename="constant_color3_48" doc="RAL 3003 | Ruby red | #8D1D2C"/>
+    <constant name="constant_color3_49" type="color3">
+      <input name="value" type="color3" value="0.1620294, 0.0137021, 0.0221739"/>
+    </constant>
+    <output name="RAL_3004_PurpleRed" type="color3" nodename="constant_color3_49" doc="RAL 3004 | Purple red | #701F29"/>
+    <constant name="constant_color3_50" type="color3">
+      <input name="value" type="color3" value="0.1119324, 0.0144438, 0.0212190"/>
+    </constant>
+    <output name="RAL_3005_WineRed" type="color3" nodename="constant_color3_50" doc="RAL 3005 | Wine red | #5E2028"/>
+    <constant name="constant_color3_51" type="color3">
+      <input name="value" type="color3" value="0.0512695, 0.0159963, 0.0185002"/>
+    </constant>
+    <output name="RAL_3007_BlackRed" type="color3" nodename="constant_color3_51" doc="RAL 3007 | Black red | #402225"/>
+    <constant name="constant_color3_52" type="color3">
+      <input name="value" type="color3" value="0.1620294, 0.0382044, 0.0307134"/>
+    </constant>
+    <output name="RAL_3009_OxideRed" type="color3" nodename="constant_color3_52" doc="RAL 3009 | Oxide red | #703731"/>
+    <constant name="constant_color3_53" type="color3">
+      <input name="value" type="color3" value="0.2086369, 0.0221739, 0.0251869"/>
+    </constant>
+    <output name="RAL_3011_BrownRed" type="color3" nodename="constant_color3_53" doc="RAL 3011 | Brown red | #7E292C"/>
+    <constant name="constant_color3_54" type="color3">
+      <input name="value" type="color3" value="0.5972018, 0.2663556, 0.1714411"/>
+    </constant>
+    <output name="RAL_3012_BeigeRed" type="color3" nodename="constant_color3_54" doc="RAL 3012 | Beige red | #CB8D73"/>
+    <constant name="constant_color3_55" type="color3">
+      <input name="value" type="color3" value="0.3324515, 0.0318960, 0.0273209"/>
+    </constant>
+    <output name="RAL_3013_TomatoRed" type="color3" nodename="constant_color3_55" doc="RAL 3013 | Tomato red | #9C322E"/>
+    <constant name="constant_color3_56" type="color3">
+      <input name="value" type="color3" value="0.6583748, 0.1746474, 0.1912017"/>
+    </constant>
+    <output name="RAL_3014_AntiquePink" type="color3" nodename="constant_color3_56" doc="RAL 3014 | Antique pink | #D47479"/>
+    <constant name="constant_color3_57" type="color3">
+      <input name="value" type="color3" value="0.7529422, 0.3813260, 0.4178851"/>
+    </constant>
+    <output name="RAL_3015_LightPink" type="color3" nodename="constant_color3_57" doc="RAL 3015 | Light pink | #E1A6AD"/>
+    <constant name="constant_color3_58" type="color3">
+      <input name="value" type="color3" value="0.4125426, 0.0512695, 0.0343398"/>
+    </constant>
+    <output name="RAL_3016_CoralRed" type="color3" nodename="constant_color3_58" doc="RAL 3016 | Coral red | #AC4034"/>
+    <constant name="constant_color3_59" type="color3">
+      <input name="value" type="color3" value="0.6514056, 0.0886556, 0.1144354"/>
+    </constant>
+    <output name="RAL_3017_Rose" type="color3" nodename="constant_color3_59" doc="RAL 3017 | Rose | #D3545F"/>
+    <constant name="constant_color3_60" type="color3">
+      <input name="value" type="color3" value="0.6375969, 0.0528606, 0.0843762"/>
+    </constant>
+    <output name="RAL_3018_StrawberryRed" type="color3" nodename="constant_color3_60" doc="RAL 3018 | Strawberry red | #D14152"/>
+    <constant name="constant_color3_61" type="color3">
+      <input name="value" type="color3" value="0.5332764, 0.0060488, 0.0116122"/>
+    </constant>
+    <output name="RAL_3020_TrafficRed" type="color3" nodename="constant_color3_61" doc="RAL 3020 | Traffic red | #C1121C"/>
+    <constant name="constant_color3_62" type="color3">
+      <input name="value" type="color3" value="0.6653873, 0.1529262, 0.0930590"/>
+    </constant>
+    <output name="RAL_3022_SalmonPink" type="color3" nodename="constant_color3_62" doc="RAL 3022 | Salmon pink | #D56D56"/>
+    <constant name="constant_color3_63" type="color3">
+      <input name="value" type="color3" value="0.9301109, 0.0000000, 0.0000000"/>
+    </constant>
+    <output name="RAL_3024_LuminousRed" type="color3" nodename="constant_color3_63" doc="RAL 3024 | Luminous red | #F70000"/>
+    <constant name="constant_color3_64" type="color3">
+      <input name="value" type="color3" value="1.0000000, 0.0000000, 0.0000000"/>
+    </constant>
+    <output name="RAL_3026_LuminousBrightRed" type="color3" nodename="constant_color3_64" doc="RAL 3026 | Luminous bright red | #FF0000"/>
+    <constant name="constant_color3_65" type="color3">
+      <input name="value" type="color3" value="0.4564110, 0.0144438, 0.0528606"/>
+    </constant>
+    <output name="RAL_3027_RaspberryRed" type="color3" nodename="constant_color3_65" doc="RAL 3027 | Raspberry red | #B42041"/>
+    <constant name="constant_color3_66" type="color3">
+      <input name="value" type="color3" value="0.7991027, 0.0185002, 0.0060488"/>
+    </constant>
+    <output name="RAL_3028_PureRed" type="color3" nodename="constant_color3_66" doc="RAL 3028 | Pure red | #E72512"/>
+    <constant name="constant_color3_67" type="color3">
+      <input name="value" type="color3" value="0.4125426, 0.0318960, 0.0437350"/>
+    </constant>
+    <output name="RAL_3031_OrientRed" type="color3" nodename="constant_color3_67" doc="RAL 3031 | Orient red | #AC323B"/>
+    <constant name="constant_color3_68" type="color3">
+      <input name="value" type="color3" value="0.1651322, 0.0074990, 0.0152085"/>
+    </constant>
+    <output name="RAL_3032_PearlRubyRed" type="color3" nodename="constant_color3_68" doc="RAL 3032 | Pearl ruby red | #711521"/>
+    <constant name="constant_color3_69" type="color3">
+      <input name="value" type="color3" value="0.4452012, 0.0722719, 0.0561285"/>
+    </constant>
+    <output name="RAL_3033_PearlPink" type="color3" nodename="constant_color3_69" doc="RAL 3033 | Pearl pink | #B24C43"/>
+    <constant name="constant_color3_70" type="color3">
+      <input name="value" type="color3" value="0.2541521, 0.1022417, 0.2269659"/>
+    </constant>
+    <output name="RAL_4001_RedLilac" type="color3" nodename="constant_color3_70" doc="RAL 4001 | Red lilac | #8A5A83"/>
+    <constant name="constant_color3_71" type="color3">
+      <input name="value" type="color3" value="0.2917706, 0.0466651, 0.0802198"/>
+    </constant>
+    <output name="RAL_4002_RedViolet" type="color3" nodename="constant_color3_71" doc="RAL 4002 | Red violet | #933D50"/>
+    <constant name="constant_color3_72" type="color3">
+      <input name="value" type="color3" value="0.6375969, 0.1046165, 0.2746773"/>
+    </constant>
+    <output name="RAL_4003_HeatherViolet" type="color3" nodename="constant_color3_72" doc="RAL 4003 | Heather violet | #D15B8F"/>
+    <constant name="constant_color3_73" type="color3">
+      <input name="value" type="color3" value="0.1412633, 0.0080232, 0.0409152"/>
+    </constant>
+    <output name="RAL_4004_ClaretViolet" type="color3" nodename="constant_color3_73" doc="RAL 4004 | Claret violet | #691639"/>
+    <constant name="constant_color3_74" type="color3">
+      <input name="value" type="color3" value="0.2269659, 0.1247718, 0.3371636"/>
+    </constant>
+    <output name="RAL_4005_BlueLilac" type="color3" nodename="constant_color3_74" doc="RAL 4005 | Blue lilac | #83639D"/>
+    <constant name="constant_color3_75" type="color3">
+      <input name="value" type="color3" value="0.3185468, 0.0185002, 0.1682694"/>
+    </constant>
+    <output name="RAL_4006_TrafficPurple" type="color3" nodename="constant_color3_75" doc="RAL 4006 | Traffic purple | #992572"/>
+    <constant name="constant_color3_76" type="color3">
+      <input name="value" type="color3" value="0.0684782, 0.0144438, 0.0437350"/>
+    </constant>
+    <output name="RAL_4007_PurpleViolet" type="color3" nodename="constant_color3_76" doc="RAL 4007 | Purple violet | #4A203B"/>
+    <constant name="constant_color3_77" type="color3">
+      <input name="value" type="color3" value="0.2788943, 0.0612461, 0.2307400"/>
+    </constant>
+    <output name="RAL_4008_SignalViolet" type="color3" nodename="constant_color3_77" doc="RAL 4008 | Signal violet | #904684"/>
+    <constant name="constant_color3_78" type="color3">
+      <input name="value" type="color3" value="0.3662526, 0.2501583, 0.3005438"/>
+    </constant>
+    <output name="RAL_4009_PastelViolet" type="color3" nodename="constant_color3_78" doc="RAL 4009 | Pastel violet | #A38995"/>
+    <constant name="constant_color3_79" type="color3">
+      <input name="value" type="color3" value="0.5647115, 0.0368895, 0.1878208"/>
+    </constant>
+    <output name="RAL_4010_Telemagenta" type="color3" nodename="constant_color3_79" doc="RAL 4010 | Telemagenta | #C63678"/>
+    <constant name="constant_color3_80" type="color3">
+      <input name="value" type="color3" value="0.2422811, 0.1714411, 0.3564001"/>
+    </constant>
+    <output name="RAL_4011_PearlViolet" type="color3" nodename="constant_color3_80" doc="RAL 4011 | Pearl violet | #8773A1"/>
+    <constant name="constant_color3_81" type="color3">
+      <input name="value" type="color3" value="0.1470273, 0.1384316, 0.2158605"/>
+    </constant>
+    <output name="RAL_4012_PearlBlackberry" type="color3" nodename="constant_color3_81" doc="RAL 4012 | Pearl blackberry | #6B6880"/>
+    <constant name="constant_color3_82" type="color3">
+      <input name="value" type="color3" value="0.0395462, 0.0722719, 0.1620294"/>
+    </constant>
+    <output name="RAL_5000_VioletBlue" type="color3" nodename="constant_color3_82" doc="RAL 5000 | Violet blue | #384C70"/>
+    <constant name="constant_color3_83" type="color3">
+      <input name="value" type="color3" value="0.0137021, 0.0630100, 0.1274377"/>
+    </constant>
+    <output name="RAL_5001_GreenBlue" type="color3" nodename="constant_color3_83" doc="RAL 5001 | Green blue | #1F4764"/>
+    <constant name="constant_color3_84" type="color3">
+      <input name="value" type="color3" value="0.0241576, 0.0251869, 0.2015563"/>
+    </constant>
+    <output name="RAL_5002_UltramarineBlue" type="color3" nodename="constant_color3_84" doc="RAL 5002 | Ultramarine blue | #2B2C7C"/>
+    <constant name="constant_color3_85" type="color3">
+      <input name="value" type="color3" value="0.0231534, 0.0382044, 0.0930590"/>
+    </constant>
+    <output name="RAL_5003_SapphireBlue" type="color3" nodename="constant_color3_85" doc="RAL 5003 | Sapphire blue | #2A3756"/>
+    <constant name="constant_color3_86" type="color3">
+      <input name="value" type="color3" value="0.0122865, 0.0137021, 0.0231534"/>
+    </constant>
+    <output name="RAL_5004_BlackBlue" type="color3" nodename="constant_color3_86" doc="RAL 5004 | Black blue | #1D1F2A"/>
+    <constant name="constant_color3_87" type="color3">
+      <input name="value" type="color3" value="0.0074990, 0.0648033, 0.2501583"/>
+    </constant>
+    <output name="RAL_5005_SignalBlue" type="color3" nodename="constant_color3_87" doc="RAL 5005 | Signal blue | #154889"/>
+    <constant name="constant_color3_88" type="color3">
+      <input name="value" type="color3" value="0.0528606, 0.1356333, 0.2663556"/>
+    </constant>
+    <output name="RAL_5007_BrilliantBlue" type="color3" nodename="constant_color3_88" doc="RAL 5007 | Brilliant blue | #41678D"/>
+    <constant name="constant_color3_89" type="color3">
+      <input name="value" type="color3" value="0.0307134, 0.0451862, 0.0648033"/>
+    </constant>
+    <output name="RAL_5008_GreyBlue" type="color3" nodename="constant_color3_89" doc="RAL 5008 | Grey blue | #313C48"/>
+    <constant name="constant_color3_90" type="color3">
+      <input name="value" type="color3" value="0.0273209, 0.0998987, 0.1878208"/>
+    </constant>
+    <output name="RAL_5009_AzureBlue" type="color3" nodename="constant_color3_90" doc="RAL 5009 | Azure blue | #2E5978"/>
+    <constant name="constant_color3_91" type="color3">
+      <input name="value" type="color3" value="0.0065121, 0.0578054, 0.2015563"/>
+    </constant>
+    <output name="RAL_5010_GentianBlue" type="color3" nodename="constant_color3_91" doc="RAL 5010 | Gentian blue | #13447C"/>
+    <constant name="constant_color3_92" type="color3">
+      <input name="value" type="color3" value="0.0168074, 0.0251869, 0.0497066"/>
+    </constant>
+    <output name="RAL_5011_SteelBlue" type="color3" nodename="constant_color3_92" doc="RAL 5011 | Steel blue | #232C3F"/>
+    <constant name="constant_color3_93" type="color3">
+      <input name="value" type="color3" value="0.0343398, 0.2195262, 0.4793202"/>
+    </constant>
+    <output name="RAL_5012_LightBlue" type="color3" nodename="constant_color3_93" doc="RAL 5012 | Light blue | #3481B8"/>
+    <constant name="constant_color3_94" type="color3">
+      <input name="value" type="color3" value="0.0168074, 0.0262412, 0.0865005"/>
+    </constant>
+    <output name="RAL_5013_CobaltBlue" type="color3" nodename="constant_color3_94" doc="RAL 5013 | Cobalt blue | #232D53"/>
+    <constant name="constant_color3_95" type="color3">
+      <input name="value" type="color3" value="0.1499598, 0.2015563, 0.3139887"/>
+    </constant>
+    <output name="RAL_5014_PigeonBlue" type="color3" nodename="constant_color3_95" doc="RAL 5014 | Pigeon blue | #6C7C98"/>
+    <constant name="constant_color3_96" type="color3">
+      <input name="value" type="color3" value="0.0212190, 0.1746474, 0.4452012"/>
+    </constant>
+    <output name="RAL_5015_SkyBlue" type="color3" nodename="constant_color3_96" doc="RAL 5015 | Sky blue | #2874B2"/>
+    <constant name="constant_color3_97" type="color3">
+      <input name="value" type="color3" value="0.0043914, 0.0822827, 0.2663556"/>
+    </constant>
+    <output name="RAL_5017_TrafficBlue" type="color3" nodename="constant_color3_97" doc="RAL 5017 | Traffic blue | #0E518D"/>
+    <constant name="constant_color3_98" type="color3">
+      <input name="value" type="color3" value="0.0152085, 0.2462013, 0.2746773"/>
+    </constant>
+    <output name="RAL_5018_TurquoiseBlue" type="color3" nodename="constant_color3_98" doc="RAL 5018 | Turquoise blue | #21888F"/>
+    <constant name="constant_color3_99" type="color3">
+      <input name="value" type="color3" value="0.0103298, 0.0953075, 0.2307400"/>
+    </constant>
+    <output name="RAL_5019_CapriBlue" type="color3" nodename="constant_color3_99" doc="RAL 5019 | Capri blue | #1A5784"/>
+    <constant name="constant_color3_100" type="color3">
+      <input name="value" type="color3" value="0.0033465, 0.0528606, 0.0822827"/>
+    </constant>
+    <output name="RAL_5020_OceanBlue" type="color3" nodename="constant_color3_100" doc="RAL 5020 | Ocean blue | #0B4151"/>
+    <constant name="constant_color3_101" type="color3">
+      <input name="value" type="color3" value="0.0021247, 0.1714411, 0.1946178"/>
+    </constant>
+    <output name="RAL_5021_WaterBlue" type="color3" nodename="constant_color3_101" doc="RAL 5021 | Water blue | #07737A"/>
+    <constant name="constant_color3_102" type="color3">
+      <input name="value" type="color3" value="0.0284260, 0.0231534, 0.1022417"/>
+    </constant>
+    <output name="RAL_5022_NightBlue" type="color3" nodename="constant_color3_102" doc="RAL 5022 | Night blue | #2F2A5A"/>
+    <constant name="constant_color3_103" type="color3">
+      <input name="value" type="color3" value="0.0742136, 0.1328683, 0.2704978"/>
+    </constant>
+    <output name="RAL_5023_DistantBlue" type="color3" nodename="constant_color3_103" doc="RAL 5023 | Distant blue | #4D668E"/>
+    <constant name="constant_color3_104" type="color3">
+      <input name="value" type="color3" value="0.1441285, 0.2917706, 0.4341536"/>
+    </constant>
+    <output name="RAL_5024_PastelBlue" type="color3" nodename="constant_color3_104" doc="RAL 5024 | Pastel blue | #6A93B0"/>
+    <constant name="constant_color3_105" type="color3">
+      <input name="value" type="color3" value="0.0221739, 0.1274377, 0.1878208"/>
+    </constant>
+    <output name="RAL_5025_PearlGentianBlue" type="color3" nodename="constant_color3_105" doc="RAL 5025 | Pearl Gentian blue | #296478"/>
+    <constant name="constant_color3_106" type="color3">
+      <input name="value" type="color3" value="0.0051815, 0.0251869, 0.0886556"/>
+    </constant>
+    <output name="RAL_5026_PearlNightBlue" type="color3" nodename="constant_color3_106" doc="RAL 5026 | Pearl night blue | #102C54"/>
+    <constant name="constant_color3_107" type="color3">
+      <input name="value" type="color3" value="0.0318960, 0.1811642, 0.1221388"/>
+    </constant>
+    <output name="RAL_6000_PatinaGreen" type="color3" nodename="constant_color3_107" doc="RAL 6000 | Patina green | #327662"/>
+    <constant name="constant_color3_108" type="color3">
+      <input name="value" type="color3" value="0.0212190, 0.1651322, 0.0481718"/>
+    </constant>
+    <output name="RAL_6001_EmeraldGreen" type="color3" nodename="constant_color3_108" doc="RAL 6001 | Emerald green | #28713E"/>
+    <constant name="constant_color3_109" type="color3">
+      <input name="value" type="color3" value="0.0202886, 0.1221388, 0.0356013"/>
+    </constant>
+    <output name="RAL_6002_LeafGreen" type="color3" nodename="constant_color3_109" doc="RAL 6002 | Leaf green | #276235"/>
+    <constant name="constant_color3_110" type="color3">
+      <input name="value" type="color3" value="0.0703601, 0.0953075, 0.0481718"/>
+    </constant>
+    <output name="RAL_6003_OliveGreen" type="color3" nodename="constant_color3_110" doc="RAL 6003 | Olive green | #4B573E"/>
+    <constant name="constant_color3_111" type="color3">
+      <input name="value" type="color3" value="0.0043914, 0.0544803, 0.0561285"/>
+    </constant>
+    <output name="RAL_6004_BlueGreen" type="color3" nodename="constant_color3_111" doc="RAL 6004 | Blue green | #0E4243"/>
+    <constant name="constant_color3_112" type="color3">
+      <input name="value" type="color3" value="0.0047770, 0.0561285, 0.0368895"/>
+    </constant>
+    <output name="RAL_6005_MossGreen" type="color3" nodename="constant_color3_112" doc="RAL 6005 | Moss green | #0F4336"/>
+    <constant name="constant_color3_113" type="color3">
+      <input name="value" type="color3" value="0.0512695, 0.0561285, 0.0437350"/>
+    </constant>
+    <output name="RAL_6006_GreyOlive" type="color3" nodename="constant_color3_113" doc="RAL 6006 | Grey olive | #40433B"/>
+    <constant name="constant_color3_114" type="color3">
+      <input name="value" type="color3" value="0.0212190, 0.0343398, 0.0176420"/>
+    </constant>
+    <output name="RAL_6007_BottleGreen" type="color3" nodename="constant_color3_114" doc="RAL 6007 | Bottle green | #283424"/>
+    <constant name="constant_color3_115" type="color3">
+      <input name="value" type="color3" value="0.0356013, 0.0395462, 0.0273209"/>
+    </constant>
+    <output name="RAL_6008_BrownGreen" type="color3" nodename="constant_color3_115" doc="RAL 6008 | Brown green | #35382E"/>
+    <constant name="constant_color3_116" type="color3">
+      <input name="value" type="color3" value="0.0193824, 0.0409152, 0.0284260"/>
+    </constant>
+    <output name="RAL_6009_FirGreen" type="color3" nodename="constant_color3_116" doc="RAL 6009 | Fir green | #26392F"/>
+    <constant name="constant_color3_117" type="color3">
+      <input name="value" type="color3" value="0.0481718, 0.1778884, 0.0437350"/>
+    </constant>
+    <output name="RAL_6010_GrassGreen" type="color3" nodename="constant_color3_117" doc="RAL 6010 | Grass green | #3E753B"/>
+    <constant name="constant_color3_118" type="color3">
+      <input name="value" type="color3" value="0.1384316, 0.2232280, 0.1046165"/>
+    </constant>
+    <output name="RAL_6011_ResedaGreen" type="color3" nodename="constant_color3_118" doc="RAL 6011 | Reseda green | #68825B"/>
+    <constant name="constant_color3_119" type="color3">
+      <input name="value" type="color3" value="0.0307134, 0.0512695, 0.0466651"/>
+    </constant>
+    <output name="RAL_6012_BlackGreen" type="color3" nodename="constant_color3_119" doc="RAL 6012 | Black green | #31403D"/>
+    <constant name="constant_color3_120" type="color3">
+      <input name="value" type="color3" value="0.1912017, 0.2015563, 0.1022417"/>
+    </constant>
+    <output name="RAL_6013_ReedGreen" type="color3" nodename="constant_color3_120" doc="RAL 6013 | Reed green | #797C5A"/>
+    <constant name="constant_color3_121" type="color3">
+      <input name="value" type="color3" value="0.0578054, 0.0561285, 0.0382044"/>
+    </constant>
+    <output name="RAL_6014_YellowOlive" type="color3" nodename="constant_color3_121" doc="RAL 6014 | Yellow olive | #444337"/>
+    <constant name="constant_color3_122" type="color3">
+      <input name="value" type="color3" value="0.0466651, 0.0512695, 0.0423114"/>
+    </constant>
+    <output name="RAL_6015_BlackOlive" type="color3" nodename="constant_color3_122" doc="RAL 6015 | Black olive | #3D403A"/>
+    <constant name="constant_color3_123" type="color3">
+      <input name="value" type="color3" value="0.0006071, 0.1441285, 0.0843762"/>
+    </constant>
+    <output name="RAL_6016_TurquoiseGreen" type="color3" nodename="constant_color3_123" doc="RAL 6016 | Turquoise green | #026A52"/>
+    <constant name="constant_color3_124" type="color3">
+      <input name="value" type="color3" value="0.0612461, 0.2383976, 0.0528606"/>
+    </constant>
+    <output name="RAL_6017_MayGreen" type="color3" nodename="constant_color3_124" doc="RAL 6017 | May green | #468641"/>
+    <constant name="constant_color3_125" type="color3">
+      <input name="value" type="color3" value="0.0648033, 0.3712377, 0.0497066"/>
+    </constant>
+    <output name="RAL_6018_YellowGreen" type="color3" nodename="constant_color3_125" doc="RAL 6018 | Yellow green | #48A43F"/>
+    <constant name="constant_color3_126" type="color3">
+      <input name="value" type="color3" value="0.4735315, 0.6938718, 0.4396572"/>
+    </constant>
+    <output name="RAL_6019_PastelGreen" type="color3" nodename="constant_color3_126" doc="RAL 6019 | Pastel green | #B7D9B1"/>
+    <constant name="constant_color3_127" type="color3">
+      <input name="value" type="color3" value="0.0356013, 0.0630100, 0.0331048"/>
+    </constant>
+    <output name="RAL_6020_ChromeGreen" type="color3" nodename="constant_color3_127" doc="RAL 6020 | Chrome green | #354733"/>
+    <constant name="constant_color3_128" type="color3">
+      <input name="value" type="color3" value="0.2383976, 0.3712377, 0.2015563"/>
+    </constant>
+    <output name="RAL_6021_PaleGreen" type="color3" nodename="constant_color3_128" doc="RAL 6021 | Pale green | #86A47C"/>
+    <constant name="constant_color3_129" type="color3">
+      <input name="value" type="color3" value="0.0481718, 0.0451862, 0.0318960"/>
+    </constant>
+    <output name="RAL_6022_OlivedrabbrownOlive" type="color3" nodename="constant_color3_129" doc="RAL 6022 | Olive-drab/brown olive | #3E3C32"/>
+    <constant name="constant_color3_130" type="color3">
+      <input name="value" type="color3" value="0.0000000, 0.2422811, 0.0886556"/>
+    </constant>
+    <output name="RAL_6024_TrafficGreen" type="color3" nodename="constant_color3_130" doc="RAL 6024 | Traffic green | #008754"/>
+    <constant name="constant_color3_131" type="color3">
+      <input name="value" type="color3" value="0.0865005, 0.1778884, 0.0451862"/>
+    </constant>
+    <output name="RAL_6025_FernGreen" type="color3" nodename="constant_color3_131" doc="RAL 6025 | Fern green | #53753C"/>
+    <constant name="constant_color3_132" type="color3">
+      <input name="value" type="color3" value="0.0000000, 0.1094617, 0.0843762"/>
+    </constant>
+    <output name="RAL_6026_OpalGreen" type="color3" nodename="constant_color3_132" doc="RAL 6026 | Opal green | #005D52"/>
+    <constant name="constant_color3_133" type="color3">
+      <input name="value" type="color3" value="0.2195262, 0.5271151, 0.4969330"/>
+    </constant>
+    <output name="RAL_6027_LightGreen" type="color3" nodename="constant_color3_133" doc="RAL 6027 | Light green | #81C0BB"/>
+    <constant name="constant_color3_134" type="color3">
+      <input name="value" type="color3" value="0.0262412, 0.0908417, 0.0612461"/>
+    </constant>
+    <output name="RAL_6028_PineGreen" type="color3" nodename="constant_color3_134" doc="RAL 6028 | Pine green | #2D5546"/>
+    <constant name="constant_color3_135" type="color3">
+      <input name="value" type="color3" value="0.0000000, 0.1682694, 0.0561285"/>
+    </constant>
+    <output name="RAL_6029_MintGreen" type="color3" nodename="constant_color3_135" doc="RAL 6029 | Mint green | #007243"/>
+    <constant name="constant_color3_136" type="color3">
+      <input name="value" type="color3" value="0.0047770, 0.2345506, 0.0975873"/>
+    </constant>
+    <output name="RAL_6032_SignalGreen" type="color3" nodename="constant_color3_136" doc="RAL 6032 | Signal green | #0F8558"/>
+    <constant name="constant_color3_137" type="color3">
+      <input name="value" type="color3" value="0.0630100, 0.2541521, 0.2307400"/>
+    </constant>
+    <output name="RAL_6033_MintTurquoise" type="color3" nodename="constant_color3_137" doc="RAL 6033 | Mint turquoise | #478A84"/>
+    <constant name="constant_color3_138" type="color3">
+      <input name="value" type="color3" value="0.2122308, 0.4341536, 0.4452012"/>
+    </constant>
+    <output name="RAL_6034_PastelTurquoise" type="color3" nodename="constant_color3_138" doc="RAL 6034 | Pastel turquoise | #7FB0B2"/>
+    <constant name="constant_color3_139" type="color3">
+      <input name="value" type="color3" value="0.0109601, 0.0886556, 0.0251869"/>
+    </constant>
+    <output name="RAL_6035_PearlGreen" type="color3" nodename="constant_color3_139" doc="RAL 6035 | Pearl green | #1B542C"/>
+    <constant name="constant_color3_140" type="color3">
+      <input name="value" type="color3" value="0.0000000, 0.1094617, 0.0722719"/>
+    </constant>
+    <output name="RAL_6036_PearlOpalGreen" type="color3" nodename="constant_color3_140" doc="RAL 6036 | Pearl opal green | #005D4C"/>
+    <constant name="constant_color3_141" type="color3">
+      <input name="value" type="color3" value="0.0185002, 0.7991027, 0.0060488"/>
+    </constant>
+    <output name="RAL_6037_PureGreen" type="color3" nodename="constant_color3_141" doc="RAL 6037 | Pure green | #25E712"/>
+    <constant name="constant_color3_142" type="color3">
+      <input name="value" type="color3" value="0.0000000, 0.9301109, 0.0000000"/>
+    </constant>
+    <output name="RAL_6038_LuminousGreen" type="color3" nodename="constant_color3_142" doc="RAL 6038 | Luminous green | #00F700"/>
+    <constant name="constant_color3_143" type="color3">
+      <input name="value" type="color3" value="0.2086369, 0.2581829, 0.2874408"/>
+    </constant>
+    <output name="RAL_7000_SquirrelGrey" type="color3" nodename="constant_color3_143" doc="RAL 7000 | Squirrel grey | #7E8B92"/>
+    <constant name="constant_color3_144" type="color3">
+      <input name="value" type="color3" value="0.2746773, 0.3185468, 0.3467041"/>
+    </constant>
+    <output name="RAL_7001_SilverGrey" type="color3" nodename="constant_color3_144" doc="RAL 7001 | Silver grey | #8F999F"/>
+    <constant name="constant_color3_145" type="color3">
+      <input name="value" type="color3" value="0.2195262, 0.2122308, 0.1384316"/>
+    </constant>
+    <output name="RAL_7002_OliveGrey" type="color3" nodename="constant_color3_145" doc="RAL 7002 | Olive grey | #817F68"/>
+    <constant name="constant_color3_146" type="color3">
+      <input name="value" type="color3" value="0.1946178, 0.1980693, 0.1529262"/>
+    </constant>
+    <output name="RAL_7003_MossGrey" type="color3" nodename="constant_color3_146" doc="RAL 7003 | Moss grey | #7A7B6D"/>
+    <constant name="constant_color3_147" type="color3">
+      <input name="value" type="color3" value="0.3419144, 0.3515326, 0.3564001"/>
+    </constant>
+    <output name="RAL_7004_SignalGrey" type="color3" nodename="constant_color3_147" doc="RAL 7004 | Signal grey | #9EA0A1"/>
+    <constant name="constant_color3_148" type="color3">
+      <input name="value" type="color3" value="0.1470273, 0.1651322, 0.1589608"/>
+    </constant>
+    <output name="RAL_7005_MouseGrey" type="color3" nodename="constant_color3_148" doc="RAL 7005 | Mouse grey | #6B716F"/>
+    <constant name="constant_color3_149" type="color3">
+      <input name="value" type="color3" value="0.1778884, 0.1589608, 0.1195384"/>
+    </constant>
+    <output name="RAL_7006_BeigeGrey" type="color3" nodename="constant_color3_149" doc="RAL 7006 | Beige grey | #756F61"/>
+    <constant name="constant_color3_150" type="color3">
+      <input name="value" type="color3" value="0.1746474, 0.1328683, 0.0561285"/>
+    </constant>
+    <output name="RAL_7008_KhakiGrey" type="color3" nodename="constant_color3_150" doc="RAL 7008 | Khaki grey | #746643"/>
+    <constant name="constant_color3_151" type="color3">
+      <input name="value" type="color3" value="0.1046165, 0.1221388, 0.0998987"/>
+    </constant>
+    <output name="RAL_7009_GreenGrey" type="color3" nodename="constant_color3_151" doc="RAL 7009 | Green grey | #5B6259"/>
+    <constant name="constant_color3_152" type="color3">
+      <input name="value" type="color3" value="0.0953075, 0.1094617, 0.0953075"/>
+    </constant>
+    <output name="RAL_7010_TarpaulinGrey" type="color3" nodename="constant_color3_152" doc="RAL 7010 | Tarpaulin grey | #575D57"/>
+    <constant name="constant_color3_153" type="color3">
+      <input name="value" type="color3" value="0.0908417, 0.1094617, 0.1195384"/>
+    </constant>
+    <output name="RAL_7011_IronGrey" type="color3" nodename="constant_color3_153" doc="RAL 7011 | Iron grey | #555D61"/>
+    <constant name="constant_color3_154" type="color3">
+      <input name="value" type="color3" value="0.0998987, 0.1195384, 0.1247718"/>
+    </constant>
+    <output name="RAL_7012_BasaltGrey" type="color3" nodename="constant_color3_154" doc="RAL 7012 | Basalt grey | #596163"/>
+    <constant name="constant_color3_155" type="color3">
+      <input name="value" type="color3" value="0.0908417, 0.0908417, 0.0648033"/>
+    </constant>
+    <output name="RAL_7013_BrownGrey" type="color3" nodename="constant_color3_155" doc="RAL 7013 | Brown grey | #555548"/>
+    <constant name="constant_color3_156" type="color3">
+      <input name="value" type="color3" value="0.0822827, 0.0930590, 0.1070231"/>
+    </constant>
+    <output name="RAL_7015_SlateGrey" type="color3" nodename="constant_color3_156" doc="RAL 7015 | Slate grey | #51565C"/>
+    <constant name="constant_color3_157" type="color3">
+      <input name="value" type="color3" value="0.0382044, 0.0497066, 0.0561285"/>
+    </constant>
+    <output name="RAL_7016_AnthraciteGrey" type="color3" nodename="constant_color3_157" doc="RAL 7016 | Anthracite grey | #373F43"/>
+    <constant name="constant_color3_158" type="color3">
+      <input name="value" type="color3" value="0.0273209, 0.0318960, 0.0343398"/>
+    </constant>
+    <output name="RAL_7021_BlackGrey" type="color3" nodename="constant_color3_158" doc="RAL 7021 | Black grey | #2E3234"/>
+    <constant name="constant_color3_159" type="color3">
+      <input name="value" type="color3" value="0.0703601, 0.0742136, 0.0612461"/>
+    </constant>
+    <output name="RAL_7022_UmbraGrey" type="color3" nodename="constant_color3_159" doc="RAL 7022 | Umbra grey | #4B4D46"/>
+    <constant name="constant_color3_160" type="color3">
+      <input name="value" type="color3" value="0.2195262, 0.2307400, 0.1912017"/>
+    </constant>
+    <output name="RAL_7023_ConcreteGrey" type="color3" nodename="constant_color3_160" doc="RAL 7023 | Concrete grey | #818479"/>
+    <constant name="constant_color3_161" type="color3">
+      <input name="value" type="color3" value="0.0630100, 0.0684782, 0.0802198"/>
+    </constant>
+    <output name="RAL_7024_GraphiteGrey" type="color3" nodename="constant_color3_161" doc="RAL 7024 | Graphite grey | #474A50"/>
+    <constant name="constant_color3_162" type="color3">
+      <input name="value" type="color3" value="0.0382044, 0.0578054, 0.0630100"/>
+    </constant>
+    <output name="RAL_7026_GraniteGrey" type="color3" nodename="constant_color3_162" doc="RAL 7026 | Granite grey | #374447"/>
+    <constant name="constant_color3_163" type="color3">
+      <input name="value" type="color3" value="0.2917706, 0.2917706, 0.2462013"/>
+    </constant>
+    <output name="RAL_7030_StoneGrey" type="color3" nodename="constant_color3_163" doc="RAL 7030 | Stone grey | #939388"/>
+    <constant name="constant_color3_164" type="color3">
+      <input name="value" type="color3" value="0.1094617, 0.1412633, 0.1620294"/>
+    </constant>
+    <output name="RAL_7031_BlueGrey" type="color3" nodename="constant_color3_164" doc="RAL 7031 | Blue grey | #5D6970"/>
+    <constant name="constant_color3_165" type="color3">
+      <input name="value" type="color3" value="0.4851499, 0.4851499, 0.3915725"/>
+    </constant>
+    <output name="RAL_7032_PebbleGrey" type="color3" nodename="constant_color3_165" doc="RAL 7032 | Pebble grey | #B9B9A8"/>
+    <constant name="constant_color3_166" type="color3">
+      <input name="value" type="color3" value="0.2195262, 0.2501583, 0.1912017"/>
+    </constant>
+    <output name="RAL_7033_CementGrey" type="color3" nodename="constant_color3_166" doc="RAL 7033 | Cement grey | #818979"/>
+    <constant name="constant_color3_167" type="color3">
+      <input name="value" type="color3" value="0.2917706, 0.2831487, 0.1811642"/>
+    </constant>
+    <output name="RAL_7034_YellowGrey" type="color3" nodename="constant_color3_167" doc="RAL 7034 | Yellow grey | #939176"/>
+    <constant name="constant_color3_168" type="color3">
+      <input name="value" type="color3" value="0.5972018, 0.6307571, 0.6038273"/>
+    </constant>
+    <output name="RAL_7035_LightGrey" type="color3" nodename="constant_color3_168" doc="RAL 7035 | Light grey | #CBD0CC"/>
+    <constant name="constant_color3_169" type="color3">
+      <input name="value" type="color3" value="0.3231432, 0.3049873, 0.3094689"/>
+    </constant>
+    <output name="RAL_7036_PlatinumGrey" type="color3" nodename="constant_color3_169" doc="RAL 7036 | Platinum grey | #9A9697"/>
+    <constant name="constant_color3_170" type="color3">
+      <input name="value" type="color3" value="0.2015563, 0.2122308, 0.2086369"/>
+    </constant>
+    <output name="RAL_7037_DustyGrey" type="color3" nodename="constant_color3_170" doc="RAL 7037 | Dusty grey | #7C7F7E"/>
+    <constant name="constant_color3_171" type="color3">
+      <input name="value" type="color3" value="0.4564110, 0.4793202, 0.4341536"/>
+    </constant>
+    <output name="RAL_7038_AgateGrey" type="color3" nodename="constant_color3_171" doc="RAL 7038 | Agate grey | #B4B8B0"/>
+    <constant name="constant_color3_172" type="color3">
+      <input name="value" type="color3" value="0.1470273, 0.1412633, 0.1144354"/>
+    </constant>
+    <output name="RAL_7039_QuartzGrey" type="color3" nodename="constant_color3_172" doc="RAL 7039 | Quartz grey | #6B695F"/>
+    <constant name="constant_color3_173" type="color3">
+      <input name="value" type="color3" value="0.3371636, 0.3662526, 0.3813260"/>
+    </constant>
+    <output name="RAL_7040_WindowGrey" type="color3" nodename="constant_color3_173" doc="RAL 7040 | Window grey | #9DA3A6"/>
+    <constant name="constant_color3_174" type="color3">
+      <input name="value" type="color3" value="0.2746773, 0.3049873, 0.3005438"/>
+    </constant>
+    <output name="RAL_7042_TrafficGreyA" type="color3" nodename="constant_color3_174" doc="RAL 7042 | Traffic grey A | #8F9695"/>
+    <constant name="constant_color3_175" type="color3">
+      <input name="value" type="color3" value="0.0761854, 0.0886556, 0.0822827"/>
+    </constant>
+    <output name="RAL_7043_TrafficGreyB" type="color3" nodename="constant_color3_175" doc="RAL 7043 | Traffic grey B | #4E5451"/>
+    <constant name="constant_color3_176" type="color3">
+      <input name="value" type="color3" value="0.5088813, 0.5088813, 0.4452012"/>
+    </constant>
+    <output name="RAL_7044_SilkGrey" type="color3" nodename="constant_color3_176" doc="RAL 7044 | Silk grey | #BDBDB2"/>
+    <constant name="constant_color3_177" type="color3">
+      <input name="value" type="color3" value="0.2831487, 0.3049873, 0.3231432"/>
+    </constant>
+    <output name="RAL_7045_Telegrey1" type="color3" nodename="constant_color3_177" doc="RAL 7045 | Telegrey 1 | #91969A"/>
+    <constant name="constant_color3_178" type="color3">
+      <input name="value" type="color3" value="0.2232280, 0.2501583, 0.2704978"/>
+    </constant>
+    <output name="RAL_7046_Telegrey2" type="color3" nodename="constant_color3_178" doc="RAL 7046 | Telegrey 2 | #82898E"/>
+    <constant name="constant_color3_179" type="color3">
+      <input name="value" type="color3" value="0.6239604, 0.6307571, 0.6239604"/>
+    </constant>
+    <output name="RAL_7047_Telegrey4" type="color3" nodename="constant_color3_179" doc="RAL 7047 | Telegrey 4 | #CFD0CF"/>
+    <constant name="constant_color3_180" type="color3">
+      <input name="value" type="color3" value="0.2462013, 0.2195262, 0.1778884"/>
+    </constant>
+    <output name="RAL_7048_PearlMouseGrey" type="color3" nodename="constant_color3_180" doc="RAL 7048 | Pearl mouse grey | #888175"/>
+    <constant name="constant_color3_181" type="color3">
+      <input name="value" type="color3" value="0.2462013, 0.1651322, 0.0544803"/>
+    </constant>
+    <output name="RAL_8000_GreenBrown" type="color3" nodename="constant_color3_181" doc="RAL 8000 | Green brown | #887142"/>
+    <constant name="constant_color3_182" type="color3">
+      <input name="value" type="color3" value="0.3324515, 0.1470273, 0.0295568"/>
+    </constant>
+    <output name="RAL_8001_OchreBrown" type="color3" nodename="constant_color3_182" doc="RAL 8001 | Ochre brown | #9C6B30"/>
+    <constant name="constant_color3_183" type="color3">
+      <input name="value" type="color3" value="0.1980693, 0.0822827, 0.0528606"/>
+    </constant>
+    <output name="RAL_8002_SignalBrown" type="color3" nodename="constant_color3_183" doc="RAL 8002 | Signal brown | #7B5141"/>
+    <constant name="constant_color3_184" type="color3">
+      <input name="value" type="color3" value="0.2158605, 0.0886556, 0.0284260"/>
+    </constant>
+    <output name="RAL_8003_ClayBrown" type="color3" nodename="constant_color3_184" doc="RAL 8003 | Clay brown | #80542F"/>
+    <constant name="constant_color3_185" type="color3">
+      <input name="value" type="color3" value="0.2746773, 0.0761854, 0.0356013"/>
+    </constant>
+    <output name="RAL_8004_CopperBrown" type="color3" nodename="constant_color3_185" doc="RAL 8004 | Copper brown | #8F4E35"/>
+    <constant name="constant_color3_186" type="color3">
+      <input name="value" type="color3" value="0.1589608, 0.0684782, 0.0284260"/>
+    </constant>
+    <output name="RAL_8007_FawnBrown" type="color3" nodename="constant_color3_186" doc="RAL 8007 | Fawn brown | #6F4A2F"/>
+    <constant name="constant_color3_187" type="color3">
+      <input name="value" type="color3" value="0.1589608, 0.0781874, 0.0212190"/>
+    </constant>
+    <output name="RAL_8008_OliveBrown" type="color3" nodename="constant_color3_187" doc="RAL 8008 | Olive brown | #6F4F28"/>
+    <constant name="constant_color3_188" type="color3">
+      <input name="value" type="color3" value="0.1022417, 0.0423114, 0.0221739"/>
+    </constant>
+    <output name="RAL_8011_NutBrown" type="color3" nodename="constant_color3_188" doc="RAL 8011 | Nut brown | #5A3A29"/>
+    <constant name="constant_color3_189" type="color3">
+      <input name="value" type="color3" value="0.1356333, 0.0395462, 0.0307134"/>
+    </constant>
+    <output name="RAL_8012_RedBrown" type="color3" nodename="constant_color3_189" doc="RAL 8012 | Red brown | #673831"/>
+    <constant name="constant_color3_190" type="color3">
+      <input name="value" type="color3" value="0.0666259, 0.0409152, 0.0262412"/>
+    </constant>
+    <output name="RAL_8014_SepiaBrown" type="color3" nodename="constant_color3_190" doc="RAL 8014 | Sepia brown | #49392D"/>
+    <constant name="constant_color3_191" type="color3">
+      <input name="value" type="color3" value="0.1247718, 0.0423114, 0.0343398"/>
+    </constant>
+    <output name="RAL_8015_ChestnutBrown" type="color3" nodename="constant_color3_191" doc="RAL 8015 | Chestnut brown | #633A34"/>
+    <constant name="constant_color3_192" type="color3">
+      <input name="value" type="color3" value="0.0722719, 0.0284260, 0.0193824"/>
+    </constant>
+    <output name="RAL_8016_MahoganyBrown" type="color3" nodename="constant_color3_192" doc="RAL 8016 | Mahogany brown | #4C2F26"/>
+    <constant name="constant_color3_193" type="color3">
+      <input name="value" type="color3" value="0.0578054, 0.0318960, 0.0262412"/>
+    </constant>
+    <output name="RAL_8017_ChocolateBrown" type="color3" nodename="constant_color3_193" doc="RAL 8017 | Chocolate brown | #44322D"/>
+    <constant name="constant_color3_194" type="color3">
+      <input name="value" type="color3" value="0.0497066, 0.0423114, 0.0423114"/>
+    </constant>
+    <output name="RAL_8019_GreyBrown" type="color3" nodename="constant_color3_194" doc="RAL 8019 | Grey brown | #3F3A3A"/>
+    <constant name="constant_color3_195" type="color3">
+      <input name="value" type="color3" value="0.0152085, 0.0137021, 0.0144438"/>
+    </constant>
+    <output name="RAL_8022_BlackBrown" type="color3" nodename="constant_color3_195" doc="RAL 8022 | Black brown | #211F20"/>
+    <constant name="constant_color3_196" type="color3">
+      <input name="value" type="color3" value="0.3813260, 0.1119324, 0.0284260"/>
+    </constant>
+    <output name="RAL_8023_OrangeBrown" type="color3" nodename="constant_color3_196" doc="RAL 8023 | Orange brown | #A65E2F"/>
+    <constant name="constant_color3_197" type="color3">
+      <input name="value" type="color3" value="0.1912017, 0.0908417, 0.0451862"/>
+    </constant>
+    <output name="RAL_8024_BeigeBrown" type="color3" nodename="constant_color3_197" doc="RAL 8024 | Beige brown | #79553C"/>
+    <constant name="constant_color3_198" type="color3">
+      <input name="value" type="color3" value="0.1778884, 0.1070231, 0.0666259"/>
+    </constant>
+    <output name="RAL_8025_PaleBrown" type="color3" nodename="constant_color3_198" doc="RAL 8025 | Pale brown | #755C49"/>
+    <constant name="constant_color3_199" type="color3">
+      <input name="value" type="color3" value="0.0761854, 0.0437350, 0.0241576"/>
+    </constant>
+    <output name="RAL_8028_TerraBrown" type="color3" nodename="constant_color3_199" doc="RAL 8028 | Terra brown | #4E3B2B"/>
+    <constant name="constant_color3_200" type="color3">
+      <input name="value" type="color3" value="0.1844750, 0.0451862, 0.0202886"/>
+    </constant>
+    <output name="RAL_8029_PearlCopper" type="color3" nodename="constant_color3_200" doc="RAL 8029 | Pearl copper | #773C27"/>
+    <constant name="constant_color3_201" type="color3">
+      <input name="value" type="color3" value="0.8631572, 0.8307699, 0.7156935"/>
+    </constant>
+    <output name="RAL_9001_Cream" type="color3" nodename="constant_color3_201" doc="RAL 9001 | Cream | #EFEBDC"/>
+    <constant name="constant_color3_202" type="color3">
+      <input name="value" type="color3" value="0.7230551, 0.7304607, 0.6583748"/>
+    </constant>
+    <output name="RAL_9002_GreyWhite" type="color3" nodename="constant_color3_202" doc="RAL 9002 | Grey white | #DDDED4"/>
+    <constant name="constant_color3_203" type="color3">
+      <input name="value" type="color3" value="0.9046612, 0.9386857, 0.9046612"/>
+    </constant>
+    <output name="RAL_9003_SignalWhite" type="color3" nodename="constant_color3_203" doc="RAL 9003 | Signal white | #F4F8F4"/>
+    <constant name="constant_color3_204" type="color3">
+      <input name="value" type="color3" value="0.0273209, 0.0295568, 0.0318960"/>
+    </constant>
+    <output name="RAL_9004_SignalBlack" type="color3" nodename="constant_color3_204" doc="RAL 9004 | Signal black | #2E3032"/>
+    <constant name="constant_color3_205" type="color3">
+      <input name="value" type="color3" value="0.0030353, 0.0030353, 0.0040247"/>
+    </constant>
+    <output name="RAL_9005_JetBlack" type="color3" nodename="constant_color3_205" doc="RAL 9005 | Jet black | #0A0A0D"/>
+    <constant name="constant_color3_206" type="color3">
+      <input name="value" type="color3" value="0.3762621, 0.3915725, 0.3813260"/>
+    </constant>
+    <output name="RAL_9006_WhiteAluminium" type="color3" nodename="constant_color3_206" doc="RAL 9006 | White aluminium | #A5A8A6"/>
+    <constant name="constant_color3_207" type="color3">
+      <input name="value" type="color3" value="0.2746773, 0.2746773, 0.2622507"/>
+    </constant>
+    <output name="RAL_9007_GreyAluminium" type="color3" nodename="constant_color3_207" doc="RAL 9007 | Grey aluminium | #8F8F8C"/>
+    <constant name="constant_color3_208" type="color3">
+      <input name="value" type="color3" value="0.9301109, 0.9473065, 0.8631572"/>
+    </constant>
+    <output name="RAL_9010_PureWhite" type="color3" nodename="constant_color3_208" doc="RAL 9010 | Pure white | #F7F9EF"/>
+    <constant name="constant_color3_209" type="color3">
+      <input name="value" type="color3" value="0.0116122, 0.0116122, 0.0116122"/>
+    </constant>
+    <output name="RAL_9011_GraphiteBlack" type="color3" nodename="constant_color3_209" doc="RAL 9011 | Graphite black | #1C1C1C"/>
+    <constant name="constant_color3_210" type="color3">
+      <input name="value" type="color3" value="1.0000000, 0.9822506, 0.7912979"/>
+    </constant>
+    <output name="RAL_9012_CleanRoomWhite" type="color3" nodename="constant_color3_210" doc="RAL 9012 | Clean room white | #FFFDE6"/>
+    <constant name="constant_color3_211" type="color3">
+      <input name="value" type="color3" value="0.9301109, 0.9646862, 0.9130987"/>
+    </constant>
+    <output name="RAL_9016_TrafficWhite" type="color3" nodename="constant_color3_211" doc="RAL 9016 | Traffic white | #F7FBF5"/>
+    <constant name="constant_color3_212" type="color3">
+      <input name="value" type="color3" value="0.0231534, 0.0262412, 0.0284260"/>
+    </constant>
+    <output name="RAL_9017_TrafficBlack" type="color3" nodename="constant_color3_212" doc="RAL 9017 | Traffic black | #2A2D2F"/>
+    <constant name="constant_color3_213" type="color3">
+      <input name="value" type="color3" value="0.6239604, 0.6514056, 0.6104956"/>
+    </constant>
+    <output name="RAL_9018_PapyrusWhite" type="color3" nodename="constant_color3_213" doc="RAL 9018 | Papyrus white | #CFD3CD"/>
+    <constant name="constant_color3_214" type="color3">
+      <input name="value" type="color3" value="0.2345506, 0.2345506, 0.2269659"/>
+    </constant>
+    <output name="RAL_9022_PearlLightGrey" type="color3" nodename="constant_color3_214" doc="RAL 9022 | Pearl light grey | #858583"/>
+    <constant name="constant_color3_215" type="color3">
+      <input name="value" type="color3" value="0.2086369, 0.2195262, 0.2232280"/>
+    </constant>
+    <output name="RAL_9023_PearlDarkGrey" type="color3" nodename="constant_color3_215" doc="RAL 9023 | Pearl dark grey | #7E8182"/>
+  </nodegraph>
+</materialx>

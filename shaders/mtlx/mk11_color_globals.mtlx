@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <materialx version="1.39" colorspace="lin_rec709">
-  <nodegraph name="Mk11ColorGlobals" xpos="14.594203" ypos="-6.732759">
+  <nodegraph name="Mk11ColorGlobals" xpos="0.000000" ypos="0.000000" nodegroup="autolib">
     <output name="RVinylOlympicBlue" type="color3" xpos="17.811594" ypos="-6.862069" nodename="constant_color3_1" />
     <constant name="constant_color3_1" type="color3" xpos="14.594203" ypos="-6.732759">
       <input name="value" type="color3" value="0.0356013, 0.194618, 0.502887" />
@@ -26,12 +26,21 @@
     </constant>
     <output name="RVinylDarkYellow" type="color3" nodename="constant_color3_6" xpos="17.746376" ypos="1.956897" />
     <constant name="constant_color3_7" type="color3" xpos="14.478261" ypos="3.612069">
-      <input name="value" type="color3" value="0.00273174, 0.0144438, 0.0528607" />
+      <input name="value" type="color3" output="RAL_5011_SteelBlue" nodename="RALColorGlobals" />
     </constant>
     <output name="ChassisRAL5011" type="color3" nodename="constant_color3_7" xpos="17.862318" ypos="3.612069" />
-    <constant name="constant_color3_8" type="color3" xpos="14.463768" ypos="5.405172">
-      <input name="value" type="color3" value="0.0612461, 0.23074, 0.496933" />
+    <constant name="constant_color3_8" type="color3" xpos="14.463768" ypos="5.396552">
+      <input name="value" type="color3" output="RAL_5015_SkyBlue" nodename="RALColorGlobals" />
     </constant>
     <output name="SuspensionRAL5015" type="color3" nodename="constant_color3_8" xpos="17.898550" ypos="5.413793" />
+    <RALColorGlobals name="RALColorGlobals" type="multioutput" xpos="8.847826" ypos="-12.741380">
+      <output name="RAL_5015_SkyBlue" type="color3" />
+      <output name="RAL_5011_SteelBlue" type="color3" />
+      <output name="RAL_2009_TrafficOrange" type="color3" />
+    </RALColorGlobals>
+    <constant name="constant_color3_9" type="color3" xpos="14.579710" ypos="7.353448">
+      <input name="value" type="color3" output="RAL_2009_TrafficOrange" nodename="RALColorGlobals" />
+    </constant>
+    <output name="JackingPointRAL2009" type="color3" nodename="constant_color3_9" xpos="17.782608" ypos="7.336207" />
   </nodegraph>
 </materialx>
