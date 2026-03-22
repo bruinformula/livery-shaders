@@ -24,9 +24,10 @@ ENTRY_CARBON_FIBER_MATERIAL AutolibCarbonFiberMaterial [[
 
     color resinTint  DEFAULT_CARBON_FIBER_MATERIAL(color(0.3, 0.3, 0.27)) [[ string doc = "Tint color of the resin" ]],
 	float resinWeight  DEFAULT_CARBON_FIBER_MATERIAL(1.0) [[ string uifolder = "Clearcoat", float uimin = 0.0, float uimax = 1.0 ]],
+    normal resinNormal DEFAULT_CARBON_FIBER_MATERIAL(N) [[ string uifolder = "Clearcoat" ]],
+    vector resinTangent DEFAULT_CARBON_FIBER_MATERIAL(0) [[ string uifolder = "Clearcoat" ]],
 	float resinAnisotropy  DEFAULT_CARBON_FIBER_MATERIAL(0.0) [[ string uifolder = "Clearcoat", float uimin = 0.0, float uimax = 1.0 ]],
 	float resinRoughness  DEFAULT_CARBON_FIBER_MATERIAL(0.05) [[ string uifolder = "Clearcoat", float uimin = 0.0, float uimax = 1.0 ]],
-	float resinRotation  DEFAULT_CARBON_FIBER_MATERIAL(0.0) [[ string uifolder = "Clearcoat", float uimin = 0.0, float uimax = 1.0 ]],
 	float resinIOR  DEFAULT_CARBON_FIBER_MATERIAL(1.4) [[ string uifolder = "Clearcoat", float uimin = 1.0, float uimax = 3.0 ]],
 	float resinExponent  DEFAULT_CARBON_FIBER_MATERIAL(5) [[ string uifolder = "Clearcoat", float uimin = 0.0, float uimax = 10.0 ]],
 
@@ -53,10 +54,8 @@ ENTRY_CARBON_FIBER_MATERIAL AutolibCarbonFiberMaterial [[
 
     closure color fiberLayer = layer(fiberSpecular, fiberBase);
 
-	vector T = vector(cos(2 * M_PI * resinRotation), sin(2 * M_PI * resinRotation), 0);
-
 	closure color resinBase = resinWeight * generalized_schlick_bsdf(
-		fiberBumpedNormal, T,
+		fiberBumpedNormal, resinTangent,
 		resinTint, // reflection_tint
 		color(0.0), // transmission_tint
 		resinRoughness, // roughness_y
@@ -68,7 +67,7 @@ ENTRY_CARBON_FIBER_MATERIAL AutolibCarbonFiberMaterial [[
 	);
 
 	closure color resinTop = resinWeight * dielectric_bsdf(
-		fiberBumpedNormal, T,
+		fiberBumpedNormal, resinTangent,
 		resinTint, // reflection_tint
 		color(0.0), // transmission_tint
 		resinRoughness, // roughness_y

@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<materialx version="1.39" colorspace="lin_rec709">
+    <surfacematerial name="RVinylOlympicBlue" type="material">
+        <input name="surfaceshader" type="surfaceshader" nodename="shader_RVinylOlympicBlue" />
+    </surfacematerial>
+    <open_pbr_surface name="shader_RVinylOlympicBlue" type="surfaceshader">
+        <input name="coat_weight" type="float" value="1" />
+        <input name="coat_roughness" type="float" value="0.05" />
+        <input name="base_color" type="color3" value="0.0356013, 0.194618, 0.502887" />
+    </open_pbr_surface>
+    <surfacematerial name="RVinylOceanBlue" type="material">
+        <input name="surfaceshader" type="surfaceshader" nodename="shader_RVinylOceanBlue" />
+    </surfacematerial>
+    <open_pbr_surface name="shader_RVinylOceanBlue" type="surfaceshader">
+        <input name="coat_weight" type="float" value="1" />
+        <input name="coat_roughness" type="float" value="0.05" />
+        <input name="base_color" type="color3" value="0.0231534, 0.127438, 0.533276" />
+    </open_pbr_surface>
+    <surfacematerial name="RVinylVividBlue" type="material">
+        <input name="surfaceshader" type="surfaceshader" nodename="shader_RVinylVividBlue" />
+    </surfacematerial>
+    <open_pbr_surface name="shader_RVinylVividBlue" type="surfaceshader">
+        <input name="coat_weight" type="float" value="1" />
+        <input name="coat_roughness" type="float" value="0.05" />
+        <input name="base_color" type="color3" value="0.0103298, 0.0561285, 0.266356" />
+    </open_pbr_surface>
+    <surfacematerial name="RVinylYellow" type="material">
+        <input name="surfaceshader" type="surfaceshader" nodename="shader_RVinylYellow" />
+    </surfacematerial>
+    <open_pbr_surface name="shader_RVinylYellow" type="surfaceshader">
+        <input name="coat_weight" type="float" value="1" />
+        <input name="coat_roughness" type="float" value="0.05" />
+        <input name="base_color" type="color3" value="0.904661, 0.491021, 0.0512695" />
+    </open_pbr_surface>
+    <surfacematerial name="RVinylMediumYellow" type="material">
+        <input name="surfaceshader" type="surfaceshader" nodename="shader_RVinylMediumYellow" />
+    </surfacematerial>
+    <open_pbr_surface name="shader_RVinylMediumYellow" type="surfaceshader">
+        <input name="coat_weight" type="float" value="1" />
+        <input name="coat_roughness" type="float" value="0.05" />
+        <input name="base_color" type="color3" value="0.896269, 0.533276, 0.0561285" />
+    </open_pbr_surface>
+    <surfacematerial name="RVinylDarkYellow" type="material">
+        <input name="surfaceshader" type="surfaceshader" nodename="shader_RVinylDarkYellow" />
+    </surfacematerial>
+    <open_pbr_surface name="shader_RVinylDarkYellow" type="surfaceshader">
+        <input name="coat_weight" type="float" value="1" />
+        <input name="coat_roughness" type="float" value="0.05" />
+        <input name="base_color" type="color3" value="0.896269, 0.445201, 0.0481718" />
+    </open_pbr_surface>
+    <surfacematerial name="ChassisRAL5011" type="material">
+        <input name="surfaceshader" type="surfaceshader" nodename="shader_ChassisRAL5011" />
+    </surfacematerial>
+    <open_pbr_surface name="shader_ChassisRAL5011" type="surfaceshader">
+        <input name="coat_weight" type="float" value="1" />
+        <input name="coat_roughness" type="float" value="0.05" />
+        <input name="base_color" type="color3" value="0.01386, 0.03752, 0.07036" />
+    </open_pbr_surface>
+    <surfacematerial name="SuspensionRAL5015" type="material">
+        <input name="surfaceshader" type="surfaceshader" nodename="shader_SuspensionRAL5015" />
+    </surfacematerial>
+    <open_pbr_surface name="shader_SuspensionRAL5015" type="surfaceshader">
+        <input name="coat_weight" type="float" value="1" />
+        <input name="coat_roughness" type="float" value="0.05" />
+        <input name="base_color" type="color3" value="0.0, 0.22666, 0.46888" />
+    </open_pbr_surface>
+    <surfacematerial name="JackingPointRAL2009" type="material">
+        <input name="surfaceshader" type="surfaceshader" nodename="shader_JackingPointRAL2009" />
+    </surfacematerial>
+    <open_pbr_surface name="shader_JackingPointRAL2009" type="surfaceshader">
+        <input name="coat_weight" type="float" value="1" />
+        <input name="coat_roughness" type="float" value="0.05" />
+        <input name="base_color" type="color3" value="0.78014, 0.11561, 0.0" />
+    </open_pbr_surface>
+</materialx>

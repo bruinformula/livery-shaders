@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<materialx version="1.39">
+  <surfacematerial name="Carbon_Fiber" type="material" xpos="8.362319" ypos="8.379311">
+    <input name="surfaceshader" type="surfaceshader" nodename="surface" />
+  </surfacematerial>
+  <surface name="surface" type="surfaceshader" xpos="6.442029" ypos="8.991380">
+    <input name="bsdf" type="BSDF" nodename="AutolibCarbonFiberMaterial" />
+  </surface>
+  <AutolibCarbonFiberWeaves name="AutolibCarbonFiberWeaves" type="multioutput" xpos="-5.478261" ypos="8.577586">
+    <input name="UV" type="vector3" nodename="convert_vector2_vector3" />
+    <output name="outBumpedNormal" type="vector3" />
+    <output name="outBump" type="float" />
+    <output name="outRotation" type="vector3" />
+    <output name="outNoise" type="float" />
+    <input name="fiberBumpStrength" type="float" value="0.456" />
+  </AutolibCarbonFiberWeaves>
+  <texcoord name="texcoord_vector2" type="vector2" xpos="-12.318841" ypos="8.870689" />
+  <convert name="convert_vector2_vector3" type="vector3" xpos="-9.173913" ypos="8.689655">
+    <input name="in" type="vector2" nodename="texcoord_vector2" />
+  </convert>
+  <AutolibCarbonFiberMaterial name="AutolibCarbonFiberMaterial" type="BSDF" xpos="1.478261" ypos="8.250000">
+    <input name="fiberRotation" type="vector3" nodename="AutolibTangentField" />
+    <input name="fiberBumpedNormal" type="vector3" output="outBumpedNormal" nodename="AutolibCarbonFiberWeaves" />
+    <input name="fiberBump" type="float" output="outBump" nodename="AutolibCarbonFiberWeaves" />
+    <input name="fiberNoise" type="float" output="outNoise" nodename="AutolibCarbonFiberWeaves" />
+  </AutolibCarbonFiberMaterial>
+  <AutolibTangentField name="AutolibTangentField" type="vector3" xpos="-2.188406" ypos="11.336206">
+    <input name="inputVector" type="vector3" output="outRotation" nodename="AutolibCarbonFiberWeaves" />
+    <input name="centeredVectors" type="integer" value="1" />
+  </AutolibTangentField>
+</materialx>

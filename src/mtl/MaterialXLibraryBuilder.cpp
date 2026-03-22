@@ -782,7 +782,7 @@ int main(int argc, char* const argv[]) {
                         nodeDef->setNodeGroup(sourceNodeDef->getNodeGroup());
                     }
 
-                    std::cout << "Registered: " << nodeDef->getName() << std::endl;
+                    //std::cout << "Registered: " << nodeDef->getName() << std::endl;
                 }
 
             } catch (const std::exception& e) {

@@ -11,7 +11,7 @@ def "World" (
 
     # kick is unable to resolve the material bindings with 'instanceable = true' for some reason
     # usdrecord works either way
-def Scope "ShadeBalls" {
+    def Scope "ShadeBalls" {
 
         def Xform "Red_Top" (
             prepend apiSchemas = ["MaterialBindingAPI"]

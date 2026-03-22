@@ -71,3 +71,5 @@ if (${BUILD_AUTOLIB_MTL_ARNOLD_BSDFS})
 endif()
 
 add_usd_render_test(render-ryb)
+add_usd_render_test(render-carbon-fiber)
+add_usd_render_test(render-mk11-color-globals)
