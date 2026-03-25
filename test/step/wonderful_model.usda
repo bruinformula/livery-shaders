@@ -1,0 +1,14 @@
+#usda 1.0
+(
+    defaultPrim = "Test"
+    metersPerUnit = 0.001
+    upAxis = "Z"
+)
+
+def StepFileContainer "Wonderful" (
+    prepend payload = @model1.usda@
+)
+{
+    asset step:sourceAsset = @model1.STEP@
+}
+
