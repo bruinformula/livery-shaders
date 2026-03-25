@@ -1,6 +1,9 @@
 #pragma once
 
-#include <ai.h>
+struct AtBSDF;
+struct AtRGB;
+struct AtShaderGlobals;
+struct AtVector;
 
 // Based on the matching BSDFs from Cycles 
 

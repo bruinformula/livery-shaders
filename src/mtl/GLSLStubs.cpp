@@ -1,11 +1,15 @@
-#include <iostream>
+#include <ostream>
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <exception>
+#include <memory>
+#include <string_view>
+#include <vector>
 
 #include <MaterialXCore/Document.h>
 #include <MaterialXFormat/File.h>
-#include <MaterialXFormat/Util.h>
+#include <MaterialXCore/Interface.h>
 
 #include "GLSLStubs.h"
 #include "OSLCompiler.h"

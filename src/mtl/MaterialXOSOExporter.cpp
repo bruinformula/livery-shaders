@@ -1,24 +1,27 @@
-#include <iostream>
+#include <_stdlib.h>
 #include <ostream>
 #include <string>
 #include <vector>
 #include <unordered_set>
-
-#include <OSL/oslquery.h>
-#include <OSL/oslcomp.h>
+#include <cstdlib>
+#include <exception>
+#include <string_view>
 
 #include <MaterialXCore/Document.h>
 #include <MaterialXCore/Util.h>
-#include <MaterialXCore/Interface.h>
-
 #include <MaterialXFormat/File.h>
 #include <MaterialXFormat/Util.h>
-
 #include <MaterialXGenShader/GenContext.h>
 #include <MaterialXGenShader/Shader.h>
-
 #include <MaterialXGenOsl/OslShaderGenerator.h>
-#include <MaterialXGenOsl/OslSyntax.h>
+#include <MaterialXCore/Element.h>
+#include <MaterialXCore/Exception.h>
+#include <MaterialXCore/Node.h>
+#include <MaterialXCore/Traversal.h>
+#include <MaterialXFormat/XmlIo.h>
+#include <MaterialXGenShader/GenOptions.h>
+#include <MaterialXGenShader/Library.h>
+#include <MaterialXGenShader/ShaderGenerator.h>
 
 #include "OSLCompiler.h"
 

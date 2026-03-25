@@ -1,4 +1,23 @@
+#include <_string.h>
+#include <ai_closure.h>
+#include <ai_color.h>
+#include <ai_node_entry.h>
+#include <ai_nodes.h>
+#include <ai_params.h>
+#include <ai_plugins.h>
+#include <ai_ray.h>
+#include <ai_shader_parameval.h>
+#include <ai_shaderglobals.h>
+#include <ai_shaders.h>
+#include <ai_vector.h>
+#include <ai_version.h>
+
 #include "diffuse_ramp_bsdf.h"
+
+class AtRenderSession;
+struct AtList;
+struct AtNode;
+struct AtNodeEntry;
 
 // Based on the matching BSDFs from Cycles 
 

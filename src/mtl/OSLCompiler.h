@@ -1,26 +1,15 @@
 #pragma once 
 
+#include <stdint.h>
 #include <string>
 #include <vector>
-
-#include <OSL/oslquery.h>
-#include <OSL/oslcomp.h>
-
-#include <MaterialXCore/Document.h>
-#include <MaterialXCore/Util.h>
-#include <MaterialXCore/Interface.h>
+#include <string_view>
 
 #include <MaterialXFormat/File.h>
-#include <MaterialXFormat/Util.h>
+#include <MaterialXCore/Exception.h>
+#include <MaterialXCore/Library.h>
 
-#include <MaterialXGenShader/GenContext.h>
-#include <MaterialXGenShader/Shader.h>
-
-#include <MaterialXGenOsl/OslShaderGenerator.h>
-#include <MaterialXGenOsl/OslSyntax.h>
-
-#include <MaterialXGenGlsl/GlslShaderGenerator.h>
-#include <MaterialXGenGlsl/GlslSyntax.h>
+#include <OSL/oslquery.h>
 
 namespace mx = MaterialX;
 namespace osl = OSL;

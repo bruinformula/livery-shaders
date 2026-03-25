@@ -1,6 +1,9 @@
 #pragma once
-#include <ai_shader_bsdf.h>
-#include <ai_shaderglobals.h>
+
+struct AtBSDF;
+struct AtRGB;
+struct AtShaderGlobals;
+struct AtVector;
 
 // Based on the Toon BSDFs from Blender/Cycles
 

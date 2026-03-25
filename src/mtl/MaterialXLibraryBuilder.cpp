@@ -1,27 +1,29 @@
-#include <MaterialXFormat/XmlIo.h>
-#include <MaterialXGenShader/Library.h>
-#include <iostream>
+#include <stddef.h>
+#include <ostream>
 #include <string>
 #include <vector>
 #include <fstream>
 #include <sstream>
 #include <filesystem>
+#include <exception>
+#include <memory>
+#include <stdexcept>
+#include <string_view>
 
-#include <OSL/oslquery.h>
-#include <OSL/oslcomp.h>
 
+#include <MaterialXFormat/XmlIo.h>
 #include <MaterialXCore/Document.h>
 #include <MaterialXCore/Util.h>
 #include <MaterialXCore/Interface.h>
-
 #include <MaterialXFormat/File.h>
-#include <MaterialXFormat/Util.h>
+#include <MaterialXCore/Definition.h>
+#include <MaterialXCore/Element.h>
+#include <MaterialXCore/Node.h>
 
-#include <MaterialXGenShader/GenContext.h>
-#include <MaterialXGenShader/Shader.h>
+#include <OpenImageIO/typedesc.h>
+#include <OpenImageIO/ustring.h>
 
-#include <MaterialXGenOsl/OslShaderGenerator.h>
-#include <MaterialXGenOsl/OslSyntax.h>
+#include <OSL/oslquery.h>
 
 #include "GLSLStubs.h"
 #include "OSLCompiler.h"

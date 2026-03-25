@@ -1,25 +1,23 @@
+#include <_ctype.h>
+#include <stddef.h>
 #include <string>
 #include <vector>
 #include <filesystem>
-
-#include <OSL/oslquery.h>
-#include <OSL/oslcomp.h>
-
-#include <MaterialXCore/Document.h>
-#include <MaterialXCore/Util.h>
-#include <MaterialXCore/Interface.h>
+#include <algorithm>
+#include <cctype>
+#include <fstream>
+#include <ostream>
+#include <sstream>
 
 #include <MaterialXFormat/File.h>
-#include <MaterialXFormat/Util.h>
 
-#include <MaterialXGenShader/GenContext.h>
-#include <MaterialXGenShader/Shader.h>
+#include <OpenImageIO/errorhandler.h>
+#include <OpenImageIO/typedesc.h>
+#include <OpenImageIO/ustring.h>
 
-#include <MaterialXGenOsl/OslShaderGenerator.h>
-#include <MaterialXGenOsl/OslSyntax.h>
-
-#include <MaterialXGenGlsl/GlslShaderGenerator.h>
-#include <MaterialXGenGlsl/GlslSyntax.h>
+#include <OSL/oslquery.h>
+#include <OSL/oslconfig.h>
+#include <OSL/oslcomp.h>
 
 #include "OSLCompiler.h"
 

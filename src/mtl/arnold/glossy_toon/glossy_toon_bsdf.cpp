@@ -1,5 +1,17 @@
 #include "glossy_toon_bsdf.h"
-#include <ai.h>
+
+#include <ai_color.h>
+#include <ai_constants.h>
+#include <ai_math.h>
+#include <ai_ray.h>
+#include <ai_shader_bsdf.h>
+#include <ai_shader_util.h>
+#include <ai_shaderglobals.h>
+#include <ai_string.h>
+#include <ai_vector.h>
+#include <math.h>
+
+struct AtBSDF;
 
 // Based on the Toon BSDFs from Blender/Cycles
 

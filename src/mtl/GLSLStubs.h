@@ -4,7 +4,7 @@
 
 #include <MaterialXCore/Document.h>
 #include <MaterialXFormat/File.h>
-#include <MaterialXFormat/Util.h>
+#include <MaterialXCore/Definition.h>
 
 namespace mx = MaterialX;
 
@@ -13,7 +13,6 @@ std::string unescapeString(const std::string& input);
 std::string materialXTypeToGLSL(const std::string& mtlxType);
 
 std::string generateGLSLStructsFromTypeDefs(mx::DocumentPtr& typeDefDoc);
-
 
 bool generateGLSLStub(
     const std::string& oslFileName,

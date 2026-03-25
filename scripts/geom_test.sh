@@ -15,6 +15,6 @@
 
 
 #./build/bin/StepConvertUsd --inputStepFile $MK10_ROOT/MK10.STEP --outputFile ./build/Mk10.usdc
-./build/bin/StepConvertUsd --inputStepFile $MK11_ROOT/mk11/geometry/model/step/MK11-TOP-001-A-TOP_ASSEMBLY.STP --outputFile ./mk11.usdc --renderPurposeThreshold 1.0
+./build/bin/StepConvertUsd --inputStepFile $MK11_ROOT/mk11/geometry/model/step/MK11-TOP-001-A-TOP_ASSEMBLY.STP --outputFile ./build/mk11.usdc --renderPurposeThreshold 1.0
 #./build/bin/StepConvertUsd --inputStepFile $MK11_ROOT/mk11/geometry/model/step/MK11-TOP-001-A-TOP_ASSEMBLY.STP --outputFile $MK11_ROOT/mk11/geometry/model/model-old.usdc --renderPurposeThreshold 1.0
 #./build/bin/StepConvertUsd --inputStepFile $MK11_ROOT/mk11/geometry/model/step/MK11-TOP-002-A-TOP_ASSEMBLY.STP --outputFile $MK11_ROOT/mk11/geometry/model/model-v1.usdc
