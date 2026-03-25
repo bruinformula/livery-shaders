@@ -380,7 +380,7 @@ int main(int argc, char* const argv[]) {
 
             std::cout << "Generating OSL shader for material: " << oslFileName << std::endl;
 
-            if (materialNames.contains(oslFileName)) {
+            if (materialNames.find(oslFileName) != materialNames.end()) {
                 std::cerr << "Duplicate material name found: " << oslFileName << ". Material names must be unique!" << std::endl;
                 return 1;
             }
