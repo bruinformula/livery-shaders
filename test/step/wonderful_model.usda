@@ -5,10 +5,34 @@
     upAxis = "Z"
 )
 
+def StepTesselationOptions "OptionsA"
+{
+    float step:meshLinearDeflection = 0.1
+    float step:meshAngularDeflection = 15
+}
+
+def StepTesselationOptions "OptionsB"
+{
+    float step:meshLinearDeflection = 10
+    float step:meshAngularDeflection = 1
+}
+
 def StepFileContainer "Wonderful" (
     prepend payload = @model1.usda@
 )
 {
     asset step:sourceAsset = @model1.STEP@
+    rel step:tessellationOptions = </OptionsA>
+
+    over "Prototypes" {
+        over "rod0" {
+            rel step:tessellationOptions = </OptionsB>
+        }
+
+        over "plate0" {
+            float step:meshLinearDeflection = 100
+        }
+
+    }
 }
 
