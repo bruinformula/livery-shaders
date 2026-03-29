@@ -25,8 +25,10 @@ def StepFileContainer "Wonderful" (
     rel step:tessellationOptions = </OptionsA>
 
     over "Prototypes" {
-        over "rod0" {
-            rel step:tessellationOptions = </OptionsB>
+        over "rod0" (
+            references = </OptionsB>
+        ) {
+            
         }
 
         over "plate0" {
