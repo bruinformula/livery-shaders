@@ -1,0 +1,43 @@
+#usda 1.0
+(
+    defaultPrim = "Wonderful"
+    metersPerUnit = 0.001
+    upAxis = "Z"
+)
+
+def StepTesselationOptions "OptionsA"
+{
+    float step:meshAngularDeflection = 15
+    float step:meshLinearDeflection = 0.1
+}
+
+def StepTesselationOptions "OptionsB"
+{
+    float step:meshAngularDeflection = 1
+    float step:meshLinearDeflection = 10
+}
+
+def StepFileContainer "Wonderful" (
+    prepend variantSets = "LOD"
+)
+{
+    asset step:sourceAsset = @model1.STEP@
+
+    variantSet "LOD" = {
+        "high" {
+            over "Prototypes" (
+                prepend references = </OptionsA>
+            ) {
+
+            }
+        }
+        "low" {
+            over "Prototypes" (
+                prepend references = </OptionsB>
+            ) {
+                
+            }
+        }
+    }
+}
+

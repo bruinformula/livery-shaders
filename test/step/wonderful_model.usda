@@ -1,40 +1,44 @@
 #usda 1.0
 (
-    defaultPrim = "Test"
+    defaultPrim = "Wonderful"
     metersPerUnit = 0.001
+    subLayers = [
+        @model1-assembly.usda@
+    ]
     upAxis = "Z"
 )
 
 def StepTesselationOptions "OptionsA"
 {
-    float step:meshLinearDeflection = 0.1
     float step:meshAngularDeflection = 15
+    float step:meshLinearDeflection = 0.1
 }
 
 def StepTesselationOptions "OptionsB"
 {
-    float step:meshLinearDeflection = 10
-    float step:meshAngularDeflection = 1
+    float step:meshAngularDeflection = 0.1
+    float step:meshLinearDeflection = 0.1
 }
 
-def StepFileContainer "Wonderful" (
-    prepend payload = @model1.usda@
-)
+def StepFileContainer "Wonderful"
 {
     asset step:sourceAsset = @model1.STEP@
-    rel step:tessellationOptions = </OptionsA>
 
-    over "Prototypes" {
+    over "Prototypes" (
+        active = false
+        prepend payload = @model1-prototypes.usda@
+    )
+    {
         over "rod0" (
             references = </OptionsB>
-        ) {
-            
+        )
+        {
         }
 
-        over "plate0" {
+        over "plate0"
+        {
             float step:meshLinearDeflection = 100
         }
-
     }
 }
 
