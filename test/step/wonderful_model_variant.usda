@@ -2,41 +2,56 @@
 (
     defaultPrim = "Wonderful"
     metersPerUnit = 0.001
+    subLayers = [
+        @model1-assembly.usdc@
+    ]
     upAxis = "Z"
 )
 
-def StepTesselationOptions "OptionsA"
+def StepTesselationOptions "HighOptions"
 {
-    float step:meshAngularDeflection = 15
+    float step:meshAngularDeflection = 0.1
     float step:meshLinearDeflection = 0.1
 }
 
-def StepTesselationOptions "OptionsB"
+def StepTesselationOptions "LowOptions"
 {
-    float step:meshAngularDeflection = 1
+    float step:meshAngularDeflection = 10
     float step:meshLinearDeflection = 10
 }
 
 def StepFileContainer "Wonderful" (
+    variants = {
+        string LOD = "low"
+    }
     prepend variantSets = "LOD"
 )
 {
     asset step:sourceAsset = @model1.STEP@
 
+    over "Prototypes" (
+        active = false
+    )
+    {
+    }
     variantSet "LOD" = {
         "high" {
             over "Prototypes" (
-                prepend references = </OptionsA>
-            ) {
-
+                prepend payload = @model1-LOD-high-prototypes.usda@
+                prepend references = </HighOptions>
+            )
+            {
             }
+
         }
         "low" {
             over "Prototypes" (
-                prepend references = </OptionsB>
-            ) {
-                
+                prepend payload = @model1-LOD-low-prototypes.usda@
+                prepend references = </LowOptions>
+            )
+            {
             }
+
         }
     }
 }
