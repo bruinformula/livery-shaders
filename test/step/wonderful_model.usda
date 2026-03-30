@@ -20,7 +20,9 @@ def StepTesselationOptions "OptionsB"
     float step:meshLinearDeflection = 0.1
 }
 
-def StepFileContainer "Wonderful"
+def StepFileContainer "Wonderful" (
+    prepend references = </OptionsA>
+)
 {
     asset step:sourceAsset = @model1.STEP@
 
@@ -30,14 +32,9 @@ def StepFileContainer "Wonderful"
     )
     {
         over "rod0" (
-            references = </OptionsB>
+            references = </OptionsA>
         )
         {
-        }
-
-        over "plate0"
-        {
-            float step:meshLinearDeflection = 100
         }
     }
 }
