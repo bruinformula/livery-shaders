@@ -1,7 +1,7 @@
 
 
-#./build/bin/StepConvertUsd --inputUsdFile ./test/step/wonderful_model.usda
-#./build/bin/StepConvertUsd --inputUsdFile ./test/step/wonderful_model_variant.usda
+./build/bin/StepConvertUsd --inputUsdFile ./test/step/wonderful_model.usda
+./build/bin/StepConvertUsd --inputUsdFile ./test/step/wonderful_model_variant.usda
 
 ./build/bin/StepConvertUsd --inputUsdFile ./test/step/wonderful_model_variant.usda --variantSet LOD --variant high
 

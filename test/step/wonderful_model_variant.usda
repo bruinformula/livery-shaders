@@ -46,6 +46,7 @@ def StepFileContainer "Wonderful" (
         }
         "low" {
             over "Prototypes" (
+                prepend payload = @model1-LOD-low-prototypes.usdc@
                 prepend references = </LowOptions>
             )
             {

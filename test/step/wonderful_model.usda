@@ -3,7 +3,7 @@
     defaultPrim = "Wonderful"
     metersPerUnit = 0.001
     subLayers = [
-        @model1-assembly.usda@
+        @model1-assembly.usdc@
     ]
     upAxis = "Z"
 )
@@ -26,7 +26,7 @@ def StepFileContainer "Wonderful"
 
     over "Prototypes" (
         active = false
-        prepend payload = @model1-prototypes.usda@
+        prepend payload = @model1-prototypes.usdc@
     )
     {
         over "rod0" (
