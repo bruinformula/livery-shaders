@@ -2,7 +2,7 @@ find_package(OSL REQUIRED)
 find_package(OpenImageIO REQUIRED)
 find_package(MaterialX REQUIRED)
 
-
+# AutolibMtl
 add_library(AutolibMtl STATIC "${CMAKE_CURRENT_SOURCE_DIR}/OSLCompiler.cpp")
 
 target_include_directories(AutolibMtl BEFORE PRIVATE ${OpenImageIO_INCLUDES})
@@ -15,6 +15,12 @@ target_link_libraries(AutolibMtl PRIVATE
 )
 target_link_libraries(AutolibMtl PRIVATE
     MaterialXGenOsl
+)
+
+install(TARGETS AutolibMtl
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
 )
 
 # MaterialXOSOExporter
@@ -32,6 +38,12 @@ target_link_libraries(MaterialXOSOExporter PRIVATE
     AutolibMtl
 )
 
+install(TARGETS MaterialXOSOExporter
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+
 # MaterialXLibraryBuilder
 add_executable(MaterialXLibraryBuilder "${CMAKE_CURRENT_SOURCE_DIR}/MaterialXLibraryBuilder.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/GLSLStubs.cpp")
 
@@ -47,6 +59,12 @@ target_link_libraries(MaterialXLibraryBuilder PRIVATE
     AutolibMtl
 )
 
+install(TARGETS MaterialXLibraryBuilder
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+
 # MaterialXQuery
 add_executable(MaterialXNodeQuery "${CMAKE_CURRENT_SOURCE_DIR}/MaterialXNodeQuery.cpp")
 
@@ -60,6 +78,12 @@ target_link_libraries(MaterialXNodeQuery PRIVATE
 
 target_link_libraries(MaterialXNodeQuery PRIVATE
     AutolibMtl
+)
+
+install(TARGETS MaterialXNodeQuery
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
 )
 
 # Arnold Plugin
