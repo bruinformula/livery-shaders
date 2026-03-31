@@ -1,12 +1,4 @@
 #include <_stdlib.h>
-#include <ostream>
-#include <fstream>
-#include <string>
-#include <vector>
-#include <unordered_set>
-#include <cstdlib>
-#include <exception>
-
 #include <MaterialXCore/Document.h>
 #include <MaterialXCore/Util.h>
 #include <MaterialXCore/Interface.h>
@@ -15,6 +7,13 @@
 #include <MaterialXCore/Definition.h>
 #include <MaterialXCore/Node.h>
 #include <MaterialXFormat/XmlIo.h>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <unordered_set>
+#include <cstdlib>
+#include <exception>
+#include <iostream>
 
 #include "OSLCompiler.h"
 

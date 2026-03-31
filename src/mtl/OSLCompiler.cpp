@@ -1,23 +1,20 @@
 #include <_ctype.h>
 #include <stddef.h>
+#include <MaterialXFormat/File.h>
+#include <OpenImageIO/errorhandler.h>
+#include <OpenImageIO/typedesc.h>
+#include <OpenImageIO/ustring.h>
+#include <OSL/oslquery.h>
+#include <OSL/oslconfig.h>
+#include <OSL/oslcomp.h>
 #include <string>
 #include <vector>
 #include <filesystem>
 #include <algorithm>
 #include <cctype>
 #include <fstream>
-#include <ostream>
 #include <sstream>
-
-#include <MaterialXFormat/File.h>
-
-#include <OpenImageIO/errorhandler.h>
-#include <OpenImageIO/typedesc.h>
-#include <OpenImageIO/ustring.h>
-
-#include <OSL/oslquery.h>
-#include <OSL/oslconfig.h>
-#include <OSL/oslcomp.h>
+#include <iostream>
 
 #include "OSLCompiler.h"
 

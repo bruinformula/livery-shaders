@@ -1,5 +1,15 @@
 #include <stddef.h>
-#include <ostream>
+#include <MaterialXFormat/XmlIo.h>
+#include <MaterialXCore/Document.h>
+#include <MaterialXCore/Util.h>
+#include <MaterialXCore/Interface.h>
+#include <MaterialXFormat/File.h>
+#include <MaterialXCore/Definition.h>
+#include <MaterialXCore/Element.h>
+#include <MaterialXCore/Node.h>
+#include <OpenImageIO/typedesc.h>
+#include <OpenImageIO/ustring.h>
+#include <OSL/oslquery.h>
 #include <string>
 #include <vector>
 #include <fstream>
@@ -9,21 +19,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string_view>
-
-
-#include <MaterialXFormat/XmlIo.h>
-#include <MaterialXCore/Document.h>
-#include <MaterialXCore/Util.h>
-#include <MaterialXCore/Interface.h>
-#include <MaterialXFormat/File.h>
-#include <MaterialXCore/Definition.h>
-#include <MaterialXCore/Element.h>
-#include <MaterialXCore/Node.h>
-
-#include <OpenImageIO/typedesc.h>
-#include <OpenImageIO/ustring.h>
-
-#include <OSL/oslquery.h>
+#include <iostream>
 
 #include "GLSLStubs.h"
 #include "OSLCompiler.h"

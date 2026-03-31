@@ -1,12 +1,4 @@
 #include <_stdlib.h>
-#include <ostream>
-#include <string>
-#include <vector>
-#include <unordered_set>
-#include <cstdlib>
-#include <exception>
-#include <string_view>
-
 #include <MaterialXCore/Document.h>
 #include <MaterialXCore/Util.h>
 #include <MaterialXFormat/File.h>
@@ -22,6 +14,14 @@
 #include <MaterialXGenShader/GenOptions.h>
 #include <MaterialXGenShader/Library.h>
 #include <MaterialXGenShader/ShaderGenerator.h>
+#include <string>
+#include <vector>
+#include <unordered_set>
+#include <cstdlib>
+#include <exception>
+#include <string_view>
+#include <__hash_table>
+#include <iostream>
 
 #include "OSLCompiler.h"
 
