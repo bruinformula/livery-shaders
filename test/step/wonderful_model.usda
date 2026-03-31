@@ -24,15 +24,16 @@ def StepFileContainer "Wonderful" (
     prepend references = </OptionsA>
 )
 {
+    rel step:defaultParams = </OptionsA>
     asset step:sourceAsset = @model1.STEP@
 
     over "Prototypes" (
         active = false
-        prepend payload = @model1-prototypes.usdc@
+        prepend payload = @model1-prototypes.usda@
     )
     {
         over "rod0" (
-            references = </OptionsA>
+            references = </OptionsB>
         )
         {
         }
