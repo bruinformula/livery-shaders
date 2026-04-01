@@ -31,9 +31,24 @@ def StepFileContainer "Wonderful"
     )
     {
         over "rod0" (
-            references = </OptionsB>
+            variants = {
+                string quality = "final"
+            }
+            variantSets = "quality"
         )
         {
+            variantSet "quality" = {
+                "draft" (
+                    references = </OptionsA>
+                ) {
+
+                }
+                "final" (
+                    references = </OptionsB>
+                ) {
+
+                }
+            }
         }
     }
 }

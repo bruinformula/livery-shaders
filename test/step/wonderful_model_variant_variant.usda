@@ -39,11 +39,31 @@ def StepFileContainer "Wonderful" (
         active = false
     )
     {
+        over "rod0" (
+            variants = {
+                string quality = "final"
+            }
+            variantSets = "quality"
+        )
+        {
+            variantSet "quality" = {
+                "draft" (
+                    references = </HighOptions>
+                ) {
+
+                }
+                "final" (
+                    references = </LowOptions>
+                ) {
+
+                }
+            }
+        }
     }
     variantSet "LOD" = {
         "high" {
             over "Prototypes" (
-                prepend payload = @LOD/model1-LOD-high-prototypes.usda@</Prototypes>
+                prepend payload = @LOD/model1-LOD-high-prototypes.usda@
                 prepend references = </HighOptions>
             )
             {
@@ -52,7 +72,7 @@ def StepFileContainer "Wonderful" (
         }
         "low" {
             over "Prototypes" (
-                prepend payload = @LOD/model1-LOD-low-prototypes.usda@</Prototypes>
+                prepend payload = @LOD/model1-LOD-low-prototypes.usda@
                 prepend references = </LowOptions>
             )
             {
