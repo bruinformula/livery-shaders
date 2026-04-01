@@ -8,6 +8,11 @@
     upAxis = "Z"
 )
 
+def StepTesselationOptions "DefaultOptions"
+{
+    int step:maxNumberRemeshPasses = 5
+}
+
 def StepTesselationOptions "HighOptions"
 {
     float step:meshAngularDeflection = 0.1
@@ -22,11 +27,12 @@ def StepTesselationOptions "LowOptions"
 
 def StepFileContainer "Wonderful" (
     variants = {
-        string LOD = "low"
+        string LOD = "high"
     }
     prepend variantSets = "LOD"
 )
 {
+    rel step:defaultParams = </DefaultOptions>
     asset step:sourceAsset = @model1.STEP@
 
     over "Prototypes" (
@@ -37,7 +43,7 @@ def StepFileContainer "Wonderful" (
     variantSet "LOD" = {
         "high" {
             over "Prototypes" (
-                prepend payload = @model1-LOD-high-prototypes.usdc@
+                prepend payload = @model1-LOD-high-prototypes.usda@
                 prepend references = </HighOptions>
             )
             {
@@ -46,7 +52,7 @@ def StepFileContainer "Wonderful" (
         }
         "low" {
             over "Prototypes" (
-                prepend payload = @model1-LOD-low-prototypes.usdc@
+                prepend payload = @model1-LOD-low-prototypes.usda@
                 prepend references = </LowOptions>
             )
             {

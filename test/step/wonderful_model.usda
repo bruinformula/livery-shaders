@@ -20,9 +20,7 @@ def StepTesselationOptions "OptionsB"
     float step:meshLinearDeflection = 0.1
 }
 
-def StepFileContainer "Wonderful" (
-    prepend references = </OptionsA>
-)
+def StepFileContainer "Wonderful"
 {
     rel step:defaultParams = </OptionsA>
     asset step:sourceAsset = @model1.STEP@
