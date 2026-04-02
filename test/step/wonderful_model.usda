@@ -31,6 +31,9 @@ def StepFileContainer "Wonderful"
     )
     {
         over "rod0" (
+            variants = {
+                string quality = "final"
+            }
             variantSets = "quality"
         )
         {
