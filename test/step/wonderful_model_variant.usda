@@ -27,7 +27,7 @@ def StepTesselationOptions "LowOptions"
 
 def StepFileContainer "Wonderful" (
     variants = {
-        string LOD = "low"
+        string LOD = "high"
     }
     prepend variantSets = "LOD"
 )
@@ -52,7 +52,6 @@ def StepFileContainer "Wonderful" (
         }
         "low" {
             over "Prototypes" (
-                prepend payload = @LOD/model1-LOD-low-prototypes.usda@</Prototypes>
                 prepend references = </LowOptions>
             )
             {

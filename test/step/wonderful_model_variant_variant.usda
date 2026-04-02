@@ -27,7 +27,7 @@ def StepTesselationOptions "LowOptions"
 
 def StepFileContainer "Wonderful" (
     variants = {
-        string LOD = "low"
+        string LOD = "high"
     }
     prepend variantSets = "LOD"
 )
@@ -41,19 +41,22 @@ def StepFileContainer "Wonderful" (
     {
         over "rod0" (
             variants = {
-                string quality = "final"
+                string quality = "default"
             }
             variantSets = "quality"
         )
         {
             variantSet "quality" = {
+                "default" {
+
+                }
                 "draft" (
-                    references = </HighOptions>
+                    references = </LowOptions>
                 ) {
 
                 }
                 "final" (
-                    references = </LowOptions>
+                    references = </HighOptions>
                 ) {
 
                 }
@@ -63,7 +66,7 @@ def StepFileContainer "Wonderful" (
     variantSet "LOD" = {
         "high" {
             over "Prototypes" (
-                prepend payload = @LOD/model1-LOD-high-prototypes.usda@
+                prepend payload = @LOD/model1-LOD-high-prototypes.usda@</Prototypes>
                 prepend references = </HighOptions>
             )
             {
@@ -72,7 +75,7 @@ def StepFileContainer "Wonderful" (
         }
         "low" {
             over "Prototypes" (
-                prepend payload = @LOD/model1-LOD-low-prototypes.usda@
+                prepend payload = @LOD/model1-LOD-low-prototypes.usda@</Prototypes>
                 prepend references = </LowOptions>
             )
             {

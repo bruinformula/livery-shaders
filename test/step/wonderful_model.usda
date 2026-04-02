@@ -27,13 +27,10 @@ def StepFileContainer "Wonderful"
 
     over "Prototypes" (
         active = false
-        prepend payload = @model1-prototypes.usda@
+        prepend payload = @model1-prototypes.usda@</Prototypes>
     )
     {
         over "rod0" (
-            variants = {
-                string quality = "final"
-            }
             variantSets = "quality"
         )
         {
