@@ -43,7 +43,7 @@ def StepFileContainer "Wonderful" (
     variantSet "LOD" = {
         "high" {
             over "Prototypes" (
-                prepend payload = @LOD/model1-LOD-high-prototypes.usda@</Prototypes>
+                prepend payload = @LOD/model1-LOD-high-prototypes.usdc@</Prototypes>
                 prepend references = </HighOptions>
             )
             {

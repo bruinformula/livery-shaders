@@ -27,7 +27,7 @@ def StepFileContainer "Wonderful"
 
     over "Prototypes" (
         active = false
-        prepend payload = @model1-prototypes.usda@</Prototypes>
+        prepend payload = @model1-prototypes.usdc@</Prototypes>
     )
     {
         over "rod0" (

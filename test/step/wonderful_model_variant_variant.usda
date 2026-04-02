@@ -13,6 +13,12 @@ def StepTesselationOptions "DefaultOptions"
     int step:maxNumberRemeshPasses = 5
 }
 
+def StepTesselationOptions "FinalOptions"
+{
+    float step:meshAngularDeflection = 0.05
+    float step:meshLinearDeflection = 0.05
+}
+
 def StepTesselationOptions "HighOptions"
 {
     float step:meshAngularDeflection = 0.1
@@ -47,7 +53,9 @@ def StepFileContainer "Wonderful" (
         )
         {
             variantSet "quality" = {
-                "default" {
+                "default" (
+                    references = </DefaultOptions>
+                ) {
 
                 }
                 "draft" (
@@ -56,7 +64,7 @@ def StepFileContainer "Wonderful" (
 
                 }
                 "final" (
-                    references = </HighOptions>
+                    references = </FinalOptions>
                 ) {
 
                 }
@@ -66,7 +74,7 @@ def StepFileContainer "Wonderful" (
     variantSet "LOD" = {
         "high" {
             over "Prototypes" (
-                prepend payload = @LOD/model1-LOD-high-prototypes.usda@</Prototypes>
+                prepend payload = @LOD/model1-LOD-high-prototypes.usdc@</Prototypes>
                 prepend references = </HighOptions>
             )
             {
@@ -75,7 +83,6 @@ def StepFileContainer "Wonderful" (
         }
         "low" {
             over "Prototypes" (
-                prepend payload = @LOD/model1-LOD-low-prototypes.usda@</Prototypes>
                 prepend references = </LowOptions>
             )
             {
