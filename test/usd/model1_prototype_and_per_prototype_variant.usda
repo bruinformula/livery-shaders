@@ -8,41 +8,39 @@
     upAxis = "Z"
 )
 
-def StepTesselationOptions "DefaultOptions"
+def StepTessellationOptions "DefaultOptions"
 {
     int step:maxNumberRemeshPasses = 5
 }
 
-def StepTesselationOptions "FinalOptions"
+def StepTessellationOptions "FinalOptions"
 {
     float step:meshAngularDeflection = 0.05
     float step:meshLinearDeflection = 0.05
 }
 
-def StepTesselationOptions "HighOptions"
+def StepTessellationOptions "HighOptions"
 {
     float step:meshAngularDeflection = 0.1
     float step:meshLinearDeflection = 0.1
 }
 
-def StepTesselationOptions "LowOptions"
+def StepTessellationOptions "LowOptions"
 {
     float step:meshAngularDeflection = 10
     float step:meshLinearDeflection = 10
 }
 
-def StepFileContainer "Wonderful" (
-    variants = {
-        string LOD = "high"
-    }
-    prepend variantSets = "LOD"
-)
+def StepFileContainer "Wonderful"
 {
-    rel step:defaultParams = </DefaultOptions>
-    asset step:sourceAsset = @model1.STEP@
+    asset step:sourceAsset = @step/model1.STEP@
 
     over "Prototypes" (
         active = false
+        variants = {
+            string LOD = "high"
+        }
+        prepend variantSets = "LOD"
     )
     {
         over "rod0" (
@@ -70,25 +68,19 @@ def StepFileContainer "Wonderful" (
                 }
             }
         }
-    }
-    variantSet "LOD" = {
-        "high" {
-            over "Prototypes" (
+        variantSet "LOD" = {
+            "high" (
                 prepend payload = @LOD/model1-LOD-high-prototypes.usdc@</Prototypes>
-                prepend references = </HighOptions>
-            )
-            {
-            }
+            ) {
+                rel step:defaultParams = </HighOptions>
 
-        }
-        "low" {
-            over "Prototypes" (
+            }
+            "low" (
                 prepend payload = @LOD/model1-LOD-low-prototypes.usdc@</Prototypes>
-                prepend references = </LowOptions>
-            )
-            {
-            }
+            ) {
+                rel step:defaultParams = </LowOptions>
 
+            }
         }
     }
 }
