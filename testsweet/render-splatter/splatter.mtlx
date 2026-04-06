@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<materialx version="1.39">
+  <surfacematerial name="Splatter_Paint_Test" type="material" xpos="4.724638" ypos="3.758621">
+    <input name="surfaceshader" type="surfaceshader" nodename="surface" />
+  </surfacematerial>
+  <surface name="surface" type="surfaceshader" xpos="2.847826" ypos="2.508621">
+    <input name="bsdf" type="BSDF" nodename="AutolibPaintLayer2" />
+  </surface>
+  <AutolibFlakes name="AutolibFlakes" type="multioutput" xpos="-10.086957" ypos="-0.508621">
+    <input name="baseNormal" type="vector3" output="bumpNormal" nodename="AutolibSplatter2" />
+    <input name="position" type="vector3" nodename="texcoord_vector3_1" />
+    <output name="outNormalDetail" type="vector3" />
+    <output name="outAlpha" type="float" />
+    <input name="scale" type="float" value="10000" />
+  </AutolibFlakes>
+  <AutolibFlakes name="AutolibFlakes2" type="multioutput" xpos="-10.086957" ypos="-5.086207">
+    <input name="baseNormal" type="vector3" output="bumpNormal" nodename="AutolibSplatter" />
+    <input name="position" type="vector3" nodename="texcoord_vector3" />
+    <output name="outNormalDetail" type="vector3" />
+    <output name="outAlpha" type="float" />
+    <input name="scale" type="float" value="10000" />
+  </AutolibFlakes>
+  <AutolibSplatter name="AutolibSplatter" type="multioutput" xpos="-14.130435" ypos="-3.086207">
+    <output name="bumpNormal" type="vector3" />
+    <input name="UV" type="vector3" nodename="texcoord_vector3" />
+    <output name="height" type="float" />
+    <input name="basinHeight" type="float" value="0.7" />
+    <input name="splatterScale" type="float" value="10" />
+  </AutolibSplatter>
+  <AutolibSplatter name="AutolibSplatter2" type="multioutput" xpos="-14.057971" ypos="1.922414">
+    <output name="bumpNormal" type="vector3" />
+    <input name="UV" type="vector3" nodename="texcoord_vector3_1" />
+    <output name="height" type="float" />
+    <input name="seed" type="integer" value="201" />
+    <input name="basinHeight" type="float" value="0.6" />
+    <input name="splatterScale" type="float" value="10" />
+  </AutolibSplatter>
+  <texcoord name="texcoord_vector3_1" type="vector3" xpos="-17.652174" ypos="1.120690" />
+  <texcoord name="texcoord_vector3" type="vector3" xpos="-17.840580" ypos="-4.258621" />
+  <AutolibPaintLayer name="AutolibPaintLayer" type="BSDF" xpos="-6.152174" ypos="-1.068966">
+    <input name="underLayer" type="BSDF" nodename="oren_nayar_diffuse_bsdf" />
+    <input name="flakeNormal" type="vector3" output="outNormalDetail" nodename="AutolibFlakes" />
+    <input name="flakeAlpha" type="float" output="outAlpha" nodename="AutolibFlakes" />
+    <input name="baseWeight" type="float" output="height" nodename="AutolibSplatter2" />
+    <input name="baseColor" type="color3" value="0.734772, 0.504051, 0.0129344" />
+  </AutolibPaintLayer>
+  <AutolibPaintLayer name="AutolibPaintLayer2" type="BSDF" xpos="-2.666667" ypos="-4.810345">
+    <input name="underLayer" type="BSDF" nodename="AutolibPaintLayer" />
+    <input name="flakeNormal" type="vector3" output="outNormalDetail" nodename="AutolibFlakes2" />
+    <input name="flakeAlpha" type="float" output="outAlpha" nodename="AutolibFlakes2" />
+    <input name="baseWeight" type="float" output="height" nodename="AutolibSplatter" />
+    <input name="baseColor" type="color3" value="0.00552635, 0.351756, 0.91859" />
+  </AutolibPaintLayer>
+  <oren_nayar_diffuse_bsdf name="oren_nayar_diffuse_bsdf" type="BSDF" xpos="-10.811594" ypos="5.198276" />
+</materialx>
