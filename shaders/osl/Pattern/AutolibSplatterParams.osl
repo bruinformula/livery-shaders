@@ -1,0 +1,63 @@
+#ifndef SOLO_SHADER   
+    #define ENTRY_SPLATTER_PARAMS void 
+#endif
+
+#ifndef ENTRY_SPLATTER_PARAMS
+    #define DEFAULT_SPLATTER_PARAMS(x) = x
+    #define ENTRY_SPLATTER_PARAMS shader
+#else
+    #define DEFAULT_SPLATTER_PARAMS(x)
+#endif
+
+ENTRY_SPLATTER_PARAMS AutolibSplatterParams [[
+    string nodegroup = "autolib",
+]] (
+    // geometry
+    int seed  DEFAULT_SPLATTER_PARAMS(433) [[ string uifolder = "Pattern" ]],
+    float scaleRadius  DEFAULT_SPLATTER_PARAMS(0.8) [[ string uifolder = "Pattern" ]],
+    float minRadius  DEFAULT_SPLATTER_PARAMS(0.005) [[ string uifolder = "Pattern" ]],
+    float maxRadius  DEFAULT_SPLATTER_PARAMS(0.3) [[ string uifolder = "Pattern" ]],
+
+    // spikes
+    float spikeAmount  DEFAULT_SPLATTER_PARAMS(0.9) [[ string uifolder = "Spikes", float uimin = 0.0, float uimax = 1.0 ]],
+    float spikePeak  DEFAULT_SPLATTER_PARAMS(8.0) [[ string uifolder = "Spikes", float uimin = 1.0 ]],
+
+    // basin
+    float basinHeight  DEFAULT_SPLATTER_PARAMS(0.95) [[ string uifolder = "Basin", float uimin = 0.0, float uimax = 1.0 ]],
+
+    // base paint
+    float baseRoughness  DEFAULT_SPLATTER_PARAMS(0.3) [[ string uifolder = "Base", float uimin = 0.0, float uimax = 1.0 ]],
+    color baseColor  DEFAULT_SPLATTER_PARAMS(color(1.0, 0.1, 0.1)) [[ string uifolder = "Base" ]],
+
+    // flakes
+    float flakeRoughness  DEFAULT_SPLATTER_PARAMS(0.1) [[ string uifolder = "Flakes", float uimin = 0.0, float uimax = 1.0 ]],
+    color flakeReflectivity DEFAULT_SPLATTER_PARAMS(color(0.95, 0.95, 0.95)) [[ string uifolder = "Flakes" ]],
+    color flakeEdgeTint  DEFAULT_SPLATTER_PARAMS(color(1.0, 1.0, 1.0)) [[ string uifolder = "Flakes" ]],
+
+    // jittered outputs
+    output int outSeed DEFAULT_SPLATTER_PARAMS(0),
+    output float outScaleRadius DEFAULT_SPLATTER_PARAMS(0.0),
+    output float outMinRadius DEFAULT_SPLATTER_PARAMS(0.0),
+    output float outMaxRadius DEFAULT_SPLATTER_PARAMS(0.0),
+    output float outSpikeAmount DEFAULT_SPLATTER_PARAMS(0.0),
+    output float outSpikePeak DEFAULT_SPLATTER_PARAMS(0.0),
+    output float outBasinHeight DEFAULT_SPLATTER_PARAMS(0.0),
+    output float outBaseRoughness DEFAULT_SPLATTER_PARAMS(0.0),
+    output color outBaseColor DEFAULT_SPLATTER_PARAMS(0),
+    output float outFlakeRoughness DEFAULT_SPLATTER_PARAMS(0.0),
+    output color outFlakeReflectivity DEFAULT_SPLATTER_PARAMS(0),
+    output color outFlakeEdgeTint DEFAULT_SPLATTER_PARAMS(0)
+) {
+    outSeed = seed;
+    outScaleRadius = scaleRadius;
+    outMinRadius = minRadius;
+    outMaxRadius = maxRadius;
+    outSpikeAmount = spikeAmount;
+    outSpikePeak = spikePeak;
+    outBasinHeight = basinHeight;
+    outBaseRoughness = baseRoughness;
+    outBaseColor = baseColor;
+    outFlakeRoughness = flakeRoughness;
+    outFlakeReflectivity = flakeReflectivity;
+    outFlakeEdgeTint = flakeEdgeTint;   
+}

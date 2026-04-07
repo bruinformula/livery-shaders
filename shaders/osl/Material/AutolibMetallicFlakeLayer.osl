@@ -9,7 +9,7 @@
     #define DEFAULT_METALLIC_FLAKE_LAYER(x)
 #endif
 
-ENTRY_METALLIC_FLAKE_LAYER AutolibMetallicFlakeLayer [[
+ENTRY_METALLIC_FLAKE_LAYER AutolibPaintLayer [[
     string nodegroup = "autolib",
     int isdefaultversion = 1,
     string version = "0.1"
@@ -17,7 +17,7 @@ ENTRY_METALLIC_FLAKE_LAYER AutolibMetallicFlakeLayer [[
     float flakeAlpha  DEFAULT_METALLIC_FLAKE_LAYER(0.0),
     normal flakeNormal  DEFAULT_METALLIC_FLAKE_LAYER(normal(0.5, 0.5, 1.0)),
 
-    // Flake appearance
+    // Flakes
     float flakeRandomize  DEFAULT_METALLIC_FLAKE_LAYER(0.2)  [[ string uifolder = "Flakes", float uimin = 0.0, float uimax = 1.0 ]],
     float flakeWeight  DEFAULT_METALLIC_FLAKE_LAYER(1.0)  [[ string uifolder = "Flakes", float uimin = 0.0, float uimax = 1.0 ]],
     color flakeReflectivity  DEFAULT_METALLIC_FLAKE_LAYER(color(0.95, 0.95, 0.95)) [[ string uifolder = "Flakes" ]],
@@ -25,13 +25,14 @@ ENTRY_METALLIC_FLAKE_LAYER AutolibMetallicFlakeLayer [[
     float flakeRoughness  DEFAULT_METALLIC_FLAKE_LAYER(0.1)  [[ string uifolder = "Flakes", float uimin = 0.0, float uimax = 1.0 ]],
 
     // Base paint
+    float baseAmount  DEFAULT_METALLIC_FLAKE_LAYER(0.5)  [[ string uifolder = "Base", float uimin = 0.0, float uimax = 1.0 ]],
     float baseWeight  DEFAULT_METALLIC_FLAKE_LAYER(1.0)  [[ string uifolder = "Base", float uimin = 0.0, float uimax = 1.0 ]],
     color baseColor  DEFAULT_METALLIC_FLAKE_LAYER(color(1.0, 0.1, 0.1)) [[ string uifolder = "Base" ]],
     float baseRoughness  DEFAULT_METALLIC_FLAKE_LAYER(0.5)  [[ string uifolder = "Base", float uimin = 0.0, float uimax = 1.0 ]],
     float baseIOR  DEFAULT_METALLIC_FLAKE_LAYER(1.9)  [[ string uifolder = "Base", float uimin = 1.0, float uimax = 3.0 ]],
 
     // Layer beneath this one
-    closure color underlayer DEFAULT_METALLIC_FLAKE_LAYER(0),
+    closure color underLayer DEFAULT_METALLIC_FLAKE_LAYER(0),
 
     output closure color out DEFAULT_METALLIC_FLAKE_LAYER(0)
 ) {
@@ -39,11 +40,13 @@ ENTRY_METALLIC_FLAKE_LAYER AutolibMetallicFlakeLayer [[
 
     closure color thisLayer;
 
+    float baseDiffuseWeight = baseWeight * baseAmount;
+
     if (flakeAlpha > 0.5) {
         color flakeIOR, flakeExtinction;
         artistic_ior(flakeReflectivity, flakeEdgeTint, flakeIOR, flakeExtinction);
 
-        thisLayer = flakeWeight * conductor_bsdf(
+        closure color flake = conductor_bsdf(
             finalNormal, 0,
             flakeRoughness, // roughness_x
             flakeRoughness, // roughness_y
@@ -51,17 +54,30 @@ ENTRY_METALLIC_FLAKE_LAYER AutolibMetallicFlakeLayer [[
             flakeExtinction, // extinction
             "ggx"
         );
+
+        thisLayer = flakeWeight * flake;
+
     } else {
-        thisLayer = baseWeight * dielectric_bsdf(
+        closure color laquer = dielectric_bsdf(
             N, 0,
-            baseColor,    // reflection_tint
-            color(0),     // transmission_tint
+            baseColor,     // reflection_tint
+            0, // transmission_tint
             baseRoughness, // roughness_x
             baseRoughness, // roughness_y
             baseIOR,      // ior
             "ggx"
         );
+
+        closure color baseDiffuse = baseDiffuseWeight * oren_nayar_diffuse_bsdf(
+            N, baseColor, baseRoughness
+        );
+        // depending on how much the base paint has 
+        // been reduced, it is best to repersent this 
+        // in a diffuse component 
+
+        thisLayer = baseWeight * layer(laquer, baseDiffuse);
     }
 
-    out = layer(thisLayer, underlayer);
+
+    out = layer(thisLayer, (1 - baseDiffuseWeight) * underLayer);
 }

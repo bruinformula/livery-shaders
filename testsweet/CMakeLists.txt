@@ -72,4 +72,5 @@ endif()
 
 add_usd_render_test(render-ryb)
 add_usd_render_test(render-carbon-fiber)
+add_usd_render_test(render-splatter)
 add_usd_render_test(render-mk11-color-globals)

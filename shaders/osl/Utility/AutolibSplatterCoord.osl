@@ -1,0 +1,151 @@
+#ifndef SOLO_SHADER
+    #define ENTRY_SPLATTER_COORD void
+#endif
+#ifndef ENTRY_SPLATTER_COORD
+    #define DEFAULT_SPLATTER_COORD(x) = x
+    #define ENTRY_SPLATTER_COORD shader
+#else
+    #define DEFAULT_SPLATTER_COORD(x)
+#endif
+
+point randomCellPosition(int x, int y, float jitter, int seed) {
+    vector off = cellnoise(vector(x, y, 0), seed);
+    off -= 0.5;
+    off *= jitter;
+    off += 0.5;
+    return point(x + off[0], y + off[1], 0);
+}
+
+float randomLength(int x, int y, float minRadius, float maxRadius) {
+    float randomValue = noise("cell", vector(x + 123.456, y + 789.012, 0));
+    return minRadius + randomValue * (maxRadius - minRadius);
+}
+
+vector randomTilt(int x, int y, float coneTilt, int seed) {
+    float tx = noise("cell", vector(x + 111.111, y + 222.222, seed)) - 0.5;
+    float ty = noise("cell", vector(x + 333.333, y + 444.444, seed)) - 0.5;
+    return vector(tx, ty, 0) * coneTilt;
+}
+
+float smoothMinWeighted(float a, float b, float k, float attrA, float attrB, output float blendedAttr) {
+    float ea = exp(-k * a);
+    float eb = exp(-k * b);
+    float wsum = ea + eb;
+    blendedAttr = (attrA * ea + attrB * eb) / wsum;
+    return -log(wsum) / k;
+}
+
+float ellipseSDF(vector p, vector axisA, float majorRadius, float minorRadius) {
+    vector axisB = vector(-axisA[1], axisA[0], 0);
+    float projA = dot(p, axisA);
+    float projB = dot(p, axisB);
+    float k = length(vector(projA / majorRadius, projB / minorRadius, 0));
+    return (k - 1.0) * min(majorRadius, minorRadius);
+}
+
+ENTRY_SPLATTER_COORD AutolibSplatterCoord [[
+    string nodegroup = "autolib",
+    int isdefaultversion = 1,
+    string version = "0.7",
+]] (
+    point UV  DEFAULT_SPLATTER_COORD(0),
+    float splatterScale  DEFAULT_SPLATTER_COORD(20) [[ string uifolder = "Pattern" ]],
+    int seed  DEFAULT_SPLATTER_COORD(433) [[ string uifolder = "Pattern" ]],
+    float jitter  DEFAULT_SPLATTER_COORD(2.0) [[ string uifolder = "Pattern" ]],
+    float minRadius  DEFAULT_SPLATTER_COORD(0.005) [[ string uifolder = "Pattern" ]],
+    float maxRadius  DEFAULT_SPLATTER_COORD(0.3) [[ string uifolder = "Pattern" ]],
+    float perimeterSmoothness  DEFAULT_SPLATTER_COORD(0.15) [[ string uifolder = "Pattern", float uimin = 0.0, float uimax = 1.0 ]],
+    float unionSmoothness  DEFAULT_SPLATTER_COORD(8.0) [[ string uifolder = "Pattern" ]],
+
+    float coneHeight  DEFAULT_SPLATTER_COORD(0.5) [[ string uifolder = "Cone", float uimin = 0.001 ]],
+    float coneTilt  DEFAULT_SPLATTER_COORD(0.3) [[ string uifolder = "Cone", float uimin = 0.0, float uimax = 2.0 ]],
+    
+    output float mask  DEFAULT_SPLATTER_COORD(0),
+    output point localUV  DEFAULT_SPLATTER_COORD(0),
+    output vector splatterDirection  DEFAULT_SPLATTER_COORD(0),
+) {
+    point scaledPos = splatterScale * UV;
+
+    int cellX = (int)floor(scaledPos[0]);
+    int cellY = (int)floor(scaledPos[1]);
+
+    float bestDistance = 1e6;
+    float bestTipDist = 1;
+    int bestID;
+
+    int bound = 1;
+
+    vector bestAxisA = vector(1, 0, 0);
+    float bestMajorRadius = 1.0;
+    float bestMinorRadius = 1.0;
+    vector bestToSample = vector(0, 0, 0);
+
+    for (int x = -bound; x <= bound; x++) {
+        for (int y = -bound; y <= bound; y++) {
+            // Get the cell indicies of the current square
+            int cx = cellX + x;
+            int cy = cellY + y;
+
+            // The goal of this is to build some sort of inution 
+            // of how paint will actually land as if it were 
+            // coming out of a paint gun of a firing out of a paint gun
+            
+            // Generate some cone with a center, a radius, and a tilt.
+            point cellCenter = randomCellPosition(cx, cy, jitter, seed);
+            float radius = randomLength(cx, cy, minRadius, maxRadius);
+            vector tilt = randomTilt(cx, cy, coneTilt, seed);
+
+            // The projected cone becomes an elipse with a major
+            // and minor axis. 
+            float tiltDist = length(tilt);
+            float tiltAngle = atan2(tiltDist, coneHeight);
+            float majorRadius = radius / max(cos(tiltAngle), 0.01); // in the direction of the tilt 
+            float minorRadius = radius; // perpendicular to the tilt
+
+            vector axisA = (tiltDist > 1e-6) ? normalize(tilt) : vector(1, 0, 0);
+            vector toSample = scaledPos - cellCenter;
+
+            float d = ellipseSDF(toSample, axisA, majorRadius, minorRadius);
+
+            vector delta = scaledPos - (cellCenter + tilt);
+
+            vector deltaSquared = pow(delta, 2);
+            float coneHeightSquared = pow(coneHeight, 2);
+            float tipDist = sqrt(deltaSquared.x + deltaSquared.y + coneHeightSquared);
+
+            if (x == -bound && y == -bound) {
+                bestDistance  = d;
+                bestTipDist   = tipDist;
+                bestAxisA     = axisA;
+                bestMajorRadius = majorRadius;
+                bestMinorRadius = minorRadius;
+                bestToSample  = toSample;
+            } else {
+                float prevBest = bestDistance;
+                bestDistance = smoothMinWeighted(bestDistance, d, unionSmoothness, bestTipDist, tipDist, bestTipDist);
+
+                // If this cell won the hard comparison, update the ellipse basis
+                if (d < prevBest) {
+                    bestAxisA       = axisA;
+                    bestMajorRadius = majorRadius;
+                    bestMinorRadius = minorRadius;
+                    bestToSample    = toSample;
+                }
+            }
+        }
+    }
+
+    vector bestAxisB = vector(-bestAxisA[1], bestAxisA[0], 0);
+    float projA = dot(bestToSample, bestAxisA);
+    float projB = dot(bestToSample, bestAxisB);
+
+    localUV.x = (projA / bestMajorRadius) * 0.5 + 0.5;
+    localUV.y = (projB / bestMinorRadius) * 0.5 + 0.5;
+
+    float dynamicSmoothness = perimeterSmoothness * bestTipDist;
+    mask = 1.0 - smoothstep(0.0, dynamicSmoothness, bestDistance);
+
+    vector sdfGradient = (projA / (bestMajorRadius * bestMajorRadius)) * bestAxisA + (projB / (bestMinorRadius * bestMinorRadius)) * bestAxisB;
+    float gradLen = length(sdfGradient);
+    splatterDirection = (gradLen > 1e-6) ? sdfGradient / gradLen : vector(0, 0, 0);
+}

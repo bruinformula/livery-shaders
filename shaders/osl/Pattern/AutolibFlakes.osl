@@ -36,6 +36,19 @@ float IDs( output float x, int flakeSeed ) {
 	return mix(0, 1, xRatio);
 }	
 
+normal combineNormals(normal base, normal detail){
+    normal baseNormal = normalize(base);
+    normal detailNormal = normalize(detail);
+
+    vector baseAdjusted   = vector(baseNormal.x, baseNormal.y, baseNormal.z + 1.0);
+    vector detailAdjusted = vector(-detailNormal.x, -detailNormal.y, detailNormal.z);
+
+    float projection = dot(baseAdjusted, detailAdjusted);
+    vector combined  = baseAdjusted * projection - detailAdjusted * baseAdjusted.z;
+
+    return normalize(combined);
+}
+
 ENTRY_FLAKES AutolibFlakes [[ 
     string nodegroup = "autolib", 
     int isdefaultversion = 1, 
@@ -45,9 +58,11 @@ ENTRY_FLAKES AutolibFlakes [[
     float scale DEFAULT_FLAKES(0.1) [[ string doc = "The density of the flakes" ]],
     int seed DEFAULT_FLAKES(0),
     float density DEFAULT_FLAKES(0.1) [[ float uimin = 0.0, float uimax = 1.0, string doc = "Ratio of flakes to non-flakes. 1.0 is 100 percent flake`" ]],
+    normal baseNormal DEFAULT_FLAKES(normal(0.5, 0.5, 1.0)) [[ string doc = "The base normal used for the flakes" ]],
     output float rehash DEFAULT_FLAKES(0),
     output float outAlpha DEFAULT_FLAKES(1),
-    output normal outNormal DEFAULT_FLAKES(normal(0.5, 0.5, 1.0))  
+    output normal outNormal DEFAULT_FLAKES(normal(0.5, 0.5, 1.0)),
+    output normal outNormalDetail DEFAULT_FLAKES(normal(0.5, 0.5, 1.0)) 
 ) {
     point scaledPosition = scale * position;
 
@@ -79,4 +94,6 @@ ENTRY_FLAKES AutolibFlakes [[
     }
 
 	outAlpha = (outNormal.x != 0.5) ? 1.0 : 0.0;
+
+    outNormalDetail = combineNormals(baseNormal, outNormal);
 }

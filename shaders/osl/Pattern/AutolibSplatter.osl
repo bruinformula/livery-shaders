@@ -38,7 +38,6 @@ struct SplatterLayerParams {
     float scale;
     int seed;
     float jitter;
-    float scaleRadius;
     float minRadius;
     float maxRadius;
     float unionSmoothness;
@@ -85,7 +84,6 @@ SplatterLayerParams jitterSplatterParams(
     
     // geometric properties
     jittered.seed = baseParams.seed + sublayerIndex;
-    jittered.scaleRadius = baseParams.scaleRadius * (1.0 + (rand1 - 0.5) * jitterAmount * 0.2);
     jittered.minRadius = baseParams.minRadius * (1.0 + (rand2 - 0.5) * jitterAmount * 0.3);
     jittered.maxRadius = baseParams.maxRadius * (1.0 + (rand3 - 0.5) * jitterAmount * 0.3);
     
@@ -124,9 +122,10 @@ ENTRY_SPLATTER AutolibSplatter [[
 	string version = "0.1" 
 ]] (
     point UV  DEFAULT_SPLATTER(0),
+    float splatterScale  DEFAULT_SPLATTER(20) [[ string uifolder = "Pattern" ]],
     int seed DEFAULT_SPLATTER(433) [[ string uifolder = "Pattern" ]],
     float jitter DEFAULT_SPLATTER(2.0) [[ string uifolder = "Pattern" ]],
-    float scaleRadius DEFAULT_SPLATTER(0.8) [[ string uifolder = "Pattern" ]],
+    vector splatterDirection DEFAULT_SPLATTER(0) [[ string uifolder = "Pattern", string doc = "Used to distort the shape of each drop"]],
     float minRadius DEFAULT_SPLATTER(0.005) [[ string uifolder = "Pattern" ]],
     float maxRadius DEFAULT_SPLATTER(0.3) [[ string uifolder = "Pattern" ]],
     float unionSmoothness DEFAULT_SPLATTER(8.0) [[ string uifolder = "Pattern", string doc = "Controls the smoothness between overlapping drops" ]],
@@ -141,29 +140,52 @@ ENTRY_SPLATTER AutolibSplatter [[
     float basinCenter DEFAULT_SPLATTER(0.3) [[ string uifolder = "Basin", string doc = "The the inflection point where the basin rises to a parameter", float uimin = 0.0, float uimax = 1.0 ]],
     float basinSmoothness DEFAULT_SPLATTER(0.075) [[ string uifolder = "Basin", string doc = "The the inflection point where the basin rises to a parameter", float uimin = 0.0, float uimax = 1.0 ]],
 
+    float basinBumpStrength DEFAULT_SPLATTER(1.0) [[ string uifolder = "Material", string doc = "Strength of the normal map generated from the splatter height" ]],
+
     output float height  DEFAULT_SPLATTER(0.0),
-    output float mask  DEFAULT_SPLATTER(0.0)
+    output float mask  DEFAULT_SPLATTER(0.0),
+    output normal bumpNormal DEFAULT_SPLATTER(N)
 ) {    
-    int cellX = (int)floor(UV[0]);
-    int cellY = (int)floor(UV[1]);
+    point scaledPos = splatterScale * UV;
+
+    int cellX = (int)floor(scaledPos[0]);
+    int cellY = (int)floor(scaledPos[1]);
     
-    vector localPos = UV - vector(cellX, cellY, 0);
+    vector localPos = scaledPos - vector(cellX, cellY, 0);
     
     float noisedDistance = 1e6;
     float smoothDistance = 1e6;
 
     for (int x = -1; x <= 1; x++) {
         for (int y = -1; y <= 1; y++) {
-            point cellCenter = randomCellPosition(cellX + x, cellY + y, jitter, seed);
+            int cx = cellX + x;
+            int cy = cellY + y;
+            point cellCenter = randomCellPosition(cx, cy, jitter, seed);
         
-            vector diff = UV - cellCenter;
+            vector initialDiff = scaledPos - cellCenter;
+            vector diff = initialDiff;
+
+            // Distort diff using splatter direction
+            float dirLen = length(splatterDirection);
+            if (dirLen > 1e-6) {
+                vector flowDir = splatterDirection / dirLen;
+
+                float alongFlow = dot(diff, flowDir);
+                vector perpFlow = diff - alongFlow * flowDir;
+
+                float stretch = 1.0 + dirLen * 5.0;
+                diff = (perpFlow / stretch) + flowDir * alongFlow; // compress perp, keep radial
+            }
+            
             float edgeDistance = length(diff);
         
             float circleRandomSeed = noise("cell", vector(cellX + x + 456.789 + seed, cellY + y + 321.654 + seed, seed)) * 1000.0;
             float angleNoise = spikeFrequency * noise("uperlin", circleRandomSeed);
             float angle = (atan2(diff.y, diff.x) / (2.0 * M_PI)) + 0.5;
         
-            float addNoise = pow(spikePeak, noise("snoise", (angle * angleNoise) - circleRandomSeed));
+            float addNoise = noise("snoise", (angle * angleNoise) - circleRandomSeed);
+            addNoise = pow(spikePeak, addNoise); // skew the spike strength to be more often low and occasionally high
+
 
             if (spikeTrimWidth > 0.0) {
                 float distFromBoundary = min(angle, 1.0 - angle);
@@ -173,7 +195,7 @@ ENTRY_SPLATTER AutolibSplatter [[
 
             addNoise = ((1.0 - spikeAmount) * addNoise) + spikeAmount;
 
-            float radius = randomRadius(cellX + x, cellY + y, minRadius * scaleRadius, maxRadius * scaleRadius);
+            float radius = randomRadius(cellX + x, cellY + y, minRadius, maxRadius);
             float edgeNoisedDistance = edgeDistance - (radius * addNoise);
         
             if (edgeNoisedDistance < noisedDistance) {
@@ -192,4 +214,6 @@ ENTRY_SPLATTER AutolibSplatter [[
 
     float heightProfile = sigmoidMask(smoothDistance, basinHeight, basinCenter, basinSmoothness);
     height = (heightProfile * 1.40) * mask;
+
+    bumpNormal = calculatenormal(P + N * height * basinBumpStrength);
 }
