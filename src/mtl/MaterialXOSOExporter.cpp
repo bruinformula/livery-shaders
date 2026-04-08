@@ -1,4 +1,3 @@
-#include <_stdlib.h>
 #include <MaterialXCore/Document.h>
 #include <MaterialXCore/Util.h>
 #include <MaterialXFormat/File.h>
@@ -20,7 +19,6 @@
 #include <cstdlib>
 #include <exception>
 #include <string_view>
-#include <__hash_table>
 #include <iostream>
 
 #include "OSLCompiler.h"

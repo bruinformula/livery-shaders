@@ -1,4 +1,3 @@
-#include <_stdlib.h>
 #include <MaterialXCore/Document.h>
 #include <MaterialXCore/Util.h>
 #include <MaterialXCore/Interface.h>

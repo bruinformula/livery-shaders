@@ -1,4 +1,3 @@
-#include <_string.h>
 #include <ai_closure.h>
 #include <ai_node_entry.h>
 #include <ai_nodes.h>
