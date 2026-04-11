@@ -1,4 +1,4 @@
-#include <stddef.h>
+
 #include <MaterialXFormat/XmlIo.h>
 #include <MaterialXCore/Document.h>
 #include <MaterialXCore/Util.h>

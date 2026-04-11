@@ -1,4 +1,4 @@
-#include <stddef.h>
+
 #include <MaterialXFormat/File.h>
 #include <OpenImageIO/errorhandler.h>
 #include <OpenImageIO/typedesc.h>
