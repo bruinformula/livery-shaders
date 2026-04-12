@@ -1,0 +1,1 @@
+./build/bin/MaterialXLibraryBuilder --oslLibraryPath shaders/osl --mtlxNodeGraphsPath shaders/mtlx --copyFilesOfPath shaders/bsdf --libraryOutputPath ./build/autolib --genosl-impl --genglsl-dummy-impl --writeByteCode
