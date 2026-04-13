@@ -13,26 +13,26 @@ StepConvertUsd -i ./test/usd/model1.usda -p /Wonderful/Prototypes -v
 echo "FILE2: baseline (quality default)"
 StepConvertUsd -i ./test/usd/model1_per_prototype_variant.usda -v
 
-echo "FILE2: rod0 no variant (should use default=final)"
+echo "FILE2: rod_1 no variant (should use default=final)"
 StepConvertUsd -i ./test/usd/model1_per_prototype_variant.usda \
-  -p /Wonderful/Prototypes/rod0 -v
+  -p /Wonderful/Prototypes/rod_1 -v
 
-echo "FILE2: rod0 quality=draft"
+echo "FILE2: rod_1 quality=draft"
 StepConvertUsd -i ./test/usd/model1_per_prototype_variant.usda \
-  -p /Wonderful/Prototypes/rod0{quality=draft} -v
+  -p /Wonderful/Prototypes/rod_1{quality=draft} -v
 
-echo "FILE2: rod0 quality=final"
+echo "FILE2: rod_1 quality=final"
 StepConvertUsd -i ./test/usd/model1_per_prototype_variant.usda \
-  -p /Wonderful/Prototypes/rod0{quality=final} -v
+  -p /Wonderful/Prototypes/rod_1{quality=final} -v
 
 echo "FILE2: conflicting quality (draft vs final)"
 StepConvertUsd -i ./test/usd/model1_per_prototype_variant.usda \
-  -p /Wonderful/Prototypes/rod0{quality=draft} \
-  -p /Wonderful/Prototypes/rod0{quality=final} -v
+  -p /Wonderful/Prototypes/rod_1{quality=draft} \
+  -p /Wonderful/Prototypes/rod_1{quality=final} -v
 
 echo "FILE2: invalid quality (ultra)"
 StepConvertUsd -i ./test/usd/model1_per_prototype_variant.usda \
-  -p /Wonderful/Prototypes/rod0{quality=ultra} -v
+  -p /Wonderful/Prototypes/rod_1{quality=ultra} -v
 
 
 # FILE 3: LOD + quality
@@ -47,48 +47,48 @@ echo "FILE3: LOD=low only"
 StepConvertUsd -i ./test/usd/model1_prototype_and_per_prototype_variant.usda \
   -p /Wonderful/Prototypes{LOD=low} -v
 
-echo "FILE3: LOD=high, rod0 default quality"
+echo "FILE3: LOD=high, rod_1 default quality"
 StepConvertUsd -i ./test/usd/model1_prototype_and_per_prototype_variant.usda \
-  -p /Wonderful/Prototypes{LOD=high}rod0 -v
+  -p /Wonderful/Prototypes{LOD=high}rod_1 -v
 
 echo "FILE3: LOD=high, quality=default"
 StepConvertUsd -i ./test/usd/model1_prototype_and_per_prototype_variant.usda \
-  -p /Wonderful/Prototypes{LOD=high}rod0{quality=default} -v
+  -p /Wonderful/Prototypes{LOD=high}rod_1{quality=default} -v
 
 echo "FILE3: LOD=high, quality=draft"
 StepConvertUsd -i ./test/usd/model1_prototype_and_per_prototype_variant.usda \
-  -p /Wonderful/Prototypes{LOD=high}rod0{quality=draft} -v
+  -p /Wonderful/Prototypes{LOD=high}rod_1{quality=draft} -v
 
 echo "FILE3: LOD=high, quality=final"
 StepConvertUsd -i ./test/usd/model1_prototype_and_per_prototype_variant.usda \
-  -p /Wonderful/Prototypes{LOD=high}rod0{quality=final} -v
+  -p /Wonderful/Prototypes{LOD=high}rod_1{quality=final} -v
 
 echo "FILE3: LOD=low, quality=default"
 StepConvertUsd -i ./test/usd/model1_prototype_and_per_prototype_variant.usda \
-  -p /Wonderful/Prototypes{LOD=low}rod0{quality=default} -v
+  -p /Wonderful/Prototypes{LOD=low}rod_1{quality=default} -v
 
 echo "FILE3: LOD=low, quality=draft"
 StepConvertUsd -i ./test/usd/model1_prototype_and_per_prototype_variant.usda \
-  -p /Wonderful/Prototypes{LOD=low}rod0{quality=draft} -v
+  -p /Wonderful/Prototypes{LOD=low}rod_1{quality=draft} -v
 
 echo "FILE3: LOD=low, quality=final"
 StepConvertUsd -i ./test/usd/model1_prototype_and_per_prototype_variant.usda \
-  -p /Wonderful/Prototypes{LOD=low}rod0{quality=final} -v
+  -p /Wonderful/Prototypes{LOD=low}rod_1{quality=final} -v
 
 echo "FILE3: split -p (LOD high + quality final)"
 StepConvertUsd -i ./test/usd/model1_prototype_and_per_prototype_variant.usda \
   -p /Wonderful/Prototypes{LOD=high} \
-  -p /Wonderful/Prototypes/rod0{quality=final} -v
+  -p /Wonderful/Prototypes/rod_1{quality=final} -v
 
 echo "FILE3: conflicting LOD (high vs low)"
 StepConvertUsd -i ./test/usd/model1_prototype_and_per_prototype_variant.usda \
   -p /Wonderful/Prototypes{LOD=high} \
   -p /Wonderful/Prototypes{LOD=low} -v
 
-echo "FILE3: cross conflict (LOD high + rod0 under low)"
+echo "FILE3: cross conflict (LOD high + rod_1 under low)"
 StepConvertUsd -i ./test/usd/model1_prototype_and_per_prototype_variant.usda \
   -p /Wonderful/Prototypes{LOD=high} \
-  -p /Wonderful/Prototypes{LOD=low}rod0{quality=final} -v
+  -p /Wonderful/Prototypes{LOD=low}rod_1{quality=final} -v
 
 echo "FILE3: invalid LOD"
 StepConvertUsd -i ./test/usd/model1_prototype_and_per_prototype_variant.usda \
@@ -96,7 +96,7 @@ StepConvertUsd -i ./test/usd/model1_prototype_and_per_prototype_variant.usda \
 
 echo "FILE3: invalid quality"
 StepConvertUsd -i ./test/usd/model1_prototype_and_per_prototype_variant.usda \
-  -p /Wonderful/Prototypes{LOD=high}rod0{quality=ultra} -v
+  -p /Wonderful/Prototypes{LOD=high}rod_1{quality=ultra} -v
 
 
 # FILE 4: LOD only

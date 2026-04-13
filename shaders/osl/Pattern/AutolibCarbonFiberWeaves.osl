@@ -51,7 +51,7 @@ WeaveData createWeaves(
 float mirrorCurve(float input, float exponent) {
     float inverseClamp = 1-clamp(input, 0, 1);
     float factor = step(0.5, input);
-    float stepped = mix(input, inverseClamp, factor);
+    double stepped = mix(input, inverseClamp, factor);
     return pow(clamp(stepped, 0, 1), 1/exponent);
 }
 
