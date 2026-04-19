@@ -1,0 +1,44 @@
+// AutolibClearcoatLayer
+
+shader AutolibClearcoatLayer [[
+    string category = "autolib"
+]] (
+    float weight = 1.0  [[ float min = 0.0, float max = 1.0 ]],
+    float roughness = 0.05 [[ float min = 0.0, float max = 1.0 ]],
+    float anisotropy = 0.0  [[ float min = 0.0, float max = 1.0 ]],
+    float rotation = 0.0  [[ float min = 0.0, float max = 1.0 ]],
+    float ior = 1.4  [[ float min = 1.0, float max = 3.0 ]],
+    float exponent = 5.0  [[ float min = 0.0, float max = 10.0 ]],
+
+    closure color underlayer = 0,
+
+    output closure color out = 0
+) {
+    vector T = vector(cos(2 * M_PI * rotation), sin(2 * M_PI * rotation), 0);
+
+    float roughnessX = roughness * (1.0 - anisotropy);
+
+    closure color clearcoatBase = generalized_schlick_bsdf(
+        N, T,
+        color(1.0), // reflection_tint
+        color(0.0), // transmission_tint
+        roughness, // roughness_y
+        roughnessX,         // roughness_x
+        color(0.04),        // f0
+        color(1, 1, 1),     // f90
+        exponent,  // exponent
+        "ggx"
+    );
+
+    closure color clearcoatTop = dielectric_bsdf(
+        N, T,
+        color(1.0), // reflection_tint
+        color(0.0), // transmission_tint
+        roughness, // roughness_y
+        roughnessX,         // roughness_x
+        ior,
+        "ggx"
+    );
+
+    out = weight * layer(layer(clearcoatTop, clearcoatBase), underlayer);
+}

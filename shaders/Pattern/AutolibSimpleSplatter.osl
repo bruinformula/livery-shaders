@@ -1,0 +1,23 @@
+// AutolibSimpleSplatter
+
+shader AutolibSimpleSplatter [[ 
+    string category = "autolib" 
+]] (
+    vector UV = vector(u, v, 0),
+    float scale = 5.0,
+    float smoothness = 0.01,
+    float basinHeight = 0.6,
+
+    output float mask = 0.0,
+    output float height = 0.0
+) {
+
+    float speckle = noise(transform("shader", UV) * scale);
+
+    mask = step(0.7 - smoothness, speckle);
+
+    float bigMask = smoothstep(0.7 - smoothness * 2.0, 0.7 - smoothness, speckle);
+    float smallMask = smoothstep(0.7 - smoothness, 0.7, speckle) * basinHeight;
+
+    height = bigMask - smallMask;
+}

@@ -1,0 +1,60 @@
+
+shader AutolibWireframe [[ 
+    string category = "autolib" 
+]] (
+    int edgeType = 1 [[ string options = "triangles|polygons|patches" ]], 
+    float lineWidth = 1  [[ float min = 0.0 ]], 
+    int raster = 1  [[ int uimin = 0, int uimax = 1 ]],
+
+    output float outValue = 0
+) {
+    // ray differentials are so big in diffuse context that this function would always return "wire"
+    if (raytype("path:diffuse")) {
+        outValue = 0.0;
+        exit();
+    }
+
+    int np = 0;
+    point p[64];
+    float pixelWidth = 1;
+    if (edgeType == 1) { // triangles
+        np = 3;
+        if (!getattribute("geom:trianglevertices", p)) {
+            //outValue = 0.0;
+            exit();
+        }
+    } else if (edgeType == 2 || edgeType == 3) { // polygons or patches
+        getattribute("geom:numpolyvertices", np);
+        if (np < 3 || !getattribute("geom:polyvertices", p)) {
+            //outValue = 0.0;
+            exit();
+        }
+    }
+
+    if (raster) {
+        // Project the derivatives of P to the viewing plane defined
+        // by I so we have a measure of how big is a pixel at this point
+        float pixelWidthX = length(Dx(P) - dot(Dx(P), I) * I);
+        float pixelWidthY = length(Dy(P) - dot(Dy(P), I) * I);
+        // Take the average of both axis' length
+        pixelWidth = (pixelWidthX + pixelWidthY) / 2;
+    }
+
+    // Use half the width as the neighbor face will render the
+    // other half. And take the square for fast comparison
+    pixelWidth *= 0.5 * lineWidth;
+    pixelWidth *= pixelWidth;
+    for (int i = 0; i < np; i++) {
+        int i2 = i ? i - 1 : np - 1;
+        vector dir = P - p[i];
+        vector edge = p[i] - p[i2];
+        vector crs = cross(edge, dir);
+        // At this point dot(crs, crs) / dot(edge, edge) is
+        // the square of area / length(edge) == square of the
+        // distance to the edge.
+        if (dot(crs, crs) < (dot(edge, edge) * pixelWidth)) {
+            outValue = 1;
+            exit();
+        }
+    }
+}

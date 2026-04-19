@@ -1,0 +1,72 @@
+// AutolibMetallicFlakeLayer
+
+shader AutolibPaintLayer [[
+    string category = "autolib"
+]] (
+    float flakeAlpha = 0.0,
+    normal flakeNormal = normal(0.5, 0.5, 1.0),
+
+    // Flakes
+    float flakeRandomize = 0.2  [[ string page = "Flakes", float min = 0.0, float max = 1.0 ]],
+    float flakeWeight = 1.0  [[ string page = "Flakes", float min = 0.0, float max = 1.0 ]],
+    color flakeReflectivity = color(0.95, 0.95, 0.95) [[ string page = "Flakes" ]],
+    color flakeEdgeTint = color(1.0, 1.0, 1.0) [[ string page = "Flakes" ]],
+    float flakeRoughness = 0.1  [[ string page = "Flakes", float min = 0.0, float max = 1.0 ]],
+
+    // Base paint
+    float baseAmount = 0.5  [[ string page = "Base", float min = 0.0, float max = 1.0 ]],
+    float baseWeight = 1.0  [[ string page = "Base", float min = 0.0, float max = 1.0 ]],
+    color baseColor = color(1.0, 0.1, 0.1) [[ string page = "Base" ]],
+    float baseRoughness = 0.5  [[ string page = "Base", float min = 0.0, float max = 1.0 ]],
+    float baseIOR = 1.9  [[ string page = "Base", float min = 1.0, float max = 3.0 ]],
+
+    // Layer beneath this one
+    closure color underLayer = 0,
+
+    output closure color out = 0
+) {
+    normal finalNormal = mix(Ng, flakeNormal, flakeRandomize);
+
+    closure color thisLayer;
+
+    float baseDiffuseWeight = baseWeight * baseAmount;
+
+    if (flakeAlpha > 0.5) {
+        color flakeIOR, flakeExtinction;
+        artistic_ior(flakeReflectivity, flakeEdgeTint, flakeIOR, flakeExtinction);
+
+        closure color flake = conductor_bsdf(
+            finalNormal, 0,
+            flakeRoughness, // roughness_x
+            flakeRoughness, // roughness_y
+            flakeIOR,       // ior
+            flakeExtinction, // extinction
+            "ggx"
+        );
+
+        thisLayer = flakeWeight * flake;
+
+    } else {
+        closure color laquer = dielectric_bsdf(
+            N, 0,
+            baseColor,     // reflection_tint
+            0, // transmission_tint
+            baseRoughness, // roughness_x
+            baseRoughness, // roughness_y
+            baseIOR,      // ior
+            "ggx"
+        );
+
+        closure color baseDiffuse = baseDiffuseWeight * oren_nayar_diffuse_bsdf(
+            N, baseColor, baseRoughness
+        );
+        // depending on how much the base paint has 
+        // been reduced, it is best to repersent this 
+        // in a diffuse component 
+
+        thisLayer = baseWeight * layer(laquer, baseDiffuse);
+    }
+
+
+    out = layer(thisLayer, (1 - baseDiffuseWeight) * underLayer);
+}

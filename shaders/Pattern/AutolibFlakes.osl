@@ -1,0 +1,88 @@
+// AutolibFlakes
+
+vector ID(vector x, int flakeSeed) {
+    vector n = floor(x);
+    vector f = x-floor(x);
+    vector m = vector(8);
+    for( int k = -1; k <= 1; k++ ) {
+		for( int j = -1; j <= 1; j++ ) {
+			for( int i = -1; i <= 1; i++ ) {
+				vector g = vector( float(i), float(j),float(k) );  	
+				vector o = noise("hash",n + g,flakeSeed);
+				vector r = g - f + (0.5 + (0.5 * sin(M_2PI * o)));
+				float s = dot(r, r);      
+				s < m.x ? m = vector(s, o.x, o.y) : 0;
+			}
+		}
+	}  
+	
+    return vector( sqrt(m.x), m.y + m.z, m.y + m.x);
+}
+
+float IDs( output float x, int flakeSeed ) { 
+	x = -1000 + x * 2000;
+	x = int(trunc(x));	
+	float xRatio = noise("cell", vector(abs(x), abs(flakeSeed), 11)); 
+	
+	return mix(0, 1, xRatio);
+}	
+
+normal combineNormals(normal base, normal detail){
+    normal baseNormal = normalize(base);
+    normal detailNormal = normalize(detail);
+
+    vector baseAdjusted   = vector(baseNormal.x, baseNormal.y, baseNormal.z + 1.0);
+    vector detailAdjusted = vector(-detailNormal.x, -detailNormal.y, detailNormal.z);
+
+    float projection = dot(baseAdjusted, detailAdjusted);
+    vector combined  = baseAdjusted * projection - detailAdjusted * baseAdjusted.z;
+
+    return normalize(combined);
+}
+
+shader AutolibFlakes [[ 
+    string category = "autolib" 
+]] ( 
+    point position = P [[ string doc = "The input point used to generate the flakes" ]], 
+    float scale = 0.1 [[ string doc = "The density of the flakes" ]],
+    int seed = 0,
+    float density = 0.1 [[ float min = 0.0, float max = 1.0, string doc = "Ratio of flakes to non-flakes. 1.0 is 100 percent flake`" ]],
+    normal baseNormal = normal(0.5, 0.5, 1.0) [[ string doc = "The base normal used for the flakes" ]],
+    output float rehash = 0,
+    output float outAlpha = 1,
+    output normal outNormal = normal(0.5, 0.5, 1.0),
+    output normal outNormalDetail = normal(0.5, 0.5, 1.0) 
+) {
+    point scaledPosition = scale * position;
+
+	vector k = ID(scaledPosition, seed);
+
+    float angle = k.y * M_2PI;
+
+    float x = 0.5 + 0.5 * cos(angle);
+    float y = 0.5 + 0.5 * sin(angle);
+    float z = 0.5 + 0.5 * tan(angle);
+
+	outNormal = normalize(vector(x, y, z) * 2.0 - 1.0);
+    outNormal = outNormal * 0.5 + 0.5;
+
+	int seeds[3] = {4, 4, 1};
+
+	for (int i = 0; i < 3; i++) {
+		outNormal[i] = IDs(outNormal[i], seeds[i]);
+	}
+
+    outNormal.z = 0.5 + 0.5 * outNormal.z;
+
+    float h = -1000.0 + outNormal.x * 2000.0;
+    h = int(trunc(h));
+    rehash = noise("cell", vector(abs(h), 16, 11));
+
+	if (density <= rehash) {
+        outNormal = vector(0.5, 0.5, 1.0);
+    }
+
+	outAlpha = (outNormal.x != 0.5) ? 1.0 : 0.0;
+
+    outNormalDetail = combineNormals(baseNormal, outNormal);
+}

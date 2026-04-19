@@ -1,0 +1,41 @@
+// AutolibHalftoneDots
+
+shader AutolibHalftoneDots [[ 
+	string category = "autolib" 
+]] (
+	vector UVW = 0  [[ string doc = "The input coordinate. If not connected, uses screen pixel space" ]],
+	vector scale = vector(8.0, 8.0, 8.0)  [[ string doc = "This size of the dots. In the default screen space mapping, this is in pixels." ]],
+	float  angle = 45.0  [[ string doc = "angle of the Halftoning" ]],	
+	color  inputValue = 0.25  [[ string doc = "The input value defining the size of the dots to yield the right halftone density. " ]],	
+	float  fuzz = 0.1  [[ float min = 0.0, float max = 2.0 ]],
+	color  dotsColor = 0.0  [[ string doc = "The color of the dots" ]],		
+	color  backgroundColor = 1.0  [[ string doc = "The color of the space between the dots" ]],
+
+	int useUV = 1 [[int uimin = 0, int uimax = 1]],
+
+	output color dots = color(1,2,3)
+) {
+	point pos = UVW;
+	if (!isconnected(UVW)) {
+		pos = transform("raster", P);
+	}
+
+	if (useUV == 1) {
+		pos = vector(u, v, 0);
+	}
+
+	pos = rotate(pos, radians(angle), 0.0, vector(0.0,0.0,1.0));
+	pos = vector(pos.x / scale.x, pos.y / scale.y, 0.0);
+	if (scale.x == 0.0) {
+		pos.x = 0.5;
+	} if (scale.y == 0.0) {
+		pos.y = 0.5;
+	}
+	
+	pos = pos - floor(pos);
+	
+	float dist = 1.0 - (distance(vector(0.5,0.5,0.0), pos) / (sqrt(2.0) / 2.5));	
+	color factor = smoothstep(-fuzz, 0.0, inputValue - sqrt(max(0,dist)));
+		
+	dots = mix(dotsColor, backgroundColor, factor);
+}
