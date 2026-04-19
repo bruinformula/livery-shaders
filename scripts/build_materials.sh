@@ -1,1 +1,0 @@
-./build/bin/MaterialXOSOExporter --mtlxMaterialsPath ./test/materials --osoOutputPath ./build/oso --library ./build/autolib --writeOSLSource -I "$BLENDER_ROOT/scripts/addons_core/cycles/shader"

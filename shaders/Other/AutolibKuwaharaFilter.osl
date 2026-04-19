@@ -4,7 +4,7 @@ shader AutolibKuwaharaFilter [[
 ]] (
     vector UV = vector(u, v, 0),
     string fileName = "" [[ string widget = "filename", string page = "Image" ]],
-    string fileColorSpace = "" [[ string uiname = "Colorspace", string page = "Color Space Conversion", string widget = "colorspace" ]],
+    string fileColorSpace = "" [[ string label = "Colorspace", string page = "Color Space Conversion", string widget = "colorspace" ]],
 
     float radius = 0.003,
     output color outColor = color(0.0))

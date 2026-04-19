@@ -4,13 +4,13 @@ shader AutolibDecal [[
     string category = "autolib" 
 ]] (
     point UV = 0,
-    string filename = "",
+    string filename = "", [[ string widget = "filename" ]]
     float width = 0.1,
-    string units = "m",
+    string units = "m", [[ string widget = "units" ]]
 
     // Texture
-    int stickerMode = 0 [[ int uimin = 0, int uimax = 1, string doc = "UV sizing correction for images to maintain their size in world space" ]],
-    int autoGamma = 1 [[ int uimin = 0, int uimax = 1 ]],
+    int stickerMode = 0 [[ int slidermin = 0, int slidermax = 1, string doc = "UV sizing correction for images to maintain their size in world space" ]],
+    int autoGamma = 1 [[ int slidermin = 0, int slidermax = 1 ]],
     float manualGamma = 1.0 [[ float min = 0 ]],
     
     // Outputs
