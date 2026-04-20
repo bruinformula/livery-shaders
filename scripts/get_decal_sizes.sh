@@ -1,2 +1,0 @@
-./build/bin/MaterialXNodeQuery --node decal --mtlxMaterialsPath ./test/materials --csvOutputPath ./build/decal_sizes --library ./build/autolib
-# the materialx nodedefs are the snake and lower case versions of the OSL funcs 
