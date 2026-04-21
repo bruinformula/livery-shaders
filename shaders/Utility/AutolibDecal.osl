@@ -1,22 +1,24 @@
 // AutolibDecal
 
+float median(float r, float g, float b) {
+    return max(min(r, g), min(max(r, g), b));
+}
+
 shader AutolibDecal [[ 
     string category = "autolib" 
 ]] (
     point UV = 0,
-    string filename = "", [[ string widget = "filename" ]]
-    float width = 0.1,
-    string units = "m", [[ string widget = "units" ]]
-
-    // Texture
+    string filename = "" [[ string widget = "filename" ]],
+    float width = 0.1 [[ string doc = "The width of the decal in the specified units. Image maintains aspect ratio" ]],
+    string units = "m" [[ string widget = "units" ]],
     int stickerMode = 0 [[ int slidermin = 0, int slidermax = 1, string doc = "UV sizing correction for images to maintain their size in world space" ]],
-    int autoGamma = 1 [[ int slidermin = 0, int slidermax = 1 ]],
-    float manualGamma = 1.0 [[ float min = 0 ]],
-    
+
+    float distanceRange = 6.0 [[ float slidermin = 0, string doc = "The distance range in world units that the MSDF texture encodes" ]],
+    int isMSDFTexture = 1 [[ string widget = "checkBox", int min = 0, int max = 1, string doc = "Whether the input texture is an MSDF (multi-channel signed distance field) or a regular alpha texture" ]],
+
     // Outputs
-    output color outColor = 0,
-    output float outAlpha = 0,
-    output vector testOutput = 0
+    output float alpha = 0,
+    output point texCoord = 0
 ) {
     int resolution[2]; // X, Y
     if (!gettextureinfo(filename, "resolution", resolution))
@@ -29,10 +31,7 @@ shader AutolibDecal [[
     float decalWidth  = width;
     float decalHeight = decalWidth * aspectRatio;
 
-    // blender doesn't support transformu()
-    //   transform(from, to, vec)
-    vector worldDim = transform(units, "world",
-                                vector(decalWidth, decalHeight, 0));
+    vector worldDim = transform(units, "world", vector(decalWidth, decalHeight, 0));
     float worldW = worldDim.x;
     float worldH = worldDim.y;
 
@@ -94,37 +93,47 @@ shader AutolibDecal [[
         V = (UV.y - 0.5) / uvSpanV + 0.5;
 
         testOutput = vector(worldPerU, worldPerV, 0);
-    } else {
+    } else if (isconnected(UV) && UV != 0) {
         point UVw = transform("world", UV);
 
         U = ((UVw.x - 0.5) / worldW) + 0.5;
         V = ((UVw.y - 0.5) / worldH) + 0.5;
+    } else {
+        U = 0.5;
+        V = 0.5;
     }
 
-    // eraly exit outside the decal rectangle
+    texCoord = point(U, 1-V, 0);
+
+    // early exit outside the decal rectangle
     if (U < 0.0 || U > 1.0 || V < 0.0 || V > 1.0)
         return;
 
-    outColor = texture(filename, U, 1.0 - V, "alpha", outAlpha);
-
-    int channels = 0;
-    gettextureinfo(filename, "channels", channels);
-
-    if (channels < 4)
-        outAlpha = 1.0;
-    
-    // Gamma handling
-    if (autoGamma) {
-        if (!endswith(filename, ".exr") &&
-            !endswith(filename, ".EXR") &&
-            !endswith(filename, ".hdr") &&
-            !endswith(filename, ".HDR") &&
-            !endswith(filename, ".tx")  &&
-            !endswith(filename, ".TX")) {
-            outColor = pow(outColor, 2.2);
-        }
-    } else if (manualGamma != 1.0) {
-        outColor = pow(outColor, manualGamma);
+    if (isMSDFTexture) {
+        texture(filename, texCoord.x, texCoord.y, "alpha", alpha);
+        return;
     }
+
+    color texel = texture(filename, texCoord.x, texCoord.y);
+    float dist = median(texel.r, texel.g, texel.b);
+
+    int res[2] = {1, 1};
+    gettextureinfo(filename, "resolution", res); 
+    
+    float unitRangeX = distanceRange / (float)res[0];
+    float unitRangeY = distanceRange / (float)res[1];
+    
+    float fwU = filterwidth(texCoord.x);
+    float fwV = filterwidth(texCoord.y);
+    
+    float screenTexSizeX = (fwU > 1e-6) ? (1.0 / fwU) : 0.0;
+    float screenTexSizeY = (fwV > 1e-6) ? (1.0 / fwV) : 0.0;
+    
+    float pxRange = max(0.5 * (unitRangeX * screenTexSizeX + unitRangeY * screenTexSizeY), 1.0);
+    
+    // Calculate final pixel distance and opacity
+    float pxDist = pxRange * (dist - 0.5);
+    alpha = clamp(pxDist + 0.5, 0.0, 1.0);
+
 }
     

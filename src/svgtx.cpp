@@ -5,8 +5,7 @@
 #include <iostream>
 #include <regex>
 #include <fstream>
-#include <execution>
-#include <numeric> 
+#include <optional>
 
 #include <OpenImageIO/half.h>
 #include <OpenImageIO/imageio.h>
@@ -424,6 +423,11 @@ int main(int argc, char* const argv[]) {
     
     if (!args.flatten) {
         layers = extractLayers(absFile);
+        if (layers.empty()) {
+            if (verbose) std::cout << "Warning: no Inkscape layers found in " << absFile << ", falling back to flat bake.\n";
+            layers.push_back({"", ""});
+            args.flatten = true; 
+        }
     } else {
         layers.push_back({"", ""});
     }
@@ -443,6 +447,11 @@ int main(int argc, char* const argv[]) {
             layers.size(),
             args
         });
+    }
+
+    if (layerJobs.empty()) {
+        std::cerr << "No layers found in SVG." << std::endl;
+        return 1;
     }
 
     std::mutex coutMutex;
