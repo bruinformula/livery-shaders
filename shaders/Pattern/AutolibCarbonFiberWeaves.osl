@@ -123,7 +123,7 @@ normal getBumpedNormal(
 shader AutolibCarbonFiberWeaves [[ 
     string category = "autolib" 
 ]] (
-    point UV = 0,
+    point UV = point(u, v, 0),
 
     vector fiberScale = vector(64, 32, 0) [[ string doc = "Scale axis of the carbon fiber pattern", vector min = vector(64, 32, 0) ]],
     float fiberZGamma = 1.5 [[ string doc = "Controls the sharpness of the fiber strands", float min = 0.1, float max = 4.0 ]],
@@ -134,14 +134,7 @@ shader AutolibCarbonFiberWeaves [[
     output normal outBumpedNormal = 0,
     output vector outRotation = 0
 ) {
-    point fiberUV;
-    if (isconnected(UV) || UV != 0) {
-        fiberUV = UV;
-    } else {
-        fiberUV = point(u, v, 0);
-    }
-
-    fiberUV *= fiberScale;
+    point fiberUV = UV * fiberScale;
 
     point weaveControlDataCoordinates = fiberUV;
     point weaveDataCoordinates = vector(fiberUV.y, fiberUV.x, 0);

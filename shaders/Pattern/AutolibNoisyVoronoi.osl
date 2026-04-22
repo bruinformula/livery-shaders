@@ -14,6 +14,10 @@ point fract(point p) {
 shader AutolibNoisyVoronoi [[ 
     string category = "autolib" 
 ]] (
+    // Input Mapping
+    point UVW = transform("world", P) [[ string doc = "World Space UVW" ]],
+    int objectUVW = 1 [[ string doc = "Use Object Space UVW instead of World Space UVW", int min = 0, int max = 1 ]],
+
     // Color 
     color color1 = 1,
     color color2 = 0,
@@ -28,14 +32,10 @@ shader AutolibNoisyVoronoi [[
     float cellExpansion = 1.5 [[ string doc = "Fill of each cell", float min = -2, float max = 2 ]],
 
     // Noise 
-    float noiseScale = 1 [[ string doc = "Edge noise size", float min = 0, float max = 10 ]],
-    float noiseAmount = 0.15 [[ string doc = "Multiplier for the edge noise size", float min = 0, float max = 10 ]],
+    float noiseScale = 1 [[ string doc = "Edge noise size", float min = 0, float max = 10  ]],
+    float noiseAmount = 0.15 [[ string doc = "Multiplier for the edge noise size", float min = 0, float max = 10  ]],
     int octaves = 1 [[ string doc = "Number of noise iterations", int min = 1, int max = 20 ]],
-    int noiseType = 2 [[ string doc = "Noise type", string options = "cell:0|hash:1|simplex:2" ]],
-
-    // Input Mapping
-    point UVW = transform("world", P) [[ string doc = "World Space UVW" ]],
-    int objectUVW = 1 [[ string doc = "Use Object Space UVW instead of World Space UVW", int min = 0, int max = 1 ]],
+    int noiseType = 2 [[ string doc = "Noise type", string widget = "mapper", string options = "cell:0|hash:1|simplex:2" ]],
 
     output color outColor = 0
 ) {

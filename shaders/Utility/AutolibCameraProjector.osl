@@ -6,8 +6,6 @@ shader AutolibCameraProjector [[
     string filename = "" [[ string page = "Decal" ]],
     vector aspect = vector(1, 1, 0) [[ string doc = "Aspect ratio (width/height) of the projection" ]],
     int useWidthImageAspect = 1 [[ int min = 0, int max = 1 ]],
-    int autoGamma = 1 [[ int min = 0, int max = 1 ]],
-    float manualGamma = 1.0 [[ float min = 0 ]],
 
     // Camera parameters
     point cameraPosition = 0,
@@ -28,6 +26,13 @@ shader AutolibCameraProjector [[
 ) {
     point camPos, targetPos, surfacePos;
     vector rightDir, upDir, surfaceNormal;
+
+    int textureExists = 0;
+    gettextureinfo(filename, "exists", textureExists);
+    if (!textureExists) {
+        
+        return;
+    }
     
     if (objectSpace) {
         camPos        = transform("", "object", cameraPosition);
@@ -95,16 +100,5 @@ shader AutolibCameraProjector [[
     if (channels < 4)
         outAlpha = 1.0;
 
-    if (autoGamma) {
-        if (!endswith(filename, ".exr") &&
-            !endswith(filename, ".EXR") &&
-            !endswith(filename, ".hdr") &&
-            !endswith(filename, ".HDR") &&
-            !endswith(filename, ".tx")  &&
-            !endswith(filename, ".TX")) {
-            outColor = pow(outColor, 2.2);
-        }
-    } else if (manualGamma != 1.0) {
-        outColor = pow(outColor, manualGamma);
-    }
+    outColor = pow(outColor, manualGamma);
 }

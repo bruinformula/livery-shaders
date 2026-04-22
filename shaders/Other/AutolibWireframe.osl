@@ -2,7 +2,7 @@
 shader AutolibWireframe [[ 
     string category = "autolib" 
 ]] (
-    int edgeType = 1 [[ string options = "triangles|polygons|patches" ]], 
+    int edgeType = 1 [[ string widget = "mapper", string options = "triangles|polygons|patches" ]], 
     float lineWidth = 1  [[ float min = 0.0 ]], 
     int raster = 1  [[ int min = 0, int max = 1 ]],
 

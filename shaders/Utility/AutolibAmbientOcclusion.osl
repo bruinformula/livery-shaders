@@ -16,7 +16,6 @@ shader AutolibAmbientOcclusion [[
     int isRayTypeDiffuse = raytype("diffuse");
     
     if (isRayTypeDiffuse) {
-        //closure color NullClosure = 0.0;
         outColor = inColor;
         closureOut = closureIn;
     } else {

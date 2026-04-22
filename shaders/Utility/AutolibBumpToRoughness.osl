@@ -50,7 +50,7 @@ shader AutolibBumpToRoughness [[
     
     int isTangentSpace = 1 [[ string widget = "checkBox", string doc = "Is the input normal in tangent space (vs world space)?" ]],
     float baseRoughness = 0.001 [[ string doc = "Base roughness at the micro-facet level", float min = 0.0, float max = 1.0 ]],
-    float gain = 1.0 [[ string doc = "Multiplier for aggregate roughness", float min = 0.0, float max = 10.0]],
+    float gain = 1.0 [[ string doc = "Multiplier for aggregate roughness", float min = 0.0, float max = 10.0 ]],
     float anisotropyGain = 1.0 [[ string doc = "Multiplier for aggregate anisotropy", float min = 0.0, float max = 2.0 ]],
     
     // Outputs

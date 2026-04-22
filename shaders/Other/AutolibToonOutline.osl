@@ -26,13 +26,12 @@ int probeForOutline(
 shader AutolibToonOutline [[ 
     string category = "autolib" 
 ]] (
-    float width = 0.01,
-    float distanceThreadshold = 1.1,
-    float normalThreadshold = 0.1,
+    float width = 0.01 [[ string doc = "Defines offset of the trace probe ray from the surface normal" ]],
+    float distanceThreadshold = 1.1 [[ string doc = "Defines a distance based comparison threshold for the probe and hit point" ]],
+    float normalThreadshold = 0.1 [[ string doc = "Defines a normal comparison threshold for the probe and hit point" ]],
     float noiseScale = 0,
     float noiseAmount = 0,
-    output float outAlpha = 0,
-    output closure color out = 0
+    output float outAlpha = 0
 ) {
 
     for (int i = -1; i <= 1; i++) {
@@ -76,12 +75,4 @@ shader AutolibToonOutline [[
             break;
         }
     }
-
-    if (outAlpha > 0) {
-        out = outAlpha * emission();
-        //out = outAlpha * diffuse(N);
-    } else {
-        out = transparent();
-    }
-
 }

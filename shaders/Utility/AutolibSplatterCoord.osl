@@ -38,14 +38,16 @@ float ellipseSDF(vector p, vector axisA, float majorRadius, float minorRadius) {
 shader AutolibSplatterCoord [[
     string category = "autolib"
 ]] (
-    point UV = 0,
+    point UV = point(u,v,0),
     float splatterScale = 20 [[ string page = "Pattern" ]],
-    int seed = 433 [[ string page = "Pattern" ]],
+    int seed = 433 [[ string page = "Pattern", int interactive = 0 ]],
     float jitter = 2.0 [[ string page = "Pattern" ]],
     float minRadius = 0.005 [[ string page = "Pattern" ]],
     float maxRadius = 0.3 [[ string page = "Pattern" ]],
     float perimeterSmoothness = 0.15 [[ string page = "Pattern", float min = 0.0, float max = 1.0 ]],
     float unionSmoothness = 8.0 [[ string page = "Pattern" ]],
+
+    int marchBound = 1 [[ string doc = "Sizes a grid for combining drops" ]],
 
     float coneHeight = 0.5 [[ string page = "Cone", float min = 0.001 ]],
     float coneTilt = 0.3 [[ string page = "Cone", float min = 0.0, float max = 2.0 ]],
@@ -63,12 +65,12 @@ shader AutolibSplatterCoord [[
     float bestTipDist = 1;
     int bestID;
 
-    int bound = 1;
-
     vector bestAxisA = vector(1, 0, 0);
     float bestMajorRadius = 1.0;
     float bestMinorRadius = 1.0;
     vector bestToSample = vector(0, 0, 0);
+
+    int bound = 2*marchBound + 1;
 
     for (int x = -bound; x <= bound; x++) {
         for (int y = -bound; y <= bound; y++) {

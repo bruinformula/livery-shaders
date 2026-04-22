@@ -11,7 +11,7 @@ shader AutolibRYB [[
     float red = 0.5 [[ float min = 0, float max = 1 ]],
     float yellow = 0.5 [[ float min = 0, float max = 1 ]],
     float blue = 0.5 [[ float min = 0, float max = 1 ]],
-    int method = 1 [[ string doc = "0 = Sugita, 1 = Gossett"]],
+    int method = 1 [[ string widget = "mapper", string options = "Sugita:0|Gossett:1"]],
     output color Cout = 1
 ) {
     // https://bahamas10.github.io/ryb/assets/ryb.pdf

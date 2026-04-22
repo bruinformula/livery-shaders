@@ -3,10 +3,10 @@
 shader AutolibCarbonFiberMaterial [[ 
     string category = "autolib"
 ]] (
-    float fiberNoise = 0.0,
-    float fiberBump = 0.0,
-    normal fiberBumpedNormal = 0,
-    vector fiberRotation = 0,
+    float fiberNoise = 0.0 [[ string page = "Fiber" ]],
+    float fiberBump = 0.0 [[ string page = "Fiber" ]],
+    normal fiberBumpedNormal = 0 [[ string page = "Fiber" ]],
+    vector fiberRotation = 0 [[ string page = "Fiber" ]],
 
     float fiberStrandBoost = 1.5 [[ string doc = "Boost the bump of the fiber strands", float min = 0, float max = 3 ]],
     float fiberSpecularWeight = 0.8 [[ string doc = "Specular amount of the carbon fiber weaves", float min = 0, float max = 1 ]],
