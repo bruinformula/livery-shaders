@@ -5,8 +5,8 @@ shader AutolibCameraProjector [[
 ]] (
     string filename = "" [[ string page = "Decal" ]],
     vector aspect = vector(1, 1, 0) [[ string doc = "Aspect ratio (width/height) of the projection" ]],
-    int useWidthImageAspect = 1 [[ int slidermin = 0, int slidermax = 1 ]],
-    int autoGamma = 1 [[ int slidermin = 0, int slidermax = 1 ]],
+    int useWidthImageAspect = 1 [[ int min = 0, int max = 1 ]],
+    int autoGamma = 1 [[ int min = 0, int max = 1 ]],
     float manualGamma = 1.0 [[ float min = 0 ]],
 
     // Camera parameters
@@ -18,8 +18,8 @@ shader AutolibCameraProjector [[
     // Projection controls
     float fov = 1 [[ float min = 0 ]],
     float overScan = 0.0 [[ float min = 0 ]],
-    int backface = 0 [[ string label = "Project on Back", int slidermin = 0, int slidermax = 1 ]],
-    int objectSpace = 0 [[ int slidermin = 0, int slidermax = 1 ]],
+    int backface = 0 [[ string label = "Project on Back", int min = 0, int max = 1 ]],
+    int objectSpace = 0 [[ int min = 0, int max = 1 ]],
 
     // Outputs
     output point outUV = 0,

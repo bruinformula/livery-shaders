@@ -1,6 +1,6 @@
 find_package(OpenImageIO REQUIRED)
+find_package(msdfgen REQUIRED)
 
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/nanosvg")
 
 # svgtx
 add_executable(svgtx "${CMAKE_CURRENT_SOURCE_DIR}/svgtx.cpp")
@@ -8,7 +8,7 @@ add_executable(svgtx "${CMAKE_CURRENT_SOURCE_DIR}/svgtx.cpp")
 target_include_directories(svgtx BEFORE PRIVATE ${OpenImageIO_INCLUDES})
 
 target_link_libraries(svgtx PRIVATE
-    nanosvg
+    msdfgen::msdfgen
     OpenImageIO::OpenImageIO
 )
 

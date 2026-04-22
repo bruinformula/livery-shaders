@@ -125,7 +125,7 @@ shader AutolibCarbonFiberWeaves [[
 ]] (
     point UV = 0,
 
-    vector fiberScale = vector(64, 32, 0) [[ string doc = "Scale axis of the carbon fiber pattern", vector slidermin = vector(64, 32, 0) ]],
+    vector fiberScale = vector(64, 32, 0) [[ string doc = "Scale axis of the carbon fiber pattern", vector min = vector(64, 32, 0) ]],
     float fiberZGamma = 1.5 [[ string doc = "Controls the sharpness of the fiber strands", float min = 0.1, float max = 4.0 ]],
     float fiberBumpStrength = 0.1 [[ string doc = "Strength of the bump effect", float min = 0, float max = 1 ]],
 
