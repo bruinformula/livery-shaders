@@ -15,27 +15,27 @@ shader AutolibNoisyVoronoi [[
     string category = "autolib" 
 ]] (
     // Input Mapping
-    point UVW = transform("world", P) [[ string doc = "World Space UVW" ]],
-    int objectUVW = 1 [[ string doc = "Use Object Space UVW instead of World Space UVW", int min = 0, int max = 1 ]],
+    point UVW = transform("world", P) [[ string help = "World Space UVW" ]],
+    int objectUVW = 1 [[ string help = "Use Object Space UVW instead of World Space UVW", int min = 0, int max = 1 ]],
 
     // Color 
     color color1 = 1,
     color color2 = 0,
-    int multicolored = 0 [[ string doc = "Output random colors. Color 1 and Color 2 are ignored.", int min = 0, int max = 1 ]],
+    int multicolored = 0 [[ string help = "Output random colors. Color 1 and Color 2 are ignored.", int min = 0, int max = 1 ]],
 
-    float scale = 1 [[ string doc = "Size of the cell pattern", float min = 0.001, float max = 10 ]],
-    float scaleMultiplier = 1 [[ string doc = "Multiplier for finer control of pattern size", float min = 0.001, float max = 10 ]],
+    float scale = 1 [[ string help = "Size of the cell pattern", float min = 0.001, float max = 10 ]],
+    float scaleMultiplier = 1 [[ string help = "Multiplier for finer control of pattern size", float min = 0.001, float max = 10 ]],
 
-    int seed = 0 [[ string doc = "Seed for random cell pattern", int min = 1, int max = 32767 ]],
-    float offsetMultiplier = 6 [[ string doc = "Multiplier for the offset for pattern variations", string page = "Extra control", float min = 0.01, float max = 10 ]],
-    int blobby = 0 [[ string doc = "Turns on or off metaball behavior", int min = 0, int max = 1 ]],
-    float cellExpansion = 1.5 [[ string doc = "Fill of each cell", float min = -2, float max = 2 ]],
+    int seed = 0 [[ string help = "Seed for random cell pattern", int min = 1, int max = 32767 ]],
+    float offsetMultiplier = 6 [[ string help = "Multiplier for the offset for pattern variations", string page = "Extra control", float min = 0.01, float max = 10 ]],
+    int blobby = 0 [[ string help = "Turns on or off metaball behavior", int min = 0, int max = 1 ]],
+    float cellExpansion = 1.5 [[ string help = "Fill of each cell", float min = -2, float max = 2 ]],
 
     // Noise 
-    float noiseScale = 1 [[ string doc = "Edge noise size", float min = 0, float max = 10  ]],
-    float noiseAmount = 0.15 [[ string doc = "Multiplier for the edge noise size", float min = 0, float max = 10  ]],
-    int octaves = 1 [[ string doc = "Number of noise iterations", int min = 1, int max = 20 ]],
-    int noiseType = 2 [[ string doc = "Noise type", string widget = "mapper", string options = "cell:0|hash:1|simplex:2" ]],
+    float noiseScale = 1 [[ string help = "Edge noise size", float min = 0, float max = 10  ]],
+    float noiseAmount = 0.15 [[ string help = "Multiplier for the edge noise size", float min = 0, float max = 10  ]],
+    int octaves = 1 [[ string help = "Number of noise iterations", int min = 1, int max = 20 ]],
+    int noiseType = 2 [[ string help = "Noise type", string widget = "mapper", string options = "cell:0|hash:1|simplex:2" ]],
 
     output color outColor = 0
 ) {

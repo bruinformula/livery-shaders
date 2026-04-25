@@ -1,0 +1,160 @@
+float fractalNoise( 
+    float x,
+    float scale,
+    int octaves,
+    float lacunarity,
+    float gain
+) {
+    float sum = 0.0;
+    float amplitude = 1.0;
+    float maxAmplitude = 0.0;
+    float frequency = scale;
+    for (int i = 0; i < octaves; i++) {
+        sum += noise("uperlin", x * frequency) * amplitude;
+        maxAmplitude += amplitude;
+        amplitude *= gain;
+        frequency *= lacunarity;
+    }
+    return (sum / maxAmplitude);
+}
+
+float calculateTrim(
+    float x,
+    float trimStart,
+    float trimEnd,
+    float trimTransitionWidth,
+    float trimExponent
+) {
+    float bias(float val, float b) {
+        float valClamped = clamp(val, 0.0, 1.0); 
+        return pow(valClamped, log(b) / log(0.5));
+    }
+
+    if (trimStart == trimEnd) {
+        return 1.0; 
+    }
+
+    // Clamp X to prevent popping outside the trim zones
+    float clampedX = clamp(x, min(trimStart, trimEnd), max(trimStart, trimEnd));
+    
+    // Normalize clampedX to a 0.0 -> 1.0 range based on start/end points
+    float scaledTrimInput = (clampedX - trimStart) / (trimEnd - trimStart);
+
+    float biased = bias(scaledTrimInput, trimExponent);
+
+    if (trimTransitionWidth <= 0) 
+        return biased; 
+
+    float transitionWeight;
+    if (trimStart < trimEnd) {
+        transitionWeight = 1.0 - smoothstep(trimEnd - trimTransitionWidth, trimEnd, clampedX);
+    } else {
+        transitionWeight = smoothstep(trimEnd, trimEnd + trimTransitionWidth, clampedX);
+    }
+
+    return mix(1.0, biased, transitionWeight);
+}
+
+shader AutolibBasicCurve [[ 
+    string category = "autolib" 
+]] (
+    point UV = point(u, v, 0),
+
+    float NoiseScale = 1 [[ string page = "Noise", float min = 0.1, float max = 10, int interactive = 1 ]],
+    int Octaves = 1 [[ string page = "Noise", int min = 1, int max = 8 ]],
+    float Lacunarity = 2.0 [[ string page = "Noise", float min = 1, int interactive = 1 ]],
+    float Gain = 0.5 [[ string page = "Noise", float min = 0, float max = 1, int interactive = 1 ]],
+
+    float BorderSmoothness = 0 [[ string page = "Border", float min = 0, float max = 1 ]],
+    float BandWidth = 0.3 [[ string page = "Border", float min = 0, float max = 1 ]],
+    float BandCenter = 0.5 [[ string page = "Border", float min = 0, float max = 1 ]],
+
+    float TrimWidth = 0.1 [[ string page = "Trim", float min = 0, float max = 1 ]],
+    float TrimTransitionWidth = 0.05 [[ string page = "Trim", float min = 0, float max = 1 ]],
+    float TrimExponent = 0.25 [[ string page = "Trim", float min = 0, float max = 1, int interactive = 1 ]],
+
+    int uniformNoiseScale = 1 [[ string widget = "checkBox", string help = "If enabled, the noise will scale uniformly based on world space size." ]],
+
+    output float worldLengthFactor = 1,
+    output float inRegion = 0,
+    output float inRegionSmooth = 0
+) {
+
+    if (uniformNoiseScale) {
+        if (!isconnected(UV)) { // By default there is no need to compute this manually
+            float worldPerU = length(dPdu);
+
+            if (worldPerU > 1e-6)
+                worldLengthFactor = worldPerU;
+        } else { // Same as AutolibDecal
+            vector dPdx = Dx(P);
+            vector dPdy = Dy(P);
+            vector dUVdx = Dx(UV);
+            vector dUVdy = Dy(UV);
+
+            float det = dUVdx.x * dUVdy.y - dUVdx.y * dUVdy.x;
+            
+            if (abs(det) > 1e-12) {
+                // This vector represents how 'P' moves in world space as 'U' moves
+                vector dPdU = (dUVdy.y * dPdx - dUVdx.y * dPdy) / det;
+                float worldPerU = length(dPdU);
+                
+                if (worldPerU > 1e-6)
+                    worldLengthFactor = worldPerU;
+            }
+        }
+    }
+
+    string objectName = "";
+    getattribute("geom:name", objectName);
+
+    int upperHash = hash(objectName);
+    int lowerHash = hash(upperHash);
+
+    float upperRandom = (float)(upperHash & 0x7fffffff) / (float)0x7fffffff;
+    float lowerRandom = (float)(lowerHash & 0x7fffffff) / (float)0x7fffffff;
+
+    // Noise offsets along U, seeded differently per object
+    float upperNoise = fractalNoise(upperRandom + UV.x, NoiseScale * worldLengthFactor, Octaves, Lacunarity, Gain);
+    float lowerNoise = fractalNoise(lowerRandom + UV.x, NoiseScale * worldLengthFactor, Octaves, Lacunarity, Gain);
+
+    float centeredUpperNoise = (upperNoise - 0.5) * 0.2;
+    float centeredLowerNoise = (lowerNoise - 0.5) * 0.2;
+
+    float upperEdge;
+    float lowerEdge;
+
+    if (TrimWidth != 0) {
+        // Left Trim: Start at 0 (trim = 0), end at TrimWidth (trim = 1)
+        float leftTrim = calculateTrim(UV.x, 0.0, TrimWidth, TrimTransitionWidth, TrimExponent);
+
+        // Right Trim: Start at 1.0 (trim = 0), end at 1.0 - TrimWidth (trim = 1)
+        float rightTrim = calculateTrim(UV.x, 1.0, 1.0 - TrimWidth, TrimTransitionWidth, TrimExponent);
+
+        float trimTotal = leftTrim * rightTrim;
+
+        // This makes the width physically shrink to 0 at the edges.
+        float halfBand = (BandWidth * 0.5) * trimTotal;
+        
+        // This calms the noise down to 0 at the edges so the tips converge perfectly to a point.
+        float trimmedUpperNoise = centeredUpperNoise * trimTotal;
+        float trimmedLowerNoise = centeredLowerNoise * trimTotal;
+        // Calculate final edges symmetrically around BandCenter
+        upperEdge = BandCenter + halfBand + trimmedUpperNoise;
+        lowerEdge = BandCenter - halfBand + trimmedLowerNoise;
+    } else {
+        // Calculate final edges symmetrically around BandCenter
+        upperEdge = BandCenter + centeredUpperNoise;
+        lowerEdge = BandCenter - centeredLowerNoise;
+    }
+
+    if (BorderSmoothness != 0) {
+        float aboveLower = smoothstep(lowerEdge, lowerEdge + BorderSmoothness, UV.y);
+        float belowUpper = 1.0 - smoothstep(upperEdge - BorderSmoothness, upperEdge, UV.y);
+        inRegionSmooth = aboveLower * belowUpper;
+    }
+
+    float aboveLower = step(lowerEdge, UV.y);
+    float belowUpper = step(UV.y, upperEdge);
+    inRegion = aboveLower * belowUpper;
+}

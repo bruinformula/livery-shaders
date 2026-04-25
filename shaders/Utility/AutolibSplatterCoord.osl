@@ -47,7 +47,7 @@ shader AutolibSplatterCoord [[
     float perimeterSmoothness = 0.15 [[ string page = "Pattern", float min = 0.0, float max = 1.0 ]],
     float unionSmoothness = 8.0 [[ string page = "Pattern" ]],
 
-    int marchBound = 1 [[ string doc = "Sizes a grid for combining drops" ]],
+    int marchBound = 1 [[ string help = "Sizes a grid for combining drops" ]],
 
     float coneHeight = 0.5 [[ string page = "Cone", float min = 0.001 ]],
     float coneTilt = 0.3 [[ string page = "Cone", float min = 0.0, float max = 2.0 ]],

@@ -6,26 +6,26 @@ float median(float r, float g, float b) {
 
 shader AutolibDecal [[ 
     string category = "autolib",
-    string doc = "The driving UV set used to orient and scale the decal. "
+    string help = "The driving UV set used to orient and scale the decal. "
                  "In 'Sticker Mode', the shader uses this coordinate's "
                  "world-space derivatives to ensure the decal maintains "
                  "its physical 'Width' regardless of geometry density."
 ]] (
-    point UV = 0 [[ string doc = "If in sticker mode, this is used as a base space in mapping from screenspace to world space." ]],
+    point UV = 0 [[ string help = "If in sticker mode, this is used as a base space in mapping from screenspace to world space." ]],
     string filename = "" [[ string widget = "filename" ]],
-    float width = 0.1 [[ string doc = "The width of the decal in the specified units. Image maintains aspect ratio" ]],
+    float width = 0.1 [[ string help = "The width of the decal in the specified units. Image maintains aspect ratio" ]],
     string units = "m" [[ string widget = "units" ]],
-    int stickerMode = 1 [[ string widget = "checkBox", int min = 0, int max = 1, string doc = "UV sizing correction for images to maintain their size in world space" ]],
+    int stickerMode = 1 [[ string widget = "checkBox", int min = 0, int max = 1, string help = "UV sizing correction for images to maintain their size in world space" ]],
 
-    float distanceRange = 6.0 [[ float min = 0, string doc = "The distance range in world units that the MSDF texture encodes" ]],
-    int isMSDFTexture = 1 [[ string widget = "checkBox", int min = 0, int max = 1, string doc = "Whether the input texture is an MSDF (multi-channel signed distance field) or a regular alpha texture" ]],
-    float sdfBlurAmount = 0 [[ float min = 0, float max = 1, string doc = "Blurs the texture read of the SDF channel" ]],
+    float distanceRange = 6.0 [[ float min = 0, string help = "The distance range in world units that the MSDF texture encodes" ]],
+    int isMSDFTexture = 1 [[ string widget = "checkBox", int min = 0, int max = 1, string help = "Whether the input texture is an MSDF (multi-channel signed distance field) or a regular alpha texture" ]],
+    float sdfBlurAmount = 0 [[ float min = 0, float max = 1, string help = "Blurs the texture read of the SDF channel" ]],
     string colorSpace = "linear" [[ string widget = "null" ]],
 
     // Outputs
-    output float alpha = 0 [[ string doc = "Clean linework computed from the SDF" ]],
-    output float sdfDistance = 0 [[ string doc = "distance from the edge of the  decal. Usd for wear patterns or whatever." ]],
-    output point texCoord = 0 [[ string doc = "Either a passthough of the UV or ones generated from stickermode" ]]
+    output float alpha = 0 [[ string help = "Clean linework computed from the SDF" ]],
+    output float sdfDistance = 0 [[ string help = "distance from the edge of the  decal. Usd for wear patterns or whatever." ]],
+    output point texCoord = 0 [[ string help = "Either a passthough of the UV or ones generated from stickermode" ]]
 ) {
     if (!isconnected(UV) || UV == 0) {
         return;

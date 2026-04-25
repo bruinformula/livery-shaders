@@ -56,11 +56,11 @@ struct Args {
         if (token == "-i" || token == "--input") {
             if (nextToken.empty()) goto expectOption;
             inputFile = nextToken;
-            return OK;
+            return OK_CONSUME;
         } else if (token == "-o" || token == "--output") {
             if (nextToken.empty()) goto expectOption;
             outputBaseName = nextToken;
-            return OK;
+            return OK_CONSUME;
         } else if (token == "-w" || token == "--width") {
             if (nextToken.empty()) goto expectOption;
             try {
@@ -69,7 +69,7 @@ struct Args {
                 std::cerr << "Invalid width value: " << nextToken << std::endl;
                 return FAIL;
             }
-            return OK;
+            return OK_CONSUME;
         } else if (token == "--pxrange") {
             if (nextToken.empty()) goto expectOption;
             try {
@@ -78,7 +78,7 @@ struct Args {
                 std::cerr << "Invalid pxrange value: " << nextToken << std::endl;
                 return FAIL;
             }
-            return OK;
+            return OK_CONSUME;
         } else if (token == "--angle") {
             if (nextToken.empty()) goto expectOption;
             try {
@@ -87,7 +87,7 @@ struct Args {
                 std::cerr << "Invalid angle value: " << nextToken << std::endl;
                 return FAIL;
             }
-            return OK;
+            return OK_CONSUME;
         } else if (token == "--seed") {
             if (nextToken.empty()) goto expectOption;
             try {
@@ -96,7 +96,7 @@ struct Args {
                 std::cerr << "Invalid seed value: " << nextToken << std::endl;
                 return FAIL;
             }
-            return OK;
+            return OK_CONSUME;
         } else if (token == "-f" || token == "--flatten") {
             flatten = true;
             return OK;
@@ -573,7 +573,7 @@ static bool bakeShape(
     // Write .tx
     OIIO::ImageSpec cfg;
     cfg.attribute("maketx:forcefloat",        0);
-    cfg.attribute("maketx:filtername",        "linear");
+    cfg.attribute("maketx:filtername",        "lanczos3");
     cfg.attribute("maketx:opaquedetect",      0);   // alpha = SDF, not opacity
     cfg.attribute("maketx:unpremult",         0);
     cfg.attribute("maketx:updatemode",        0);

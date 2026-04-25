@@ -8,10 +8,10 @@ shader AutolibCarbonFiberMaterial [[
     normal fiberBumpedNormal = 0 [[ string page = "Fiber" ]],
     vector fiberRotation = 0 [[ string page = "Fiber" ]],
 
-    float fiberStrandBoost = 1.5 [[ string doc = "Boost the bump of the fiber strands", float min = 0, float max = 3 ]],
-    float fiberSpecularWeight = 0.8 [[ string doc = "Specular amount of the carbon fiber weaves", float min = 0, float max = 1 ]],
+    float fiberStrandBoost = 1.5 [[ string help = "Boost the bump of the fiber strands", float min = 0, float max = 3 ]],
+    float fiberSpecularWeight = 0.8 [[ string help = "Specular amount of the carbon fiber weaves", float min = 0, float max = 1 ]],
 
-    color resinTint = color(0.3, 0.3, 0.27) [[ string doc = "Tint color of the resin" ]],
+    color resinTint = color(0.3, 0.3, 0.27) [[ string help = "Tint color of the resin" ]],
 	float resinWeight = 1.0 [[ string page = "Clearcoat", float min = 0.0, float max = 1.0 ]],
     normal resinNormal = N [[ string page = "Clearcoat" ]],
     vector resinTangent = 0 [[ string page = "Clearcoat" ]],

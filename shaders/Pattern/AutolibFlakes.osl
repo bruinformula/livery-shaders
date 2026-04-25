@@ -43,11 +43,11 @@ normal combineNormals(normal base, normal detail){
 shader AutolibFlakes [[ 
     string category = "autolib" 
 ]] ( 
-    point position = P [[ string doc = "The input point used to generate the flakes" ]], 
-    float scale = 0.1 [[ string doc = "The density of the flakes" ]],
+    point position = P [[ string help = "The input point used to generate the flakes" ]], 
+    float scale = 0.1 [[ string help = "The density of the flakes" ]],
     int seed = 0,
-    float density = 0.1 [[ float min = 0.0, float max = 1.0, string doc = "Ratio of flakes to non-flakes. 1.0 is 100 percent flake`" ]],
-    normal baseNormal = normal(0.5, 0.5, 1.0) [[ string doc = "The base normal used for the flakes" ]],
+    float density = 0.1 [[ float min = 0.0, float max = 1.0, string help = "Ratio of flakes to non-flakes. 1.0 is 100 percent flake`" ]],
+    normal baseNormal = normal(0.5, 0.5, 1.0) [[ string help = "The base normal used for the flakes" ]],
     output float rehash = 0,
     output float outAlpha = 1,
     output normal outNormal = normal(0.5, 0.5, 1.0),

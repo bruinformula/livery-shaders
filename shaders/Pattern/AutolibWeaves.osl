@@ -85,28 +85,28 @@ shader AutolibWeaves [[
 ]] (
     point UV = point(u,v,0),
 
-    float scale = 0.2 [[ string doc = "Pattern scale", float min = 0.001, float max = 10 ]],
+    float scale = 0.2 [[ string help = "Pattern scale", float min = 0.001, float max = 10 ]],
 
-    color uColor = 0.2 [[ string doc = "Color of U thread" ]],
-    color vColor = 0.5 [[ string doc = "Color of V thread" ]],
+    color uColor = 0.2 [[ string help = "Color of U thread" ]],
+    color vColor = 0.5 [[ string help = "Color of V thread" ]],
 
-    float width = 0.5 [[ string doc = "Thread width", float min = 0.0, float max = 1.0 ]],
-    float roundness = 1.0 [[ string doc = "Thread roundness", float min = 0.0, float max = 1.0 ]],
+    float width = 0.5 [[ string help = "Thread width", float min = 0.0, float max = 1.0 ]],
+    float roundness = 1.0 [[ string help = "Thread roundness", float min = 0.0, float max = 1.0 ]],
 
-    float roundnessBump = 1.0 [[ string doc = "Roundness outBumpiness strength", float min = 0.0, float max = 2.0 ]],
-    float roundShadow = 0.5 [[ string doc = "Round shading strength", float min = 0.0, float max = 1.0 ]],
+    float roundnessBump = 1.0 [[ string help = "Roundness outBumpiness strength", float min = 0.0, float max = 2.0 ]],
+    float roundShadow = 0.5 [[ string help = "Round shading strength", float min = 0.0, float max = 1.0 ]],
 
-    float weaveBump = 0.5 [[ string doc = "Weave outBumpiness intensity", float min = 0.0, float max = 2.0 ]],
-    float weaveShadow = 0.4 [[ string doc = "Weave shadow strength", float min = 0.0, float max = 1.0 ]],
+    float weaveBump = 0.5 [[ string help = "Weave outBumpiness intensity", float min = 0.0, float max = 2.0 ]],
+    float weaveShadow = 0.4 [[ string help = "Weave shadow strength", float min = 0.0, float max = 1.0 ]],
 
-    float frizz = 0.0 [[ string doc = "Fiber frizz amount", float min = 0.0, float max = 1.0 ]],
-    float frizzBump = 0.0 [[ string doc = "Frizz outBumpiness intensity", float min = 0.0, float max = 2.0 ]],
-    float frizzScale = 0.1 [[ string doc = "Frizz noise scale", float min = 0.0, float max = 10.0 ]],
+    float frizz = 0.0 [[ string help = "Fiber frizz amount", float min = 0.0, float max = 1.0 ]],
+    float frizzBump = 0.0 [[ string help = "Frizz outBumpiness intensity", float min = 0.0, float max = 2.0 ]],
+    float frizzScale = 0.1 [[ string help = "Frizz noise scale", float min = 0.0, float max = 10.0 ]],
 
-    float bendyness = 0.2 [[ string doc = "Thread bending randomness", float min = 0.0, float max = 1.0 ]],
-    float bendynessScale = 3.0 [[ string doc = "Bending noise scale", float min = 0.0, float max = 10.0 ]],
+    float bendyness = 0.2 [[ string help = "Thread bending randomness", float min = 0.0, float max = 1.0 ]],
+    float bendynessScale = 3.0 [[ string help = "Bending noise scale", float min = 0.0, float max = 10.0 ]],
 
-    float opacityFade = 0.0 [[ string doc = "Thread edge opacity fade", float min = 0.0, float max = 1.0 ]],
+    float opacityFade = 0.0 [[ string help = "Thread edge opacity fade", float min = 0.0, float max = 1.0 ]],
 
     output color outColor = 0,
     output float outBump = 0,

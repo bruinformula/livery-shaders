@@ -3,13 +3,13 @@
 shader AutolibHalftoneDots [[ 
 	string category = "autolib" 
 ]] (
-	vector UVW = 0  [[ string doc = "The input coordinate. If not connected, uses screen pixel space" ]],
-	color inputValue = 0.25  [[ string doc = "The input value defining the size of the dots to yield the right halftone density." ]],	
-	vector scale = vector(8.0, 8.0, 8.0)  [[ string doc = "This size of the dots. In the default screen space mapping, this is in pixels." ]],
-	float angle = 45.0  [[ string doc = "angle of the Halftoning" ]],	
+	vector UVW = 0  [[ string help = "The input coordinate. If not connected, uses screen pixel space" ]],
+	color inputValue = 0.25  [[ string help = "The input value defining the size of the dots to yield the right halftone density." ]],	
+	vector scale = vector(8.0, 8.0, 8.0)  [[ string help = "This size of the dots. In the default screen space mapping, this is in pixels." ]],
+	float angle = 45.0  [[ string help = "angle of the Halftoning" ]],	
 	float fuzz = 0.1  [[ float min = 0.0, float max = 2.0 ]],
-	color dotsColor = 0.0  [[ string doc = "The color of the dots" ]],		
-	color backgroundColor = 1.0  [[ string doc = "The color of the space between the dots" ]],
+	color dotsColor = 0.0  [[ string help = "The color of the dots" ]],		
+	color backgroundColor = 1.0  [[ string help = "The color of the space between the dots" ]],
 
 	int useUV = 1 [[int min = 0, int max = 1]],
 

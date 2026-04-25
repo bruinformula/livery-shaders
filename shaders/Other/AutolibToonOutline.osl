@@ -26,9 +26,9 @@ int probeForOutline(
 shader AutolibToonOutline [[ 
     string category = "autolib" 
 ]] (
-    float width = 0.01 [[ string doc = "Defines offset of the trace probe ray from the surface normal" ]],
-    float distanceThreadshold = 1.1 [[ string doc = "Defines a distance based comparison threshold for the probe and hit point" ]],
-    float normalThreadshold = 0.1 [[ string doc = "Defines a normal comparison threshold for the probe and hit point" ]],
+    float width = 0.01 [[ string help = "Defines offset of the trace probe ray from the surface normal" ]],
+    float distanceThreadshold = 1.1 [[ string help = "Defines a distance based comparison threshold for the probe and hit point" ]],
+    float normalThreadshold = 0.1 [[ string help = "Defines a normal comparison threshold for the probe and hit point" ]],
     float noiseScale = 0,
     float noiseAmount = 0,
     output float outAlpha = 0

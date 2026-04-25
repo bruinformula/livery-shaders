@@ -45,21 +45,21 @@ void covarianceToEigen(
 shader AutolibBumpToRoughness [[ 
     string category = "autolib" 
 ]] (    
-    vector UV = vector(u, v, 0) [[ string doc = "UV coordinates for the surface" ]],
-    vector bumpNormal = vector(0, 0, 1) [[ string doc = "Input bump/normal vector (in tangent space or world space)" ]],
+    vector UV = vector(u, v, 0) [[ string help = "UV coordinates for the surface" ]],
+    vector bumpNormal = vector(0, 0, 1) [[ string help = "Input bump/normal vector (in tangent space or world space)" ]],
     
-    int isTangentSpace = 1 [[ string widget = "checkBox", string doc = "Is the input normal in tangent space (vs world space)?" ]],
-    float baseRoughness = 0.001 [[ string doc = "Base roughness at the micro-facet level", float min = 0.0, float max = 1.0 ]],
-    float gain = 1.0 [[ string doc = "Multiplier for aggregate roughness", float min = 0.0, float max = 10.0 ]],
-    float anisotropyGain = 1.0 [[ string doc = "Multiplier for aggregate anisotropy", float min = 0.0, float max = 2.0 ]],
+    int isTangentSpace = 1 [[ string widget = "checkBox", string help = "Is the input normal in tangent space (vs world space)?" ]],
+    float baseRoughness = 0.001 [[ string help = "Base roughness at the micro-facet level", float min = 0.0, float max = 1.0 ]],
+    float gain = 1.0 [[ string help = "Multiplier for aggregate roughness", float min = 0.0, float max = 10.0 ]],
+    float anisotropyGain = 1.0 [[ string help = "Multiplier for aggregate anisotropy", float min = 0.0, float max = 2.0 ]],
     
     // Outputs
-    output normal outNormal = N [[ string doc = "Computed normal in world space" ]],
-    output float outRoughness = 0.0 [[ string doc = "Computed roughness value" ]],
-    output float outAnisotropy = 0.0 [[ string doc = "Computed anisotropy (0=isotropic, 1=max anisotropic)" ]],
-    output vector outAnisotropyDirection = vector(0) [[ string doc = "Direction of anisotropy in world space" ]],
-    output float outRoughnessU = 0.0 [[ string doc = "Roughness in U direction (major axis)" ]],
-    output float outRoughnessV = 0.0 [[ string doc = "Roughness in V direction (minor axis)" ]]
+    output normal outNormal = N [[ string help = "Computed normal in world space" ]],
+    output float outRoughness = 0.0 [[ string help = "Computed roughness value" ]],
+    output float outAnisotropy = 0.0 [[ string help = "Computed anisotropy (0=isotropic, 1=max anisotropic)" ]],
+    output vector outAnisotropyDirection = vector(0) [[ string help = "Direction of anisotropy in world space" ]],
+    output float outRoughnessU = 0.0 [[ string help = "Roughness in U direction (major axis)" ]],
+    output float outRoughnessV = 0.0 [[ string help = "Roughness in V direction (minor axis)" ]]
 ) {
 
     vector pPps, pPpt;
