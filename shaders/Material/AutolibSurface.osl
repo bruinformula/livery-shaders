@@ -113,7 +113,7 @@ surface AutolibSurface [[
 
     // Metal
     closure color metalMix;
-    if (in.base.metalness > 0 && in.specular.weight > 0) {
+    if (in.base.metalness > 0) {
         color metalR0 = in.base.col * in.base.weight;
         color metalR90 = in.specular.col;
 
@@ -153,19 +153,21 @@ surface AutolibSurface [[
         "thinfilm_thickness", 0, 
         "thinfilm_ior", 1.5
     );
-
-    closure color dielReflTf = dielectric_bsdf(
-        in.geometry.norm,                  
-        in.geometry.tangent, 
-        in.specular.col, color(0), 
-        specAx, specAy, 
-        modETA, 
-        "ggx", 
-        "thinfilm_thickness", tfNm, 
-        "thinfilm_ior", in.thin_film.ior
-    );
-
-    closure color dielReflMix = mix(dielRefl, dielReflTf, in.thin_film.weight);
+    
+    closure color dielReflMix;
+    if (in.thin_film.weight > 0) {
+        closure color dielReflTf = dielectric_bsdf(
+            in.geometry.norm, in.geometry.tangent,
+            in.specular.col, color(0),
+            specAx, specAy,
+            modETA, "ggx",
+            "thinfilm_thickness", tfNm,
+            "thinfilm_ior", in.thin_film.ior
+        );
+        dielReflMix = mix(dielRefl, dielReflTf, in.thin_film.weight);
+    } else {
+        dielReflMix = dielRefl;
+    }
 
     // Dielectric transmission + participating medium
     closure color dielVolumeTrans;
@@ -191,30 +193,29 @@ surface AutolibSurface [[
 
     // Diffuse base
     closure color diffuse_bsdf;
-    if (in.base.weight > 0 || in.subsurface.weight < 1) {
+    if (in.base.weight > 0 && in.subsurface.weight < 1) {
         diffuse_bsdf = in.base.weight * oren_nayar_diffuse_bsdf(in.geometry.norm, BaseColorNn, in.base.diffuse_roughness);
     }
 
     // Subsurface — volumetric path
     closure color sss;
     if (in.subsurface.weight > 0) {
-        color sssRadiusFinal = in.subsurface.radius * in.subsurface.radius_scale;
-
-        #if (OSL_VERSION_MAJOR == 1 && OSL_VERSION_MINOR >= 14) || (OSL_VERSION_MAJOR > 1)
-            closure color sssVolume = subsurface_bssrdf(in.geometry.norm, sssColorNn, sssRadiusFinal, in.subsurface.scatter_anisotropy);
-        #else
-            closure color sssVolume = subsurface_bssrdf(in.geometry.norm, sssColorNn, 1.0, sssRadiusFinal, in.subsurface.scatter_anisotropy);
-        #endif
-
-        // Subsurface — thin-walled path
-        float sssInv = 1 - in.subsurface.scatter_anisotropy;
-        float sssPlus = 1 + in.subsurface.scatter_anisotropy;
-
-        closure color sssTwR = sssInv * oren_nayar_diffuse_bsdf(in.geometry.norm, sssColorNn, in.base.diffuse_roughness);
-        closure color sssTwT = sssPlus * translucent_bsdf(in.geometry.norm, sssColorNn);
-        
-        closure color sssThin = in.subsurface.col * mix(sssTwT, sssTwR, 0.5);
-        sss = mix(sssVolume, sssThin, float(in.geometry.thin_walled));
+        if (in.geometry.thin_walled) {
+            float sssInv = 1 - in.subsurface.scatter_anisotropy;
+            float sssPlus = 1 + in.subsurface.scatter_anisotropy;
+            closure color sssTwR = sssInv * oren_nayar_diffuse_bsdf(
+                in.geometry.norm, sssColorNn, in.base.diffuse_roughness);
+            closure color sssTwT = sssPlus * translucent_bsdf(
+                in.geometry.norm, sssColorNn);
+            sss = in.subsurface.col * mix(sssTwT, sssTwR, 0.5);
+        } else {
+            color sssRadiusFinal = in.subsurface.radius * in.subsurface.radius_scale;
+            #if (OSL_VERSION_MAJOR == 1 && OSL_VERSION_MINOR >= 14) || (OSL_VERSION_MAJOR > 1)
+                sss = subsurface_bssrdf(in.geometry.norm, sssColorNn, sssRadiusFinal, in.subsurface.scatter_anisotropy);
+            #else
+                sss = subsurface_bssrdf(in.geometry.norm, sssColorNn, 1.0, sssRadiusFinal, in.subsurface.scatter_anisotropy);
+            #endif
+        }
     }
 
     // Layer stack (outermost -> innermost):  fuzz -> coat -> darkened(metal <-> dielectric) -> opaque <-> transmission
