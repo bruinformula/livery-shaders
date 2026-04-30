@@ -1,0 +1,11 @@
+shader AutolibTransform [[
+    string category = "autolib"   
+]] (
+    point Input = P,
+    string From = "common" [[ string widget = "popup", string options = "common|object|shader|world|camera|scren|raster|NDC" ]],
+    string To = "object" [[ string widget = "popup", string options = "common|object|shader|world|camera|scren|raster|NDC" ]],
+
+    output point Result = 0
+) {
+    Result = transform(From, To, Input);
+}

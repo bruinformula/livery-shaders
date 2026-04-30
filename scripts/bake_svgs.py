@@ -30,8 +30,8 @@ def bake_svgs(source_dir : Path, output_dir : Path, extra_flags: list):
         print(f"Baking: {file_path.name}")
         
         try:
-            #command_str = ['svgtx'] + extra_flags + ["-i", str(file_path)]
-            command_str = ["msdfgen", "mtsdf", "-svg", str(file_path), "-autoframe", "-dimensions", "512", "512", "-format", "tiff", "-o", str(file_path) + ".tiff" ]
+            command_str = ['svgtx'] + extra_flags + ["-i", str(file_path)]
+            #command_str = ["msdfgen", "mtsdf", "-svg", str(file_path), "-autoframe", "-dimensions", "512", "512", "-format", "tiff", "-o", str(file_path) + ".tiff" ]
             #print(command_str)
             result = subprocess.run(
                 command_str, 

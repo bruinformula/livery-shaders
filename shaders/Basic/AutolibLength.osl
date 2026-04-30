@@ -1,0 +1,9 @@
+shader AutolibLength [[
+    string category = "autolib"
+]] (
+    vector Input = vector(0, 0, 0),
+
+    output float Length = 0
+) {
+    Length = length(Input);
+}

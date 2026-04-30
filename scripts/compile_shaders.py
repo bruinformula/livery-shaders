@@ -73,5 +73,5 @@ if __name__ == "__main__":
     
     output_dir = Path(output_env).resolve()
 
-    extra_args = ['-O2'] 
+    extra_args = [] 
     compile_shaders(source_dir, output_dir, extra_args)

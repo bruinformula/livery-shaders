@@ -1,0 +1,17 @@
+shader AutolibCross [[
+    string category = "autolib"
+]] (
+    vector VectorA = vector(1, 0, 0),
+    vector VectorB = vector(0, 1, 0),
+    int NormalizeResult = 1 [[ string widget = "checkBox" ]],
+
+    output vector Result = 0
+) {
+    vector c = cross(VectorA, VectorB);
+    
+    if (NormalizeResult) {
+        Result = normalize(c);
+    } else {
+        Result = c;
+    }
+}

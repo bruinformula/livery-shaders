@@ -1,0 +1,23 @@
+
+shader AutolibFromColor [[
+    string category = "autolib"
+]] (
+    color Input = 0.0 [[ string label = "Input", string help = "The color or vector to extract a float from." ]],
+    int Mode = 0 [[ string widget = "mapper",  string options = "Channel R:0|Channel G:1|Channel B:2|Luminance:3|Average:4", int connectable = 0 ]],
+
+    output float resultF = 0
+) {
+    if (Mode == 0) {
+        resultF = Input.r;
+    } else if (Mode == 1) {
+        resultF = Input.g;
+    } else if (Mode == 2) {
+        resultF = Input.b;
+    } else if (Mode == 3) {
+        resultF = luminance(Input);
+    } else if (Mode == 4) {
+        resultF = (Input.r + Input.g + Input.b) / 3.0;
+    } else {
+        resultF = 0.5;
+    }
+}

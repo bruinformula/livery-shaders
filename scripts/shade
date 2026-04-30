@@ -1,2 +1,2 @@
-oslc ../shaders/Pattern/AutolibBasicCurve.osl
-testshade -g 1024 1024 AutolibBasicCurve.oso  -o outValue outValue.png
+oslc shaders/Pattern/AutolibBasicCurve.osl
+testshade -g 1024 1024 AutolibBasicCurve.oso  -o inRegion inRegion.png

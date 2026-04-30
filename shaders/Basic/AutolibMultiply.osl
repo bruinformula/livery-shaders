@@ -1,0 +1,11 @@
+shader AutolibMultiply [[
+    string category = "autolib"
+]] (
+    color InputA = 1.0,
+    color InputB = 1.0,
+    float Scalar = 1.0,
+
+    output color Output = 0
+) {
+    Output = (InputA * InputB) * Scalar;
+}

@@ -1,0 +1,52 @@
+shader AutolibManifold [[
+    string category = "autolib"
+]] (
+    string CoordType = "uv" [[ string widget = "popup", string options = "uv|st|PObject|PWorld" ]],
+    point OtherCoord = 0 [[ string widget = "null", string help = "Will only be used if connected"]],
+    float Scale = 1.0 [[ string widget = "number", int interactive = 1 ]],
+    vector Repeat = 1.0 [[ string widget = "number", int interactive = 1 ]],
+    vector Offset = 0.0 [[ string widget = "number", int interactive = 1 ]],
+    float Rotate = 0.0 [[ string widget = "number", int slider = 1, float slidermin = 0, float slidermax = 360 ]],
+
+    output point Result = 0
+) {
+    point p;
+
+    if (isconnected(OtherCoord)) {
+        p = OtherCoord;
+    } else if (CoordType == "uv") {
+        p = point(u, v, 0);
+    } else if (CoordType == "st") {
+        getattribute("st", p);
+    } else if (CoordType == "PObject") {
+        p = transform("object", P);
+    } else if (CoordType == "PWorld") {
+        p = transform("world", P);
+    } else {
+        p = point(u, v, 0);
+    }
+    
+    // Rotate
+    if (Rotate != 0.0) {
+        float angle = radians(Rotate);
+        float s = sin(angle);
+        float c = cos(angle);
+        float x = p[0];
+        float y = p[1];
+        p[0] = x * c - y * s;
+        p[1] = x * s + y * c;
+    }
+
+    // Scale and Offset
+    if (Scale != 1.0) {
+        p *= Scale;
+    }
+    if (Repeat != vector(1.0)) {
+        p *= Repeat;
+    }
+    if (Offset != vector(0.0)) {
+        p += Offset;
+    }
+
+    Result = p;
+}

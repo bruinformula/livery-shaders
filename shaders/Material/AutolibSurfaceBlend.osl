@@ -1,0 +1,40 @@
+#include "OpenPBRSurface.h"
+
+// See Physcially based shading imagworks talk by Mr. Kirley
+float wmix(float weight_A, float weight_B, float x) {
+    if (weight_A == weight_B)
+        return x; // both A and B exist in equally, just return x. aka LERP.
+    if (weight_A == 0)
+        return 1; // A has nothing, take everything from B
+    if (weight_B == 0)
+        return 0; // B has nothing, take everything from A
+    // NOTE: the ifs above just avoid numerical singularities
+    // but are otherwise continuous with this general formula
+    float a = (1 - x) * weight_A; // how much of A
+    float b = x * weight_B; // how much of B
+    return b / (a + b);
+}
+
+surface AutolibSurfaceBlend [[
+    string category = "autolib"
+]] (
+    float BlendFactor = 0.5  [[ float min = 0.0, float max = 1.0 ]],
+    OpenPBRSurface MaterialA = {},
+    OpenPBRSurface MaterialB = {},
+    output OpenPBRSurface MaterialOut = {}
+) {
+    float clampedBlend = clamp(BlendFactor, 0, 1);
+
+    if (!isconnected(MaterialA) || BlendFactor == 0) {
+        MaterialOut = MaterialB;
+        return;
+    }
+    if (!isconnected(MaterialB) || BlendFactor == 1) {
+        MaterialOut = MaterialA;
+        return;
+    }
+
+
+
+
+}

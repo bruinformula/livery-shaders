@@ -1,0 +1,19 @@
+shader AutolibDot [[
+    string category = "autolib"
+]] (
+    vector VectorA = N,
+    vector VectorB = I,
+    int NormalizeInputs = 1,
+
+    output float Result = 0
+) {
+    vector a = VectorA;
+    vector b = VectorB;
+    
+    if (NormalizeInputs) {
+        a = normalize(VectorA);
+        b = normalize(VectorB);
+    }
+
+    Result = dot(a, b);
+}

@@ -1,0 +1,11 @@
+shader AutolibClamp [[
+    string category = "autolib"
+]] (
+    color Input = 0.5,
+    float Min = 0.0,
+    float Max = 1.0,
+
+    output color Output = 0
+) {
+    Output = clamp(Input, Min, Max);
+}

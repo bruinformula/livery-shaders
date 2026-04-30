@@ -22,6 +22,7 @@ float calculateTrim(
     float x,
     float trimStart,
     float trimEnd,
+    float trimLowerBound,
     float trimTransitionWidth,
     float trimExponent
 ) {
@@ -40,7 +41,7 @@ float calculateTrim(
     // Normalize clampedX to a 0.0 -> 1.0 range based on start/end points
     float scaledTrimInput = (clampedX - trimStart) / (trimEnd - trimStart);
 
-    float biased = bias(scaledTrimInput, trimExponent);
+    float biased = (1 - trimLowerBound) * bias(scaledTrimInput, trimExponent) + trimLowerBound;
 
     if (trimTransitionWidth <= 0) 
         return biased; 
@@ -54,11 +55,11 @@ float calculateTrim(
 
     return mix(1.0, biased, transitionWeight);
 }
-
 shader AutolibBasicCurve [[ 
     string category = "autolib" 
 ]] (
-    point UV = point(u, v, 0),
+    point UV = point(u, v, 0), 
+    int SwapUAndV = 0 [[ string widget = "checkBox", string help = "By default, the primary axis (length) is U. Turn this on to use V as the length." ]], 
 
     float NoiseScale = 1 [[ string page = "Noise", float min = 0.1, float max = 10, int interactive = 1 ]],
     int Octaves = 1 [[ string page = "Noise", int min = 1, int max = 8 ]],
@@ -69,7 +70,8 @@ shader AutolibBasicCurve [[
     float BandWidth = 0.3 [[ string page = "Border", float min = 0, float max = 1 ]],
     float BandCenter = 0.5 [[ string page = "Border", float min = 0, float max = 1 ]],
 
-    float TrimWidth = 0.1 [[ string page = "Trim", float min = 0, float max = 1 ]],
+    float TrimWidth = 0.1 [[ string page = "Trim", float min = 0, float max = 1 ]], 
+    float TrimLowerBound = 0.10 [[ string page = "Trim", float min = 0, float max = 1 ]],
     float TrimTransitionWidth = 0.05 [[ string page = "Trim", float min = 0, float max = 1 ]],
     float TrimExponent = 0.25 [[ string page = "Trim", float min = 0, float max = 1, int interactive = 1 ]],
 
@@ -79,14 +81,16 @@ shader AutolibBasicCurve [[
     output float inRegion = 0,
     output float inRegionSmooth = 0
 ) {
+    float coordU = SwapUAndV ? UV.y : UV.x;
+    float coordV = SwapUAndV ? UV.x : UV.y;
 
+    // Calculate World Length Factor
     if (uniformNoiseScale) {
-        if (!isconnected(UV)) { // By default there is no need to compute this manually
-            float worldPerU = length(dPdu);
-
-            if (worldPerU > 1e-6)
+        if (!isconnected(UV)) { // Standard geometric derivatives
+            float worldPerU = SwapUAndV ? length(dPdv) : length(dPdu);
+            if (worldPerU > 1e-6) 
                 worldLengthFactor = worldPerU;
-        } else { // Same as AutolibDecal
+        } else { // Screen-space Jacobian
             vector dPdx = Dx(P);
             vector dPdy = Dy(P);
             vector dUVdx = Dx(UV);
@@ -95,66 +99,58 @@ shader AutolibBasicCurve [[
             float det = dUVdx.x * dUVdy.y - dUVdx.y * dUVdy.x;
             
             if (abs(det) > 1e-12) {
-                // This vector represents how 'P' moves in world space as 'U' moves
-                vector dPdU = (dUVdy.y * dPdx - dUVdx.y * dPdy) / det;
-                float worldPerU = length(dPdU);
-                
-                if (worldPerU > 1e-6)
-                    worldLengthFactor = worldPerU;
+                vector dP_dLength;
+                if (SwapUAndV) {
+                    // We want world change relative to V
+                    dP_dLength = (-dUVdy.x * dPdx + dUVdx.x * dPdy) / det;
+                } else {
+                    // We want world change relative to U
+                    dP_dLength = (dUVdy.y * dPdx - dUVdx.y * dPdy) / det;
+                }
+                float len = length(dP_dLength);
+                if (len > 1e-6) worldLengthFactor = len;
             }
         }
     }
 
+    // Object-based Randomness
     string objectName = "";
     getattribute("geom:name", objectName);
-
     int upperHash = hash(objectName);
     int lowerHash = hash(upperHash);
-
     float upperRandom = (float)(upperHash & 0x7fffffff) / (float)0x7fffffff;
     float lowerRandom = (float)(lowerHash & 0x7fffffff) / (float)0x7fffffff;
 
-    // Noise offsets along U, seeded differently per object
-    float upperNoise = fractalNoise(upperRandom + UV.x, NoiseScale * worldLengthFactor, Octaves, Lacunarity, Gain);
-    float lowerNoise = fractalNoise(lowerRandom + UV.x, NoiseScale * worldLengthFactor, Octaves, Lacunarity, Gain);
+    // Noise 
+    float upperNoise = fractalNoise(upperRandom + coordU, NoiseScale * worldLengthFactor, Octaves, Lacunarity, Gain);
+    float lowerNoise = fractalNoise(lowerRandom + coordU, NoiseScale * worldLengthFactor, Octaves, Lacunarity, Gain);
 
     float centeredUpperNoise = (upperNoise - 0.5) * 0.2;
     float centeredLowerNoise = (lowerNoise - 0.5) * 0.2;
 
-    float upperEdge;
-    float lowerEdge;
+    float upperEdge, lowerEdge;
 
     if (TrimWidth != 0) {
-        // Left Trim: Start at 0 (trim = 0), end at TrimWidth (trim = 1)
-        float leftTrim = calculateTrim(UV.x, 0.0, TrimWidth, TrimTransitionWidth, TrimExponent);
-
-        // Right Trim: Start at 1.0 (trim = 0), end at 1.0 - TrimWidth (trim = 1)
-        float rightTrim = calculateTrim(UV.x, 1.0, 1.0 - TrimWidth, TrimTransitionWidth, TrimExponent);
-
+        float leftTrim = calculateTrim(coordU, 0.0, TrimWidth, TrimLowerBound, TrimTransitionWidth, TrimExponent);
+        float rightTrim = calculateTrim(coordU, 1.0, 1.0 - TrimWidth, TrimLowerBound, TrimTransitionWidth, TrimExponent);
         float trimTotal = leftTrim * rightTrim;
 
-        // This makes the width physically shrink to 0 at the edges.
         float halfBand = (BandWidth * 0.5) * trimTotal;
-        
-        // This calms the noise down to 0 at the edges so the tips converge perfectly to a point.
         float trimmedUpperNoise = centeredUpperNoise * trimTotal;
         float trimmedLowerNoise = centeredLowerNoise * trimTotal;
-        // Calculate final edges symmetrically around BandCenter
+        
         upperEdge = BandCenter + halfBand + trimmedUpperNoise;
         lowerEdge = BandCenter - halfBand + trimmedLowerNoise;
     } else {
-        // Calculate final edges symmetrically around BandCenter
-        upperEdge = BandCenter + centeredUpperNoise;
-        lowerEdge = BandCenter - centeredLowerNoise;
+        upperEdge = BandCenter + (BandWidth * 0.5) + centeredUpperNoise;
+        lowerEdge = BandCenter - (BandWidth * 0.5) - centeredLowerNoise;
     }
 
     if (BorderSmoothness != 0) {
-        float aboveLower = smoothstep(lowerEdge, lowerEdge + BorderSmoothness, UV.y);
-        float belowUpper = 1.0 - smoothstep(upperEdge - BorderSmoothness, upperEdge, UV.y);
+        float aboveLower = smoothstep(lowerEdge, lowerEdge + BorderSmoothness, coordV);
+        float belowUpper = 1.0 - smoothstep(upperEdge - BorderSmoothness, upperEdge, coordV);
         inRegionSmooth = aboveLower * belowUpper;
     }
 
-    float aboveLower = step(lowerEdge, UV.y);
-    float belowUpper = step(UV.y, upperEdge);
-    inRegion = aboveLower * belowUpper;
+    inRegion = step(lowerEdge, coordV) * step(coordV, upperEdge);
 }

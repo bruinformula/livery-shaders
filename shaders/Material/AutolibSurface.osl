@@ -1,0 +1,247 @@
+#include "OpenPBRSurface.h"
+
+// Anisotropy helper — returns alpha_x and alpha_y as separate floats
+void openpbr_anisotropy(
+    float roughness, 
+    float anisotropy,
+    output float alpha_x, 
+    output float alpha_y
+) {
+    float roughSq = roughness * roughness;
+    float inv = 1 - anisotropy;
+    float sq = sqrt(2.0 / (pow(inv, 2) + 1));
+    alpha_x = roughSq * sq;
+    alpha_y = inv * alpha_x;
+}
+
+surface AutolibSurface [[
+    string category = "autolib"
+]] (
+    OpenPBRSurface in = {} [[ string widget = "null" ]],
+    output closure color Cout = 0
+) {
+    // Thin-film thickness in nanometres
+    float tfNm = in.thin_film.thickness * 1000;
+
+    // Coat roughness alphas
+    float coatAx, coatAy;
+    openpbr_anisotropy(in.coat.roughness, in.coat.roughness_anisotropy, coatAx, coatAy);
+
+    // Coat F0
+    float CoatIORM1 = in.coat.ior - 1;
+    float CoatIORP1 = in.coat.ior + 1;
+    float coat_F0Sqrt = CoatIORM1 / CoatIORP1;
+    float coat_F0 = coat_F0Sqrt * coat_F0Sqrt;
+    float CoatIORSqr = in.coat.ior * in.coat.ior;
+
+    // Coat roughening of specular
+    float coatR4 = pow(in.coat.roughness, 4.0);
+    float specR4 = pow(in.specular.roughness, 4.0);
+    float combinedR4 = min(1, 2.0 * coatR4 + specR4);
+    float coatedSpecRoughness = pow(combinedR4, 0.25);
+    float effSpecRoughness = mix(in.specular.roughness, coatedSpecRoughness, in.coat.weight);
+
+    // Main specular alphas
+    float specAx, specAy;
+    openpbr_anisotropy(effSpecRoughness, in.specular.roughness_anisotropy, specAx, specAy);
+
+    // Modulated specular IOR
+    float s2c = in.specular.ior / in.coat.ior;
+    float c2s = in.coat.ior / in.specular.ior;
+    float tirFix = (s2c > 1) ? s2c : c2s;
+    float etaS = mix(in.specular.ior, tirFix, in.coat.weight);
+
+    float etaM1 = etaS - 1;
+    float etaP1 = etaS + 1;
+    float F0Sqrt = etaM1 / etaP1;
+    float F0 = F0Sqrt * F0Sqrt;
+    float sF0 = clamp(in.specular.weight * F0, 0, 0.99999);
+    float eps = sign(etaM1) * sqrt(sF0);
+    float modETA = (1 + eps) / (1 - eps);
+
+    // Volume / transmission coefficients
+    color tcSafe = max(in.transmission.col, 1e-6);
+    float tdSafe = max(in.transmission.depth, 1e-6);
+
+    vector extNum = -log(tcSafe);
+    vector extCoeff = extNum / tdSafe;
+    vector scaCoeff = in.transmission.scatter / tdSafe;
+    vector absCoeff = extCoeff - scaCoeff;
+
+    // Shift absorption so minimum channel > = 0
+    float absMin = min(min(absCoeff.x, absCoeff.y), absCoeff.z);
+    vector absShifted = absCoeff - vector(absMin, absMin, absMin);
+    vector finalAbs = (0 > absMin) ? absShifted : absCoeff;
+
+    vector volAbsorption = (in.transmission.depth > 0) ? finalAbs : vector(0);
+    vector volScattering = (in.transmission.depth > 0) ? scaCoeff : vector(0);
+
+    color transTint = (in.transmission.depth > 0) ? color(1) : in.transmission.col;
+
+    // Coat darkening
+    float oneM_F0 = 1 - coat_F0;
+    float Kcoat = 1 - oneM_F0 / CoatIORSqr;
+    float oneM_Kcoat = 1 - Kcoat;
+
+    color Emetal = in.base.col * in.specular.weight;
+    color Edielectric = mix(in.base.col, in.subsurface.col, in.subsurface.weight);
+    color Ebase = mix(Edielectric, Emetal, in.base.metalness);
+
+    color baseDarkening = color(oneM_Kcoat, oneM_Kcoat, oneM_Kcoat) / (color(1) - Ebase * Kcoat);
+
+    color modDarkening = mix(1, baseDarkening, in.coat.weight * in.coat.darkening);
+    color coatAtten = mix(1, in.coat.col, in.coat.weight);
+
+    // Safe nonnegative inputs
+    color BaseColorNn = max(in.base.col, 0);
+    color sssColorNn = max(in.subsurface.col, 0);
+
+    // Fuzz
+    closure color fuzz_bsdf = in.fuzz.weight * sheen_bsdf(in.geometry.norm, in.fuzz.col, in.fuzz.roughness);
+
+    // Coat
+    closure color coat_bsdf = in.coat.weight * dielectric_bsdf(
+        in.geometry.coat_normal,  
+        in.geometry.coat_tangent,
+        color(1), color(0),
+        coatAx, coatAy, 
+        in.coat.ior, 
+        "ggx", 
+        "thinfilm_thickness", 0, 
+        "thinfilm_ior", 1.5
+    );
+
+    // Metal
+    closure color metalMix;
+    if (in.base.metalness > 0 && in.specular.weight > 0) {
+        color metalR0 = in.base.col * in.base.weight;
+        color metalR90 = in.specular.col;
+
+        closure color metal_bsdf = in.specular.weight * generalized_schlick_bsdf(
+            in.geometry.norm, 
+            in.geometry.tangent, 
+            color(1), color(0), 
+            specAx, specAy, 
+            metalR0, metalR90, 5.0, 
+            "ggx", 
+            "thinfilm_thickness", 0, 
+            "thinfilm_ior", 1.5
+        );
+
+        closure color metal_bsdfTf = in.specular.weight * generalized_schlick_bsdf(
+            in.geometry.norm, 
+            in.geometry.tangent, 
+            color(1), color(0), 
+            specAx, specAy, 
+            metalR0, metalR90, 5.0, 
+            "ggx", 
+            "thinfilm_thickness", tfNm, 
+            "thinfilm_ior", in.thin_film.ior
+        );
+
+        metalMix = mix(metal_bsdf, metal_bsdfTf, in.thin_film.weight);
+    }
+
+
+    // Dielectric reflection (base + thin-film variant)
+    closure color dielRefl = dielectric_bsdf(
+        in.geometry.norm, 
+        in.geometry.tangent, 
+        in.specular.col, color(0), 
+        specAx, specAy, 
+        modETA, "ggx", 
+        "thinfilm_thickness", 0, 
+        "thinfilm_ior", 1.5
+    );
+
+    closure color dielReflTf = dielectric_bsdf(
+        in.geometry.norm,                  
+        in.geometry.tangent, 
+        in.specular.col, color(0), 
+        specAx, specAy, 
+        modETA, 
+        "ggx", 
+        "thinfilm_thickness", tfNm, 
+        "thinfilm_ior", in.thin_film.ior
+    );
+
+    closure color dielReflMix = mix(dielRefl, dielReflTf, in.thin_film.weight);
+
+    // Dielectric transmission + participating medium
+    closure color dielVolumeTrans;
+    if (in.transmission.weight > 0) {
+        closure color dielTrans = dielectric_bsdf(
+            in.geometry.norm, 
+            in.geometry.tangent, 
+            color(0), transTint, 
+            specAx, specAy, 
+            modETA, 
+            "ggx", 
+            "thinfilm_thickness", 0, 
+            "thinfilm_ior", 1.5
+        );
+
+        vector extinction = volAbsorption + volScattering;
+        vector safe_ext = max(extinction, 1e-8);
+
+        closure color vol = anisotropic_vdf(volScattering / safe_ext, extinction, in.transmission.scatter_anisotropy);
+
+        dielVolumeTrans = layer(dielTrans, vol);
+    }
+
+    // Diffuse base
+    closure color diffuse_bsdf;
+    if (in.base.weight > 0 || in.subsurface.weight < 1) {
+        diffuse_bsdf = in.base.weight * oren_nayar_diffuse_bsdf(in.geometry.norm, BaseColorNn, in.base.diffuse_roughness);
+    }
+
+    // Subsurface — volumetric path
+    closure color sss;
+    if (in.subsurface.weight > 0) {
+        color sssRadiusFinal = in.subsurface.radius * in.subsurface.radius_scale;
+
+        #if (OSL_VERSION_MAJOR == 1 && OSL_VERSION_MINOR >= 14) || (OSL_VERSION_MAJOR > 1)
+            closure color sssVolume = subsurface_bssrdf(in.geometry.norm, sssColorNn, sssRadiusFinal, in.subsurface.scatter_anisotropy);
+        #else
+            closure color sssVolume = subsurface_bssrdf(in.geometry.norm, sssColorNn, 1.0, sssRadiusFinal, in.subsurface.scatter_anisotropy);
+        #endif
+
+        // Subsurface — thin-walled path
+        float sssInv = 1 - in.subsurface.scatter_anisotropy;
+        float sssPlus = 1 + in.subsurface.scatter_anisotropy;
+
+        closure color sssTwR = sssInv * oren_nayar_diffuse_bsdf(in.geometry.norm, sssColorNn, in.base.diffuse_roughness);
+        closure color sssTwT = sssPlus * translucent_bsdf(in.geometry.norm, sssColorNn);
+        
+        closure color sssThin = in.subsurface.col * mix(sssTwT, sssTwR, 0.5);
+        sss = mix(sssVolume, sssThin, float(in.geometry.thin_walled));
+    }
+
+    // Layer stack (outermost -> innermost):  fuzz -> coat -> darkened(metal <-> dielectric) -> opaque <-> transmission
+    closure color opaqueBase = mix(diffuse_bsdf, sss, in.subsurface.weight);
+    closure color dielSubstrate = mix(opaqueBase, dielVolumeTrans, in.transmission.weight);
+    closure color dielBase = layer(dielReflMix, dielSubstrate);
+    closure color baseSub = mix(dielBase, metalMix, in.base.metalness);
+    closure color darkened = modDarkening * baseSub;
+    closure color coatAttenuated = coatAtten * darkened;
+    closure color coatLayer = layer(coat_bsdf, coatAttenuated);
+    closure color fuzzLayer = layer(fuzz_bsdf, coatLayer);
+
+    // Emission with Schlick Fresnel modulation through coat
+    closure color uncoated_edf = uniform_edf(in.emission.col * in.emission.luminance);
+    closure color tinted_edf = in.coat.col * uncoated_edf;
+
+    float NdotV = fabs(dot(in.geometry.norm, -I));
+    float x5 = pow(clamp(1 - NdotV, 0, 1), 5.0);
+    color fCoat = mix(color(oneM_F0), color(0), x5);
+    closure color coated_edf = tinted_edf * fCoat;
+
+    closure color emission_edf = mix(uncoated_edf, coated_edf, in.coat.weight);
+
+    // Outputs
+    closure color bsdf = fuzzLayer;
+    closure color edf = emission_edf;
+    float opacity = clamp(in.geometry.opacity, 0, 1);
+
+    Cout = (bsdf + edf) * opacity + transparent() * (1 - opacity);
+}

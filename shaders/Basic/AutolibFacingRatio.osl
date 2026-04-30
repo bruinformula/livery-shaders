@@ -1,0 +1,21 @@
+shader AutolibFacingRatio [[
+    string category = "autolib"
+]] (
+    vector Normal = N,
+    vector View = I,
+    int Invert = 0 [[ string widget = "checkBox" ]],
+    float Gain = 0.5,
+
+    output float Result = 0
+) {
+    vector n = normalize(Normal);
+    vector i = normalize(View);
+    
+    float dotProduct = abs(dot(n, i));
+    float facing = 1.0 - dotProduct;
+
+    if (Invert) facing = 1.0 - facing;
+    
+    // Using a simplified gain to shape the falloff
+    Result = clamp(facing / ((1.0 / max(Gain, 0.001) - 2.0) * (1.0 - facing) + 1.0), 0.0, 1.0);
+}

@@ -1,0 +1,34 @@
+shader AutolibRaySwitch [[
+    string category = "autolib"   
+]] (
+    closure color CameraClosure = 0,
+    closure color ShadowClosure = 0,
+    closure color DiffuseTransmitClosure = 0,
+    closure color SpecularTransmitClosure = 0,
+    closure color VolumeScatterClosure = 0,
+    closure color DiffuseReflectClosure = 0,
+    closure color SpecularReflectClosure = 0,
+    closure color SubsurfaceClosure = 0,
+
+    output closure color BSDF = 0
+) {
+    if (raytype("camera")) {
+        BSDF = CameraClosure;
+    } else if (raytype("shadow")) {
+        BSDF = ShadowClosure;
+    } else if (raytype("diffuse_transmit")) {
+        BSDF = DiffuseTransmitClosure;
+    } else if (raytype("specular_transmit")) {
+        BSDF = SpecularTransmitClosure;
+    } else if (raytype("volume_scatter")) {
+        BSDF = VolumeScatterClosure;
+    } else if (raytype("diffuse_reflect")) {
+        BSDF = DiffuseReflectClosure;
+    } else if (raytype("specular_reflect")) {
+        BSDF = SpecularReflectClosure;
+    } else if (raytype("subsurface")) {
+        BSDF = SubsurfaceClosure;
+    } else {
+        BSDF = CameraClosure; // fallback
+    }
+}

@@ -1,0 +1,13 @@
+shader AutolibSeparate [[
+    string category = "autolib"
+]] (
+    color Input = 0,
+
+    output float X = 0,
+    output float Y = 0,
+    output float Z = 0
+) {
+    X = Input[0];
+    Y = Input[1];
+    Z = Input[2];
+}

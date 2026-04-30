@@ -1,6 +1,6 @@
 // AutolibMetallicFlakeLayer
 
-shader AutolibPaintLayer [[
+surface AutolibPaintLayer [[
     string category = "autolib"
 ]] (
     float flakeAlpha = 0.0,
@@ -23,7 +23,7 @@ shader AutolibPaintLayer [[
     // Layer beneath this one
     closure color underLayer = 0,
 
-    output closure color out = 0
+    output closure color Cout = 0
 ) {
     normal finalNormal = mix(Ng, flakeNormal, flakeRandomize);
 
@@ -68,5 +68,5 @@ shader AutolibPaintLayer [[
     }
 
 
-    out = layer(thisLayer, (1 - baseDiffuseWeight) * underLayer);
+    Cout = layer(thisLayer, (1 - baseDiffuseWeight) * underLayer);
 }
