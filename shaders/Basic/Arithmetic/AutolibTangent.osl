@@ -1,0 +1,10 @@
+shader AutolibTangent [[
+    string category = "autolib"
+]] (
+    vector Opposite = 0,
+    vector Adjacent = 1,
+
+    output vector Output = 0
+) {
+    Output = tan(Opposite / Adjacent);
+}

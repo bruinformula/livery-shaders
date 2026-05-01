@@ -1,0 +1,9 @@
+shader AutolibGamma [[
+    string category = "autolib"
+]] (
+    color Input = 0,
+    float Gamma = 2.2,
+    output color Output = 0
+) {
+    Output = pow(max(Input, 0), 1.0 / Gamma);
+}

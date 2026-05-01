@@ -1,0 +1,10 @@
+shader AutolibCosine [[
+    string category = "autolib"
+]] (
+    vector Adjacent = 1,
+    vector Hypotenuse = 0,
+
+    output vector Output = 0
+) {
+    Output = cos(Adjacent / Hypotenuse);
+}

@@ -1,0 +1,10 @@
+shader AutolibRefract [[
+    string category = "autolib"
+]] (
+    vector Incident = 0,
+    vector Normal = vector(0, 1, 0),
+    float IOR = 1.5,
+    output vector Output = 0
+) {
+    Output = refract(Incident, Normal, IOR);
+}

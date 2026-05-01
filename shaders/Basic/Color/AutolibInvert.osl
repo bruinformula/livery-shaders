@@ -1,0 +1,9 @@
+shader AutolibInvert [[
+    string category = "autolib"
+]] (
+    color Input = 0,
+    float Strength = 1,
+    output color Output = 0
+) {
+    Output = mix(Input, 1 - Input, Strength);
+}

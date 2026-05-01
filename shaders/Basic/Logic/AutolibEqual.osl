@@ -1,0 +1,10 @@
+shader AutolibEqual [[
+    string category = "autolib"
+]] (
+    float A = 0,
+    float B = 0,
+    float Threshold = 0.0001,
+    output float Output = 0
+) {
+    Output = (abs(A - B) <= Threshold) ? 1.0 : 0.0;
+}

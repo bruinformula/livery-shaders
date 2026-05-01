@@ -1,0 +1,10 @@
+shader AutolibSaturate [[
+    string category = "autolib"
+]] (
+    color Input = 0,
+    float Amount = 1,
+    output color Output = 0
+) {
+    float lum = luminance(Input);
+    Output = mix(color(lum), Input, Amount);
+}

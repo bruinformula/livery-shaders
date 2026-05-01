@@ -117,9 +117,9 @@ OpenPBRThinFilm mix_thin_film(OpenPBRThinFilm a, OpenPBRThinFilm b, float x) {
     float lx = wmix(a.weight, b.weight, x);
 
     OpenPBRThinFilm result;
-    result.weight    = mix(a.weight, b.weight, x);
+    result.weight = mix(a.weight, b.weight, x);
     result.thickness = mix(a.thickness, b.thickness, lx);
-    result.ior       = ior_lerp(a.ior, b.ior, lx);
+    result.ior = ior_lerp(a.ior, b.ior, lx);
     return result;
 }
 
@@ -150,21 +150,21 @@ OpenPBRGeometry mix_geometry(OpenPBRGeometry a, OpenPBRGeometry b, float x) {
     return result;
 }
 
-surface AutolibSurfaceCombine [[
+shader AutolibSurfaceCombine [[
     string category = "autolib"
 ]] (
-    float CombineFactor = 0.5  [[ float min = 0.0, float max = 1.0 ]],
+    float Factor = 0.5  [[ float min = 0.0, float max = 1.0 ]],
     OpenPBRSurface MaterialA = {},
     OpenPBRSurface MaterialB = {},
     output OpenPBRSurface mat = {}
 ) {
-    float x = clamp(CombineFactor, 0, 1);
+    float x = clamp(Factor, 0, 1);
 
-    if (!isconnected(MaterialA) || x == 0) {
+    if (!isconnected(MaterialA) || x == 1) {
         mat = MaterialB;
         return;
     }
-    if (!isconnected(MaterialB) || x == 1) {
+    if (!isconnected(MaterialB) || x == 0) {
         mat = MaterialA;
         return;
     }

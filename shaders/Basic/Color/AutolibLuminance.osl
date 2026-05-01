@@ -1,0 +1,8 @@
+shader AutolibLuminance [[
+    string category = "autolib"
+]] (
+    color Input = 0,
+    output float Output = 0
+) {
+    Output = luminance(Input);
+}

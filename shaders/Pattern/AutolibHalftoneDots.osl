@@ -11,7 +11,7 @@ shader AutolibHalftoneDots [[
 	color dotsColor = 0.0  [[ string help = "The color of the dots" ]],		
 	color backgroundColor = 1.0  [[ string help = "The color of the space between the dots" ]],
 
-	int useUV = 0 [[int min = 0, int max = 1]],
+	int useUV = 0 [[ int min = 0, int max = 1]],
 
 	output color dots = color(1,2,3)
 ) {

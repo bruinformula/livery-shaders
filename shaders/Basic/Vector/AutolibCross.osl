@@ -1,0 +1,9 @@
+shader AutolibCross [[
+    string category = "autolib"
+]] (
+    vector A = 0,
+    vector B = 0,
+    output vector Output = 0
+) {
+    Output = cross(A, B);
+}

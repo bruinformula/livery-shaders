@@ -1,5 +1,5 @@
 
-shader AutolibFromColor [[
+shader AutolibToFloat [[
     string category = "autolib"
 ]] (
     color Input = 0.0 [[ string label = "Input", string help = "The color or vector to extract a float from." ]],

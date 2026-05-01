@@ -67,6 +67,7 @@ struct OpenPBRGeometry {
     vector coat_tangent;
 };
 
+
 // One struct to rule them all
 struct OpenPBRSurface {
     OpenPBRBase base;

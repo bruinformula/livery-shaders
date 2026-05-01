@@ -1,0 +1,9 @@
+shader AutolibMin [[
+    string category = "autolib"
+]] (
+    vector A = 0,
+    vector B = 1,
+    output vector Output = 0
+) {
+    Output = min(A, B);
+}

@@ -1,10 +1,10 @@
 shader AutolibSubtract [[
     string category = "autolib"
 ]] (
-    color InputA = 0.0,
-    color InputB = 0.0,
+    vector InputA = 0.0,
+    vector InputB = 0.0,
 
-    output color Output = 0
+    output vector Output = 0
 ) {
     Output = InputA - InputB;
 }

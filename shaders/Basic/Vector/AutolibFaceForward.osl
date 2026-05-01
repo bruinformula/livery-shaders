@@ -1,0 +1,9 @@
+shader AutolibFaceForward [[
+    string category = "autolib"
+]] (
+    vector Normal = N,
+    vector Incident = I,
+    output vector Output = 0
+) {
+    Output = faceforward(Normal, Incident); // Ng is implied
+}

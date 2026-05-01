@@ -37,7 +37,7 @@ def compile_shaders(source_dir : Path, output_dir : Path, extra_flags: list):
                 capture_output=True, 
                 text=True
             )
-            if result.stdout:
+            if result.stdout and result.returncode == 0:
                 print(result.stdout.strip())
             
             if result.returncode == 0:

@@ -1,0 +1,8 @@
+shader AutolibLogarithm [[
+    string category = "autolib"
+]] (
+    vector Input = 1,
+    output vector Output = 0
+) {
+    Output = log(max(Input, 0.000001));
+}

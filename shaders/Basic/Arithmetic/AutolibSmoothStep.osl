@@ -1,0 +1,10 @@
+shader AutolibSmoothStep [[
+    string category = "autolib"
+]] (
+    vector Low = 0,
+    vector High = 1,
+    vector Input = 0,
+    output vector Output = 0
+) {
+    Output = smoothstep(Low, High, Input);
+}

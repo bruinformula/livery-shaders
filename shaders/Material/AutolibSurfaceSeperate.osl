@@ -1,0 +1,26 @@
+#include "OpenPBRSurface.h"
+
+shader AutolibSurfaceSeperate [[
+    string category = "autolib"
+]] (
+    OpenPBRSurface mat = {},
+    output OpenPBRBase base = {},
+    output OpenPBRSpecular specular = {},
+    output OpenPBRTransmission transmission = {},
+    output OpenPBRSubsurface subsurface = {},
+    output OpenPBRCoat coat = {},
+    output OpenPBRFuzz fuzz = {},
+    output OpenPBRThinFilm thin_film = {},
+    output OpenPBREmission emission = {},
+    output OpenPBRGeometry geometry = {}
+) {
+    base = mat.base;
+    specular = mat.specular;
+    transmission = mat.transmission;
+    subsurface = mat.subsurface;
+    coat = mat.coat;
+    fuzz = mat.fuzz;
+    thin_film = mat.thin_film;
+    emission = mat.emission;
+    geometry = mat.geometry;
+}

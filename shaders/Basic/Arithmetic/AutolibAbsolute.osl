@@ -1,0 +1,8 @@
+shader AutolibAbsolute [[
+    string category = "autolib"
+]] (
+    vector Input = 0,
+    output vector Output = 0
+) {
+    Output = abs(Input);
+}

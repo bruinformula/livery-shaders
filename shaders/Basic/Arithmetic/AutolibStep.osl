@@ -1,0 +1,9 @@
+shader AutolibStep [[
+    string category = "autolib"
+]] (
+    vector Edge = 0.5,
+    vector Input = 0,
+    output vector Output = 0
+) {
+    Output = step(Edge, Input);
+}

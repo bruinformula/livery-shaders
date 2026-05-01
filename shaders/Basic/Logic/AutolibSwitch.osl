@@ -1,0 +1,10 @@
+shader AutolibSwitch [[
+    string category = "autolib"
+]] (
+    float Mask = 0,
+    vector IfTrue = 0,
+    vector IfFalse = 0,
+    output vector Output = 0
+) {
+    Output = (Mask >= 0.5) ? IfTrue : IfFalse;
+}

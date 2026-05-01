@@ -1,0 +1,9 @@
+shader AutolibPower [[
+    string category = "autolib"
+]] (
+    vector Base = 0,
+    vector Exponent = 1,
+    output vector Output = 0
+) {
+    Output = pow(Base, Exponent);
+}

@@ -1,0 +1,9 @@
+shader AutolibReflect [[
+    string category = "autolib"
+]] (
+    vector Incident = 0,
+    vector Normal = vector(0, 1, 0),
+    output vector Output = 0
+) {
+    Output = reflect(Incident, Normal);
+}
