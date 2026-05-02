@@ -12,9 +12,9 @@ float randomRadius(int x, int y, float MinRadius, float MaxRadius, int Seed) {
 }
 
 float sigmoidMask(float x, float low, float center, float sharpness) {
-    float k = 1.0 / max(1e-6, sharpness);
-    float s = 1.0 / (1.0 + exp(-k * (x - center)));
-    return low + (1.0 - low) * s;
+    float k = 1 / max(1e-6, sharpness);
+    float s = 1 / (1 + exp(-k * (x - center)));
+    return low + (1 - low) * s;
 }
 
 float smoothMin(float a, float b, float k) {
@@ -22,8 +22,21 @@ float smoothMin(float a, float b, float k) {
     return res;
 }
 
+color randomCellAlbedo(int x, int y, color BaseAlbedo, float JitterAmount, int Seed) {
+    float rR = noise("hash", vector(x, y, Seed + 100));
+    float rG = noise("hash", vector(x, y, Seed + 101));
+    float rB = noise("hash", vector(x, y, Seed + 102));
+    color jittered = color(
+        clamp(BaseAlbedo[0] * (1.0 + (rR - 0.5) * JitterAmount * 0.4), 0.0, 1.0),
+        clamp(BaseAlbedo[1] * (1.0 + (rG - 0.5) * JitterAmount * 0.4), 0.0, 1.0),
+        clamp(BaseAlbedo[2] * (1.0 + (rB - 0.5) * JitterAmount * 0.4), 0.0, 1.0)
+    );
+    return jittered;
+}
+
 struct SplatterLayerParams {
     float Scale;
+    color Albedo;
     int Seed;
     float Jitter;
     float MinRadius;
@@ -56,30 +69,44 @@ SplatterLayerParams jitterSplatterParams(
     float rand4 = noise("hash", vector(baseParams.Seed + sublayerIndex, 3, 0));
     float rand5 = noise("hash", vector(baseParams.Seed + sublayerIndex, 4, 0));
     
-    // geometric properties
     Jittered.Seed = baseParams.Seed + sublayerIndex;
-    Jittered.MinRadius = baseParams.MinRadius * (1.0 + (rand2 - 0.5) * JitterAmount * 0.3);
-    Jittered.MaxRadius = baseParams.MaxRadius * (1.0 + (rand3 - 0.5) * JitterAmount * 0.3);
+    Jittered.MinRadius = baseParams.MinRadius * (1 + (rand2 - 0.5) * JitterAmount * 0.3);
+    Jittered.MaxRadius = baseParams.MaxRadius * (1 + (rand3 - 0.5) * JitterAmount * 0.3);
     
-    // spike properties
-    Jittered.SpikeAmount = clamp(baseParams.SpikeAmount + (rand4 - 0.5) * JitterAmount * 0.2, 0.0, 1.0);
-    Jittered.SpikePeak = baseParams.SpikePeak * (1.0 + (rand5 - 0.5) * JitterAmount * 0.4);
+    Jittered.SpikeAmount = clamp(baseParams.SpikeAmount + (rand4 - 0.5) * JitterAmount * 0.2, 0, 1);
+    Jittered.SpikePeak = baseParams.SpikePeak * (1 + (rand5 - 0.5) * JitterAmount * 0.4);
     
-    // basin properties
     float rand6 = noise("hash", vector(baseParams.Seed + sublayerIndex, 5, 0));
-    Jittered.BasinHeight = clamp(baseParams.BasinHeight + (rand6 - 0.5) * JitterAmount * 0.15, 0.0, 1.0);
+    Jittered.BasinHeight = clamp(baseParams.BasinHeight + (rand6 - 0.5) * JitterAmount * 0.15, 0, 1);
     
-    // bump properties 
     float rand7 = noise("hash", vector(baseParams.Seed + sublayerIndex, 6, 0));
-    Jittered.BumpStrength = clamp(baseParams.BumpStrength + (rand7 - 0.5) * JitterAmount * 0.1, 0.0, 1.0);
+    Jittered.BumpStrength = clamp(baseParams.BumpStrength + (rand7 - 0.5) * JitterAmount * 0.1, 0, 1);
+
+    float rand8  = noise("hash", vector(baseParams.Seed + sublayerIndex, 7, 0));
+    float rand9  = noise("hash", vector(baseParams.Seed + sublayerIndex, 8, 0));
+    float rand10 = noise("hash", vector(baseParams.Seed + sublayerIndex, 9, 0));
+    Jittered.Albedo = color(
+        clamp(baseParams.Albedo[0] * (1.0 + (rand8  - 0.5) * JitterAmount * 0.3), 0.0, 1.0),
+        clamp(baseParams.Albedo[1] * (1.0 + (rand9  - 0.5) * JitterAmount * 0.3), 0.0, 1.0),
+        clamp(baseParams.Albedo[2] * (1.0 + (rand10 - 0.5) * JitterAmount * 0.3), 0.0, 1.0)
+    );
 
     return Jittered;
 }
+
+struct SplatterData {
+    float Height;
+    float Mask;
+    normal BumpedNormal;
+    color Albedo;
+    int LayerIdx;
+};
 
 shader AutolibSplatter [[ 
     string category = "autolib" 
 ]] (
     point UV = point(u,v,0),
+    color LayerAlbedo = 1 [[ int interactive = 1 ]],
     float SplatterScale = 20 [[ string page = "Pattern", int interactive = 1 ]],
     int Seed = 433 [[ string page = "Pattern" ]],
     float Jitter = 2.0 [[ string page = "Pattern", int interactive = 1 ]],
@@ -88,104 +115,144 @@ shader AutolibSplatter [[
     float MaxRadius = 0.3 [[ string page = "Pattern", int interactive = 1 ]],
     float UnionSmoothness = 8.0 [[ string page = "Pattern", string help = "Controls the smoothness between overlapping drops", int interactive = 1 ]],
 
-    float SpikeAmount = 0.9 [[ string page = "Spikes", string help = "Controls the intensity of the spikes on the splatter", float min = 0.0, float max = 1.0, int interactive = 1 ]],
-    float SpikePeak = 8 [[ string page = "Spikes", string help = "Controls the height of the peak spikes", float min = 1.0, int interactive = 1 ]],
-    float SpikeFrequency = 36  [[ string page = "Spikes", string help = "Higher values increase the number of spikes", float min = 0.0, int interactive = 1 ]],
-    float SpikePerimeterSmoothness = 0.01 [[ string page = "Spikes", float min = 0.0, float max = 1.0, int interactive = 1 ]],
-    float SpikeTrimWidth = 0.02 [[ string page = "Spikes", string help = "Width of the ramp zone at angle boundaries to smooth the seam", float min = 0.0, float max = 0.5, int interactive = 1 ]],
+    float SpikeAmount = 0.9 [[ string page = "Spikes", string help = "Controls the intensity of the spikes on the splatter", float min = 0, float max = 1, int interactive = 1 ]],
+    float SpikePeak = 8 [[ string page = "Spikes", string help = "Controls the height of the peak spikes", float min = 1, int interactive = 1 ]],
+    float SpikeFrequency = 36 [[ string page = "Spikes", string help = "Higher values increase the number of spikes", float min = 0, int interactive = 1 ]],
+    float SpikePerimeterSmoothness = 0.01 [[ string page = "Spikes", float min = 0, float max = 1, int interactive = 1 ]],
+    float SpikeTrimWidth = 0.02 [[ string page = "Spikes", string help = "Width of the ramp zone at angle boundaries to smooth the seam", float min = 0, float max = 0.5, int interactive = 1 ]],
 
-    float BasinHeight = 0.95 [[ string page = "Basin", string help = "Base height of the splatter basin", float min = 0.0, float max = 1.0, int interactive = 1 ]],
-    float BasinCenter = 0.3 [[ string page = "Basin", string help = "The the inflection point where the basin rises to a parameter", float min = 0.0, float max = 1.0, int interactive = 1 ]],
-    float BasinSmoothness = 0.075 [[ string page = "Basin", string help = "The the inflection point where the basin rises to a parameter", float min = 0.0, float max = 1.0, int interactive = 1 ]],
-    float BasinBumpStrength = 1.0 [[ string page = "Basin", string help = "Strength of the normal map generated from the splatter height", int interactive = 1 ]],
+    float BasinHeight = 0.95 [[ string page = "Basin", string help = "Base height of the splatter basin", float min = 0, float max = 1, int interactive = 1 ]],
+    float BasinCenter = 0.3 [[ string page = "Basin", string help = "The the inflection point where the basin rises to a parameter", float min = 0, float max = 1, int interactive = 1 ]],
+    float BasinSmoothness = 0.075 [[ string page = "Basin", string help = "The the inflection point where the basin rises to a parameter", float min = 0, float max = 1, int interactive = 1 ]],
+    float BasinBumpStrength = 1 [[ string page = "Basin", string help = "Strength of the normal map generated from the splatter height", int interactive = 1 ]],
 
     int MarchBound = 1 [[ string help = "Sizes a grid for combining drops" ]],
     int NumLayers = 1 [[ int min = 0, string help = "Number of layered splatters to combine for more complexity" ]],
 
-    output float Height = 0.0,
-    output float Mask = 0.0,
-    output normal BumpedNormal = N
+    SplatterData OtherData = {} [[ string page = "Chaining" ]],
+
+    output SplatterData Data = {},
+    output float Height = 0,
+    output float Mask = 0,
+    output normal BumpedNormal = N,
+    output color Albedo = 0,
+    output int LayerIdx = 0
 ) {
     point ScaledPos = SplatterScale * UV;
     int cellX = (int)floor(ScaledPos[0]);
     int cellY = (int)floor(ScaledPos[1]);
 
     SplatterLayerParams baseParams = {
-        SplatterScale, Seed, Jitter, MinRadius, MaxRadius, UnionSmoothness,
+        SplatterScale, LayerAlbedo, Seed, Jitter, MinRadius, MaxRadius, UnionSmoothness,
         SpikeAmount, SpikePeak, SpikeFrequency, SpikePerimeterSmoothness, SpikeTrimWidth,
         BasinHeight, BasinCenter, BasinSmoothness, BasinBumpStrength
     };
 
     SplatterLayerParams jitteredParams = baseParams;
 
-    // Increase bound search if Jitter is high to prevent "popping"
     int bound = MarchBound + (int)ceil(Jitter);
-    
+
     float finalHeight = 0.0;
     float finalMask = 0.0;
-    
+    color finalAlbedo = color(0.0);
+    float finalAlbedoWeight = 0.0;
+
     for (int layerIdx = 0; layerIdx < NumLayers; layerIdx++) {
-        // Use a smaller Jitter multiplier for attributes so spikes don't vanish
         jitteredParams = jitterSplatterParams(jitteredParams, layerIdx, Jitter * 0.2);
-        
+
         float layerNoisedDist = 1e6;
         float layerSmoothDist = 1e6;
+
+        color layerAlbedoAccum = color(0.0);
+        float layerAlbedoWeight = 0.0;
 
         for (int x = -bound; x <= bound; x++) {
             for (int y = -bound; y <= bound; y++) {
                 int cx = cellX + x;
                 int cy = cellY + y;
-                
-                // FIX: Use params.Seed and params.Jitter
+
                 point cellCenter = randomCellPosition(cx, cy, jitteredParams.Jitter, jitteredParams.Seed);
                 vector diff = ScaledPos - cellCenter;
 
-                // Distortion logic
                 float dirLen = length(SplatterDirection);
                 if (dirLen > 1e-6) {
                     vector flowDir = normalize(SplatterDirection);
                     float along = dot(diff, flowDir);
                     vector perp = diff - along * flowDir;
-                    diff = (perp / (1.0 + dirLen * 5.0)) + flowDir * along;
+                    diff = (perp / (1 + dirLen * 5.0)) + flowDir * along;
                 }
-                
+
                 float dist = length(diff);
                 float angle = (atan2(diff.y, diff.x) / (M_PI * 2.0)) + 0.5;
-                
-                // Spike noise calculation
+
                 float circleSeed = noise("hash", vector(cx, cy, jitteredParams.Seed)) * 100.0;
                 float addNoise = noise("snoise", (angle * jitteredParams.SpikeFrequency) + circleSeed);
                 addNoise = pow(jitteredParams.SpikePeak, addNoise);
 
                 if (jitteredParams.SpikeTrimWidth > 0.0) {
-                    float edge = min(angle, 1.0 - angle);
+                    float edge = min(angle, 1 - angle);
                     addNoise *= smoothstep(0.0, jitteredParams.SpikeTrimWidth, edge);
                 }
 
-                // Apply spike intensity
-                addNoise = mix(1.0, addNoise, 1.0 - jitteredParams.SpikeAmount);
-                
+                addNoise = mix(1, addNoise, 1 - jitteredParams.SpikeAmount);
+
                 float rad = randomRadius(cx, cy, jitteredParams.MinRadius, jitteredParams.MaxRadius, jitteredParams.Seed);
-                
+
                 float dNoised = dist - (rad * addNoise);
                 layerNoisedDist = min(layerNoisedDist, dNoised);
 
                 if (x == -bound && y == -bound) layerSmoothDist = dist;
                 else layerSmoothDist = smoothMin(layerSmoothDist, dist, jitteredParams.UnionSmoothness);
+
+                color cellAlbedo = randomCellAlbedo(cx, cy, jitteredParams.Albedo, Jitter, jitteredParams.Seed);
+                float cellWeight = exp(-jitteredParams.UnionSmoothness * max(dist, 1e-6));
+                layerAlbedoAccum += cellWeight * cellAlbedo;
+                layerAlbedoWeight += cellWeight;
             }
         }
 
-        float m = 1.0 - smoothstep(-jitteredParams.SpikePerimeterSmoothness, 0.0, layerNoisedDist);
+        float m = 1 - smoothstep(-jitteredParams.SpikePerimeterSmoothness, 0, layerNoisedDist);
         float h = sigmoidMask(layerSmoothDist, jitteredParams.BasinHeight, jitteredParams.BasinCenter, jitteredParams.BasinSmoothness) * 1.4 * m;
 
-        // Correct layering: Max provides a clean "stamp" look
         finalHeight = max(finalHeight, h);
         finalMask = max(finalMask, m);
+
+        color layerAlbedo = (layerAlbedoWeight > 1e-6) ? layerAlbedoAccum / layerAlbedoWeight : jitteredParams.Albedo;
+
+        finalAlbedo += layerAlbedo * m;
+        finalAlbedoWeight += m;
     }
 
-    Height = finalHeight;
-    Mask = finalMask;
+    color thisAlbedo = (finalAlbedoWeight > 1e-6) ? finalAlbedo / finalAlbedoWeight : color(0.0);
+    thisAlbedo = thisAlbedo * finalMask;
 
-    normal bumpedPoint = P + N * Height * jitteredParams.BumpStrength;
-    BumpedNormal = normalize(cross(Dx(bumpedPoint), Dy(bumpedPoint)));
+    normal bumpedPoint = P + N * finalHeight * jitteredParams.BumpStrength;
+    normal finalNormal = normalize(cross(Dx(bumpedPoint), Dy(bumpedPoint)));
+
+    int thisLayerIdx = 0;
+
+    color compositeAlbedo = finalHeight * thisAlbedo;
+    float compositeMask = finalMask;
+    float compositeHeight = finalHeight;
+    normal compositeNormal = finalNormal;
+
+    if (isconnected(OtherData)) {
+        thisLayerIdx = OtherData.LayerIdx + 1;
+        compositeAlbedo = thisAlbedo + OtherData.Albedo * (1.0 - finalHeight);
+        compositeMask = max(finalMask, OtherData.Mask);
+        compositeHeight = finalHeight + OtherData.Height;
+        compositeNormal = normalize(mix(vector(OtherData.BumpedNormal), vector(finalNormal), finalMask));
+    }
+
+    Data.Height = compositeHeight;
+    Data.Mask = compositeMask;
+    Data.BumpedNormal = compositeNormal;
+    Data.Albedo = compositeAlbedo;
+    Data.LayerIdx = thisLayerIdx;
+
+    Height = compositeHeight;
+    Mask = compositeMask;
+    BumpedNormal = compositeNormal;
+    Albedo = compositeAlbedo;
+    LayerIdx = thisLayerIdx;
 }

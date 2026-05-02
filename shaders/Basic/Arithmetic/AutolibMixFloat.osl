@@ -1,0 +1,25 @@
+shader AutolibMixFloat [[
+    string category = "autolib"
+]] (
+    float Mixer = 0 [[ string widget = "number", int slider = 1, float slidermin = 0, float slidermax = 1 ]],
+    float FloatA = 0,
+    float FloatB = 1,
+    int Clamp = 0 [[ string widget = "checkBox", int min = 0, int max = 1 ]],
+
+    output float X = 0
+) {
+    float clampedMixer = Mixer;
+    if (Clamp == 1) {
+        clampedMixer = clamp(Mixer, 0.0, 1.0);
+    }
+
+    if (clampedMixer <= 0.0) {
+        X = FloatA;
+        return;
+    } else if (clampedMixer >= 1.0) {
+        X = FloatB;
+        return;
+    }
+
+    X = mix(FloatA, FloatB, clampedMixer);
+}
