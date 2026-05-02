@@ -1,22 +1,22 @@
 // AutolibSplatterCoord
 
-point randomCellPosition(int x, int y, float jitter, int seed) {
-    vector off = cellnoise(vector(x, y, 0), seed);
+point randomCellPosition(int x, int y, float Jitter, int Seed) {
+    vector off = cellnoise(vector(x, y, 0), Seed);
     off -= 0.5;
-    off *= jitter;
+    off *= Jitter;
     off += 0.5;
     return point(x + off[0], y + off[1], 0);
 }
 
-float randomLength(int x, int y, float minRadius, float maxRadius) {
+float randomLength(int x, int y, float MinRadius, float MaxRadius) {
     float randomValue = noise("cell", vector(x + 123.456, y + 789.012, 0));
-    return minRadius + randomValue * (maxRadius - minRadius);
+    return MinRadius + randomValue * (MaxRadius - MinRadius);
 }
 
-vector randomTilt(int x, int y, float coneTilt, int seed) {
-    float tx = noise("cell", vector(x + 111.111, y + 222.222, seed)) - 0.5;
-    float ty = noise("cell", vector(x + 333.333, y + 444.444, seed)) - 0.5;
-    return vector(tx, ty, 0) * coneTilt;
+vector randomTilt(int x, int y, float ConeTilt, int Seed) {
+    float tx = noise("cell", vector(x + 111.111, y + 222.222, Seed)) - 0.5;
+    float ty = noise("cell", vector(x + 333.333, y + 444.444, Seed)) - 0.5;
+    return vector(tx, ty, 0) * ConeTilt;
 }
 
 float smoothMinWeighted(float a, float b, float k, float attrA, float attrB, output float blendedAttr) {
@@ -39,24 +39,24 @@ shader AutolibSplatterCoord [[
     string category = "autolib"
 ]] (
     point UV = point(u,v,0),
-    float splatterScale = 20 [[ string page = "Pattern" ]],
-    int seed = 433 [[ string page = "Pattern", int interactive = 0 ]],
-    float jitter = 2.0 [[ string page = "Pattern" ]],
-    float minRadius = 0.005 [[ string page = "Pattern" ]],
-    float maxRadius = 0.3 [[ string page = "Pattern" ]],
-    float perimeterSmoothness = 0.15 [[ string page = "Pattern", float min = 0.0, float max = 1.0 ]],
-    float unionSmoothness = 8.0 [[ string page = "Pattern" ]],
+    float SplatterScale = 20 [[ string page = "Pattern", int interactive = 1 ]],
+    int Seed = 433 [[ string page = "Pattern", int interactive = 0 ]],
+    float Jitter = 2.0 [[ string page = "Pattern" ]],
+    float MinRadius = 0.005 [[ string page = "Pattern" ]],
+    float MaxRadius = 0.3 [[ string page = "Pattern" ]],
+    float PerimeterSmoothness = 0.15 [[ string page = "Pattern", float min = 0.0, float max = 1.0 ]],
+    float UnionSmoothness = 8.0 [[ string page = "Pattern" ]],
 
-    int marchBound = 1 [[ string help = "Sizes a grid for combining drops" ]],
+    int MarchBound = 1 [[ string help = "Sizes a grid for combining drops" ]],
 
-    float coneHeight = 0.5 [[ string page = "Cone", float min = 0.001 ]],
-    float coneTilt = 0.3 [[ string page = "Cone", float min = 0.0, float max = 2.0 ]],
+    float ConeHeight = 0.5 [[ string page = "Cone", float min = 0.001 ]],
+    float ConeTilt = 0.3 [[ string page = "Cone", float min = 0.0, float max = 2.0 ]],
     
-    output float mask = 0,
-    output point localUV = 0,
-    output vector splatterDirection = 0,
+    output float Mask = 0,
+    output point LocalUV = 0,
+    output vector SplatterDirection = 0,
 ) {
-    point scaledPos = splatterScale * UV;
+    point scaledPos = SplatterScale * UV;
 
     int cellX = (int)floor(scaledPos[0]);
     int cellY = (int)floor(scaledPos[1]);
@@ -70,7 +70,7 @@ shader AutolibSplatterCoord [[
     float bestMinorRadius = 1.0;
     vector bestToSample = vector(0, 0, 0);
 
-    int bound = 2*marchBound + 1;
+    int bound = 2*MarchBound + 1;
 
     for (int x = -bound; x <= bound; x++) {
         for (int y = -bound; y <= bound; y++) {
@@ -83,14 +83,14 @@ shader AutolibSplatterCoord [[
             // coming out of a paint gun of a firing out of a paint gun
             
             // Generate some cone with a center, a radius, and a tilt.
-            point cellCenter = randomCellPosition(cx, cy, jitter, seed);
-            float radius = randomLength(cx, cy, minRadius, maxRadius);
-            vector tilt = randomTilt(cx, cy, coneTilt, seed);
+            point cellCenter = randomCellPosition(cx, cy, Jitter, Seed);
+            float radius = randomLength(cx, cy, MinRadius, MaxRadius);
+            vector tilt = randomTilt(cx, cy, ConeTilt, Seed);
 
             // The projected cone becomes an elipse with a major
             // and minor axis. 
             float tiltDist = length(tilt);
-            float tiltAngle = atan2(tiltDist, coneHeight);
+            float tiltAngle = atan2(tiltDist, ConeHeight);
             float majorRadius = radius / max(cos(tiltAngle), 0.01); // in the direction of the tilt 
             float minorRadius = radius; // perpendicular to the tilt
 
@@ -102,8 +102,8 @@ shader AutolibSplatterCoord [[
             vector delta = scaledPos - (cellCenter + tilt);
 
             vector deltaSquared = pow(delta, 2);
-            float coneHeightSquared = pow(coneHeight, 2);
-            float tipDist = sqrt(deltaSquared.x + deltaSquared.y + coneHeightSquared);
+            float ConeHeightSquared = pow(ConeHeight, 2);
+            float tipDist = sqrt(deltaSquared.x + deltaSquared.y + ConeHeightSquared);
 
             if (x == -bound && y == -bound) {
                 bestDistance  = d;
@@ -114,7 +114,7 @@ shader AutolibSplatterCoord [[
                 bestToSample  = toSample;
             } else {
                 float prevBest = bestDistance;
-                bestDistance = smoothMinWeighted(bestDistance, d, unionSmoothness, bestTipDist, tipDist, bestTipDist);
+                bestDistance = smoothMinWeighted(bestDistance, d, UnionSmoothness, bestTipDist, tipDist, bestTipDist);
 
                 // If this cell won the hard comparison, update the ellipse basis
                 if (d < prevBest) {
@@ -131,13 +131,13 @@ shader AutolibSplatterCoord [[
     float projA = dot(bestToSample, bestAxisA);
     float projB = dot(bestToSample, bestAxisB);
 
-    localUV.x = (projA / bestMajorRadius) * 0.5 + 0.5;
-    localUV.y = (projB / bestMinorRadius) * 0.5 + 0.5;
+    LocalUV.x = (projA / bestMajorRadius) * 0.5 + 0.5;
+    LocalUV.y = (projB / bestMinorRadius) * 0.5 + 0.5;
 
-    float dynamicSmoothness = perimeterSmoothness * bestTipDist;
-    mask = 1.0 - smoothstep(0.0, dynamicSmoothness, bestDistance);
+    float dynamicSmoothness = PerimeterSmoothness * bestTipDist;
+    Mask = 1.0 - smoothstep(0.0, dynamicSmoothness, bestDistance);
 
     vector sdfGradient = (projA / (bestMajorRadius * bestMajorRadius)) * bestAxisA + (projB / (bestMinorRadius * bestMinorRadius)) * bestAxisB;
     float gradLen = length(sdfGradient);
-    splatterDirection = (gradLen > 1e-6) ? sdfGradient / gradLen : vector(0, 0, 0);
+    SplatterDirection = (gradLen > 1e-6) ? sdfGradient / gradLen : vector(0, 0, 0);
 }

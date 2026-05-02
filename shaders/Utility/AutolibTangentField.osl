@@ -7,7 +7,7 @@ shader AutolibTangentField [[
     vector inputVector = vector(0.5) [[ string label = "Input Vector", string help = "Red and green channels read as x and y coordinates of a 2d vector. Ignored if inputRotation is connected." ]],
     float rotationOffset = 0 [[ string label = "Rotation Offset", string help = "A global rotation offset in degrees." ]],
     float rotationRange = 1.0 [[ string label = "Rotation Range", string help = "Scales the rotation range. 1.0 equates 0 to 360 degrees." ]],
-    int centeredVectors = 0 [[ string label = "Centered Vectors", string help = "Centers the gradient values of the vector map. Ignored when inputRotation is used.", string widget = "checkBox" ]],
+    int centeredVectors = 0 [[ string label = "Centered Vectors", string help = "Centers the gradient values of the vector map. Ignored when inputRotation is used.", string widget = "checkBox", int interactive = 1 ]],
 
     output vector resultXYZ = 0 [[ string label = "Result XYZ", string help = "The final tangent vector that should be connected to the Bxdf's Shading Tangent input." ]]
 ) {

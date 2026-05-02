@@ -1,0 +1,12 @@
+shader AutolibConditionFloat [[
+    string category = "autolib"
+]] (
+    float Value = 0.0,
+    float Threshold = 0.5,
+    float IfGreater = 1.0,
+    float IfLess = 0.0,
+
+    output float Result = 0
+) {
+    Result = (Value >= Threshold) ? IfGreater : IfLess;
+}

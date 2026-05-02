@@ -1,0 +1,8 @@
+shader AutolibRoundFloat [[
+    string category = "autolib"
+]] (
+    float Input = 0,
+    output float Output = 0
+) {
+    Output = round(Input);
+}

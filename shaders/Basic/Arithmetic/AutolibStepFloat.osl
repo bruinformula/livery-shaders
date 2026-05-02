@@ -1,0 +1,9 @@
+shader AutolibStepFloat [[
+    string category = "autolib"
+]] (
+    float Edge = 0.5,
+    float Input = 0,
+    output float Output = 0
+) {
+    Output = step(Edge, Input);
+}

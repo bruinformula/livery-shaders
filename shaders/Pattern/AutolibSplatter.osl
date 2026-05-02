@@ -1,14 +1,14 @@
 // AutolibSplatter
 
-point randomCellPosition(int x, int y, float jitter, int seed) {
-    vector off = cellnoise(vector(x, y, 0), seed);
-    return point(x + (off[0] - 0.5) * jitter + 0.5, 
-                 y + (off[1] - 0.5) * jitter + 0.5, 0);
+point randomCellPosition(int x, int y, float Jitter, int Seed) {
+    vector off = cellnoise(vector(x, y, 0), Seed);
+    return point(x + (off[0] - 0.5) * Jitter + 0.5, 
+                 y + (off[1] - 0.5) * Jitter + 0.5, 0);
 }
 
-float randomRadius(int x, int y, float minRadius, float maxRadius, int seed) {
-    float randomValue = noise("hash", vector(x, y, seed));
-    return minRadius + randomValue * (maxRadius - minRadius);
+float randomRadius(int x, int y, float MinRadius, float MaxRadius, int Seed) {
+    float randomValue = noise("hash", vector(x, y, Seed));
+    return MinRadius + randomValue * (MaxRadius - MinRadius);
 }
 
 float sigmoidMask(float x, float low, float center, float sharpness) {
@@ -23,109 +23,110 @@ float smoothMin(float a, float b, float k) {
 }
 
 struct SplatterLayerParams {
-    float scale;
-    int seed;
-    float jitter;
-    float minRadius;
-    float maxRadius;
-    float unionSmoothness;
+    float Scale;
+    int Seed;
+    float Jitter;
+    float MinRadius;
+    float MaxRadius;
+    float UnionSmoothness;
 
-    float spikeAmount;
-    float spikePeak;
-    float spikeFrequency;
-    float spikePerimeterSmoothness;
-    float spikeTrimWidth;
+    float SpikeAmount;
+    float SpikePeak;
+    float SpikeFrequency;
+    float SpikePerimeterSmoothness;
+    float SpikeTrimWidth;
 
-    float basinHeight;
-    float basinCenter;
-    float basinSmoothness;
+    float BasinHeight;
+    float BasinCenter;
+    float BasinSmoothness;
 
-    float bumpStrength;
+    float BumpStrength;
 };
 
 SplatterLayerParams jitterSplatterParams(
     SplatterLayerParams baseParams,
     int sublayerIndex,
-    float jitterAmount
+    float JitterAmount
 ) {
-    SplatterLayerParams jittered = baseParams;
+    SplatterLayerParams Jittered = baseParams;
     
-    float rand1 = noise("hash", vector(baseParams.seed + sublayerIndex, 0, 0));
-    float rand2 = noise("hash", vector(baseParams.seed + sublayerIndex, 1, 0));
-    float rand3 = noise("hash", vector(baseParams.seed + sublayerIndex, 2, 0));
-    float rand4 = noise("hash", vector(baseParams.seed + sublayerIndex, 3, 0));
-    float rand5 = noise("hash", vector(baseParams.seed + sublayerIndex, 4, 0));
+    float rand1 = noise("hash", vector(baseParams.Seed + sublayerIndex, 0, 0));
+    float rand2 = noise("hash", vector(baseParams.Seed + sublayerIndex, 1, 0));
+    float rand3 = noise("hash", vector(baseParams.Seed + sublayerIndex, 2, 0));
+    float rand4 = noise("hash", vector(baseParams.Seed + sublayerIndex, 3, 0));
+    float rand5 = noise("hash", vector(baseParams.Seed + sublayerIndex, 4, 0));
     
     // geometric properties
-    jittered.seed = baseParams.seed + sublayerIndex;
-    jittered.minRadius = baseParams.minRadius * (1.0 + (rand2 - 0.5) * jitterAmount * 0.3);
-    jittered.maxRadius = baseParams.maxRadius * (1.0 + (rand3 - 0.5) * jitterAmount * 0.3);
+    Jittered.Seed = baseParams.Seed + sublayerIndex;
+    Jittered.MinRadius = baseParams.MinRadius * (1.0 + (rand2 - 0.5) * JitterAmount * 0.3);
+    Jittered.MaxRadius = baseParams.MaxRadius * (1.0 + (rand3 - 0.5) * JitterAmount * 0.3);
     
     // spike properties
-    jittered.spikeAmount = clamp(baseParams.spikeAmount + (rand4 - 0.5) * jitterAmount * 0.2, 0.0, 1.0);
-    jittered.spikePeak = baseParams.spikePeak * (1.0 + (rand5 - 0.5) * jitterAmount * 0.4);
+    Jittered.SpikeAmount = clamp(baseParams.SpikeAmount + (rand4 - 0.5) * JitterAmount * 0.2, 0.0, 1.0);
+    Jittered.SpikePeak = baseParams.SpikePeak * (1.0 + (rand5 - 0.5) * JitterAmount * 0.4);
     
     // basin properties
-    float rand6 = noise("hash", vector(baseParams.seed + sublayerIndex, 5, 0));
-    jittered.basinHeight = clamp(baseParams.basinHeight + (rand6 - 0.5) * jitterAmount * 0.15, 0.0, 1.0);
+    float rand6 = noise("hash", vector(baseParams.Seed + sublayerIndex, 5, 0));
+    Jittered.BasinHeight = clamp(baseParams.BasinHeight + (rand6 - 0.5) * JitterAmount * 0.15, 0.0, 1.0);
     
     // bump properties 
-    float rand7 = noise("hash", vector(baseParams.seed + sublayerIndex, 6, 0));
-    jittered.bumpStrength = clamp(baseParams.bumpStrength + (rand7 - 0.5) * jitterAmount * 0.1, 0.0, 1.0);
+    float rand7 = noise("hash", vector(baseParams.Seed + sublayerIndex, 6, 0));
+    Jittered.BumpStrength = clamp(baseParams.BumpStrength + (rand7 - 0.5) * JitterAmount * 0.1, 0.0, 1.0);
 
-    return jittered;
+    return Jittered;
 }
 
 shader AutolibSplatter [[ 
     string category = "autolib" 
 ]] (
     point UV = point(u,v,0),
-    float splatterScale = 20 [[ string page = "Pattern" ]],
-    int seed = 433 [[ string page = "Pattern" ]],
-    float jitter = 2.0 [[ string page = "Pattern" ]],
-    vector splatterDirection = 0 [[ string page = "Pattern", string help = "Used to distort the shape of each drop" ]],
-    float minRadius = 0.005 [[ string page = "Pattern" ]],
-    float maxRadius = 0.3 [[ string page = "Pattern" ]],
-    float unionSmoothness = 8.0 [[ string page = "Pattern", string help = "Controls the smoothness between overlapping drops" ]],
+    float SplatterScale = 20 [[ string page = "Pattern", int interactive = 1 ]],
+    int Seed = 433 [[ string page = "Pattern" ]],
+    float Jitter = 2.0 [[ string page = "Pattern", int interactive = 1 ]],
+    vector SplatterDirection = 0 [[ string page = "Pattern", string help = "Used to distort the shape of each drop", int interactive = 1 ]],
+    float MinRadius = 0.005 [[ string page = "Pattern", int interactive = 1 ]],
+    float MaxRadius = 0.3 [[ string page = "Pattern", int interactive = 1 ]],
+    float UnionSmoothness = 8.0 [[ string page = "Pattern", string help = "Controls the smoothness between overlapping drops", int interactive = 1 ]],
 
-    float spikeAmount = 0.9 [[ string page = "Spikes", string help = "Controls the intensity of the spikes on the splatter", float min = 0.0, float max = 1.0 ]],
-    float spikePeak = 8 [[ string page = "Spikes", string help = "Controls the height of the peak spikes", float min = 1.0 ]],
-    float spikeFrequency = 36  [[ string page = "Spikes", string help = "Higher values increase the number of spikes", float min = 0.0 ]],
-    float spikePerimeterSmoothness = 0.01 [[ string page = "Spikes", float min = 0.0, float max = 1.0 ]],
-    float spikeTrimWidth = 0.02 [[ string page = "Spikes", string help = "Width of the ramp zone at angle boundaries to smooth the seam", float min = 0.0, float max = 0.5 ]],
+    float SpikeAmount = 0.9 [[ string page = "Spikes", string help = "Controls the intensity of the spikes on the splatter", float min = 0.0, float max = 1.0, int interactive = 1 ]],
+    float SpikePeak = 8 [[ string page = "Spikes", string help = "Controls the height of the peak spikes", float min = 1.0, int interactive = 1 ]],
+    float SpikeFrequency = 36  [[ string page = "Spikes", string help = "Higher values increase the number of spikes", float min = 0.0, int interactive = 1 ]],
+    float SpikePerimeterSmoothness = 0.01 [[ string page = "Spikes", float min = 0.0, float max = 1.0, int interactive = 1 ]],
+    float SpikeTrimWidth = 0.02 [[ string page = "Spikes", string help = "Width of the ramp zone at angle boundaries to smooth the seam", float min = 0.0, float max = 0.5, int interactive = 1 ]],
 
-    float basinHeight = 0.95 [[ string page = "Basin", string help = "Base height of the splatter basin", float min = 0.0, float max = 1.0 ]],
-    float basinCenter = 0.3 [[ string page = "Basin", string help = "The the inflection point where the basin rises to a parameter", float min = 0.0, float max = 1.0 ]],
-    float basinSmoothness = 0.075 [[ string page = "Basin", string help = "The the inflection point where the basin rises to a parameter", float min = 0.0, float max = 1.0 ]],
+    float BasinHeight = 0.95 [[ string page = "Basin", string help = "Base height of the splatter basin", float min = 0.0, float max = 1.0, int interactive = 1 ]],
+    float BasinCenter = 0.3 [[ string page = "Basin", string help = "The the inflection point where the basin rises to a parameter", float min = 0.0, float max = 1.0, int interactive = 1 ]],
+    float BasinSmoothness = 0.075 [[ string page = "Basin", string help = "The the inflection point where the basin rises to a parameter", float min = 0.0, float max = 1.0, int interactive = 1 ]],
+    float BasinBumpStrength = 1.0 [[ string page = "Basin", string help = "Strength of the normal map generated from the splatter height", int interactive = 1 ]],
 
-    float basinBumpStrength = 1.0 [[ string page = "Material", string help = "Strength of the normal map generated from the splatter height" ]],
+    int MarchBound = 1 [[ string help = "Sizes a grid for combining drops" ]],
+    int NumLayers = 1 [[ int min = 0, string help = "Number of layered splatters to combine for more complexity" ]],
 
-    int marchBound = 1 [[ string help = "Sizes a grid for combining drops" ]],
-    int numLayers = 1 [[ int min = 0, string help = "Number of layered splatters to combine for more complexity" ]],
-
-    output float height = 0.0,
-    output float mask = 0.0,
-    output normal bumpNormal = N
+    output float Height = 0.0,
+    output float Mask = 0.0,
+    output normal BumpedNormal = N
 ) {
-    point scaledPos = splatterScale * UV;
-    int cellX = (int)floor(scaledPos[0]);
-    int cellY = (int)floor(scaledPos[1]);
+    point ScaledPos = SplatterScale * UV;
+    int cellX = (int)floor(ScaledPos[0]);
+    int cellY = (int)floor(ScaledPos[1]);
 
     SplatterLayerParams baseParams = {
-        splatterScale, seed, jitter, minRadius, maxRadius, unionSmoothness,
-        spikeAmount, spikePeak, spikeFrequency, spikePerimeterSmoothness, spikeTrimWidth,
-        basinHeight, basinCenter, basinSmoothness, basinBumpStrength
+        SplatterScale, Seed, Jitter, MinRadius, MaxRadius, UnionSmoothness,
+        SpikeAmount, SpikePeak, SpikeFrequency, SpikePerimeterSmoothness, SpikeTrimWidth,
+        BasinHeight, BasinCenter, BasinSmoothness, BasinBumpStrength
     };
 
-    // Increase bound search if jitter is high to prevent "popping"
-    int bound = marchBound + (int)ceil(jitter);
+    SplatterLayerParams jitteredParams = baseParams;
+
+    // Increase bound search if Jitter is high to prevent "popping"
+    int bound = MarchBound + (int)ceil(Jitter);
     
     float finalHeight = 0.0;
     float finalMask = 0.0;
     
-    for (int layerIdx = 0; layerIdx < numLayers; layerIdx++) {
-        // Use a smaller jitter multiplier for attributes so spikes don't vanish
-        SplatterLayerParams params = jitterSplatterParams(baseParams, layerIdx, jitter * 0.2);
+    for (int layerIdx = 0; layerIdx < NumLayers; layerIdx++) {
+        // Use a smaller Jitter multiplier for attributes so spikes don't vanish
+        jitteredParams = jitterSplatterParams(jitteredParams, layerIdx, Jitter * 0.2);
         
         float layerNoisedDist = 1e6;
         float layerSmoothDist = 1e6;
@@ -135,14 +136,14 @@ shader AutolibSplatter [[
                 int cx = cellX + x;
                 int cy = cellY + y;
                 
-                // FIX: Use params.seed and params.jitter
-                point cellCenter = randomCellPosition(cx, cy, params.jitter, params.seed);
-                vector diff = scaledPos - cellCenter;
+                // FIX: Use params.Seed and params.Jitter
+                point cellCenter = randomCellPosition(cx, cy, jitteredParams.Jitter, jitteredParams.Seed);
+                vector diff = ScaledPos - cellCenter;
 
                 // Distortion logic
-                float dirLen = length(splatterDirection);
+                float dirLen = length(SplatterDirection);
                 if (dirLen > 1e-6) {
-                    vector flowDir = normalize(splatterDirection);
+                    vector flowDir = normalize(SplatterDirection);
                     float along = dot(diff, flowDir);
                     vector perp = diff - along * flowDir;
                     diff = (perp / (1.0 + dirLen * 5.0)) + flowDir * along;
@@ -152,37 +153,39 @@ shader AutolibSplatter [[
                 float angle = (atan2(diff.y, diff.x) / (M_PI * 2.0)) + 0.5;
                 
                 // Spike noise calculation
-                float circleSeed = noise("hash", vector(cx, cy, params.seed)) * 100.0;
-                float addNoise = noise("snoise", (angle * params.spikeFrequency) + circleSeed);
-                addNoise = pow(params.spikePeak, addNoise);
+                float circleSeed = noise("hash", vector(cx, cy, jitteredParams.Seed)) * 100.0;
+                float addNoise = noise("snoise", (angle * jitteredParams.SpikeFrequency) + circleSeed);
+                addNoise = pow(jitteredParams.SpikePeak, addNoise);
 
-                if (params.spikeTrimWidth > 0.0) {
+                if (jitteredParams.SpikeTrimWidth > 0.0) {
                     float edge = min(angle, 1.0 - angle);
-                    addNoise *= smoothstep(0.0, params.spikeTrimWidth, edge);
+                    addNoise *= smoothstep(0.0, jitteredParams.SpikeTrimWidth, edge);
                 }
 
                 // Apply spike intensity
-                addNoise = mix(1.0, addNoise, 1.0 - params.spikeAmount);
+                addNoise = mix(1.0, addNoise, 1.0 - jitteredParams.SpikeAmount);
                 
-                float rad = randomRadius(cx, cy, params.minRadius, params.maxRadius, params.seed);
+                float rad = randomRadius(cx, cy, jitteredParams.MinRadius, jitteredParams.MaxRadius, jitteredParams.Seed);
                 
                 float dNoised = dist - (rad * addNoise);
                 layerNoisedDist = min(layerNoisedDist, dNoised);
 
                 if (x == -bound && y == -bound) layerSmoothDist = dist;
-                else layerSmoothDist = smoothMin(layerSmoothDist, dist, params.unionSmoothness);
+                else layerSmoothDist = smoothMin(layerSmoothDist, dist, jitteredParams.UnionSmoothness);
             }
         }
 
-        float m = 1.0 - smoothstep(-params.spikePerimeterSmoothness, 0.0, layerNoisedDist);
-        float h = sigmoidMask(layerSmoothDist, params.basinHeight, params.basinCenter, params.basinSmoothness) * 1.4 * m;
+        float m = 1.0 - smoothstep(-jitteredParams.SpikePerimeterSmoothness, 0.0, layerNoisedDist);
+        float h = sigmoidMask(layerSmoothDist, jitteredParams.BasinHeight, jitteredParams.BasinCenter, jitteredParams.BasinSmoothness) * 1.4 * m;
 
         // Correct layering: Max provides a clean "stamp" look
         finalHeight = max(finalHeight, h);
         finalMask = max(finalMask, m);
     }
 
-    height = finalHeight;
-    mask = finalMask;
-    bumpNormal = calculatenormal(P + N * height * basinBumpStrength);
+    Height = finalHeight;
+    Mask = finalMask;
+
+    normal bumpedPoint = P + N * Height * jitteredParams.BumpStrength;
+    BumpedNormal = normalize(cross(Dx(bumpedPoint), Dy(bumpedPoint)));
 }

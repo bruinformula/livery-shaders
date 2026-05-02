@@ -1,0 +1,10 @@
+shader AutolibSubtractFloat [[
+    string category = "autolib"
+]] (
+    float InputA = 0.0,
+    float InputB = 0.0,
+
+    output float Output = 0
+) {
+    Output = InputA - InputB;
+}

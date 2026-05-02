@@ -1,0 +1,10 @@
+shader AutolibSineFloat [[
+    string category = "autolib"
+]] (
+    float Opposite = 1,
+    float Hypotenuse = 0,
+
+    output float Output = 0
+) {
+    Output = sin(Opposite / Hypotenuse);
+}

@@ -55,6 +55,7 @@ vector mirrorCurve(vector input, float exponent) {
 
 struct WeaveParams {
     float zGamma;
+    int verticalOnly;
 };
 
 void displacedWeaves (
@@ -75,13 +76,14 @@ void displacedWeaves (
     //Bump
     float weaveFactorBump = mix(weaveControlData.segmentFactor, weaveData.segmentFactor, weaveControlData.mask);
     float iBump = mirrorCurve(weaveFactorBump, params.zGamma);
-    float jBump = mirrorCurve(mixedTextureCoordinates.x, 6);
-    //fiberBump = iBump;
-    fiberBump = min(iBump, jBump);
+    if (!params.verticalOnly) {
+        float jBump = mirrorCurve(mixedTextureCoordinates.x, 6);
+        fiberBump = min(iBump, jBump);
+    } else {
+        fiberBump = iBump;
+    }
 
     //Normal
-    //float iVecFactor = 2 * (1 - weaveControlData.segmentFactor) - 1;
-    //float jVecFactor = 2 * weaveData.segmentFactor - 1;
     float iVecFactor = (1 - weaveControlData.segmentFactor);
     float jVecFactor = weaveData.segmentFactor;
 
@@ -89,7 +91,6 @@ void displacedWeaves (
     vector jVec = vector(0, jVecFactor, 0);
     vector iWeaveFactorNormal = mix(iVec, jVec, weaveControlData.mask);
 
-    //float anotherFactor = (2 * pow(clamp(mixedTextureCoordinates.x, 0, 1), 0.1) - 1);
     float anotherFactor = pow(clamp(mixedTextureCoordinates.x, 0, 1), 0.1);
 
     iVec = vector(anotherFactor, 0, 0);
@@ -97,27 +98,6 @@ void displacedWeaves (
     vector jWeaveFactorNormal = mix(iVec, jVec, weaveControlData.mask);
 
     fiberRotation = min(iWeaveFactorNormal, jWeaveFactorNormal);
-    //fiberRotation = vector(iWeaveFactorNormal);
-}
-
-normal getBumpedNormal( 
-    vector centerColor, 
-    vector uColor, 
-    vector vColor, 
-    float bumpAmount
-) {
-	vector worldTangent = normalize(dPdu);
-	vector worldBitangent = normalize(dPdv);
-	vector worldNormal = normalize(N);
-	
-    vector average = vector(0.3333333);
-    float center = dot(average, centerColor);
-    float ddu = center - dot(average, uColor);
-    float ddv = center - dot(average, vColor);
-	
-	float inverseBumpAmount = 1.0 / bumpAmount;
-	
-    return normalize(ddu * worldTangent + ddv * worldBitangent + inverseBumpAmount * worldNormal);
 }
 
 shader AutolibCarbonFiberWeaves [[ 
@@ -125,16 +105,22 @@ shader AutolibCarbonFiberWeaves [[
 ]] (
     point UV = point(u, v, 0),
 
-    vector fiberScale = vector(64, 32, 0) [[ string help = "Scale axis of the carbon fiber pattern", vector min = vector(64, 32, 0) ]],
-    float fiberZGamma = 1.5 [[ string help = "Controls the sharpness of the fiber strands", float min = 0.1, float max = 4.0 ]],
-    float fiberBumpStrength = 0.1 [[ string help = "Strength of the bump effect", float min = 0, float max = 1 ]],
-
-    output float outNoise = 0,
-    output float outBump = 0,
-    output normal outBumpedNormal = 0,
-    output vector outRotation = 0
+    vector FiberScale = vector(64, 32, 0) [[ string help = "Scale axis of the carbon fiber pattern", vector min = vector(64, 32, 0) ]],
+    float FiberZGamma = 0.5 [[ string help = "Controls the Z gradient of the broad fiber pattern", float min = 0.1, float max = 4.0, int interactive = 1 ]],
+    float FiberBumpStrength = 0.01 [[ string help = "Strength of the bump effect", float min = 0, float max = 1, int interactive = 1 ]],
+    float FiberStrandBoost = 1 [[ string help = "Boost the bump of the fiber strands", float min = 0, float max = 3, int interactive = 1 ]],
+    float FiberSpecularRoughnessAlong = 0.1 [[ string help = "Base roughness along the fiber direction", float min = 0, float max = 1, int interactive = 1 ]],
+    float FiberSpecularRoughnessAcross = 0.95 [[ string help = "Base roughness across the fiber direction", float min = 0, float max = 1, int interactive = 1 ]],
+    int VerticalBumpOnly = 0 [[ string help = "Adds a vertical bump component to the weaves (like for a specular highlight", float min = 0, int interactive = 1 ]],
+    
+    output float SpecularRoughness = 0,
+    output float SpecularAnisotropy = 0,
+    output float Noise = 0,
+    output float Height = 0,
+    output normal BumpedNormal = 0,
+    output vector Rotation = 0
 ) {
-    point fiberUV = UV * fiberScale;
+    point fiberUV = UV * FiberScale;
 
     point weaveControlDataCoordinates = fiberUV;
     point weaveDataCoordinates = vector(fiberUV.y, fiberUV.x, 0);
@@ -147,15 +133,26 @@ shader AutolibCarbonFiberWeaves [[
     WeaveData weaveData = createWeaves(weaveDataCoordinates);
 
     WeaveParams weaveParams;
-    weaveParams.zGamma = fiberZGamma;
+    weaveParams.zGamma = FiberZGamma;
+    weaveParams.verticalOnly = VerticalBumpOnly;
 
     float fiberBumpU, fiberBumpV;
     float fiberNoiseU, fiberNoiseV;
     vector fiberRotationU, fiberRotationV;
 
-    displacedWeaves(weaveParams, weaveControlData, weaveData, outNoise, outBump, outRotation);
+    displacedWeaves(weaveParams, weaveControlData, weaveData, Noise, Height, Rotation);
     displacedWeaves(weaveParams, createWeaves(weaveControlDataCoordinatesU), weaveData, fiberNoiseU, fiberBumpU, fiberRotationU);
     displacedWeaves(weaveParams, createWeaves(weaveControlDataCoordinatesV), weaveData, fiberNoiseV, fiberBumpV, fiberRotationV);
 
-    outBumpedNormal = getBumpedNormal(vector(outBump), vector(fiberBumpU), vector(fiberBumpV), fiberBumpStrength);
+    float fiberBumpiness = Height * pow(Noise, FiberStrandBoost);
+
+    float roughnessAlong = FiberSpecularRoughnessAlong * fiberBumpiness;
+    float roughnessAcross = FiberSpecularRoughnessAcross * fiberBumpiness;
+
+    // OpenPBR wants a single roughness + anisotropy factor
+    SpecularRoughness = max(roughnessAlong, roughnessAcross);
+    SpecularAnisotropy = 1.0 - (roughnessAlong / roughnessAcross);
+
+    normal bumpedPoint = P + N * FiberBumpStrength * fiberBumpiness;
+    BumpedNormal = normalize(cross(Dx(bumpedPoint), Dy(bumpedPoint)));
 }

@@ -1,12 +1,12 @@
 shader AutolibMix [[
     string category = "autolib"
 ]] (
-    color ColorA = 0,
-    color ColorB = 1,
     float Mixer = 0 [[ string widget = "number", int slider = 1, float slidermin = 0, float slidermax = 1 ]],
+    vector VectorA = 0,
+    vector VectorB = 1,
     int Clamp = 0 [[ string widget = "checkBox", int min = 0, int max = 1 ]],
 
-    output color RGB = 0
+    output vector XYZ = 0
 ) {
     float clampedMixer = Mixer;
     if (Clamp == 1) {
@@ -14,12 +14,12 @@ shader AutolibMix [[
     }
 
     if (clampedMixer <= 0.0) {
-        RGB = ColorA;
+        XYZ = VectorA;
         return;
     } else if (clampedMixer >= 1.0) {
-        RGB = ColorB;
+        XYZ = VectorB;
         return;
     }
 
-    RGB = mix(ColorA, ColorB, clampedMixer);
+    XYZ = mix(VectorA, VectorB, clampedMixer);
 }

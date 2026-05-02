@@ -1,0 +1,9 @@
+shader AutolibLengthFloat [[
+    string category = "autolib"
+]] (
+    float Input = 0.0,
+
+    output float Length = 0
+) {
+    Length = abs(Input);
+}

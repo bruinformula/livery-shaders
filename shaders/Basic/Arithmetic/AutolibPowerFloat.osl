@@ -1,0 +1,9 @@
+shader AutolibPowerFloat [[
+    string category = "autolib"
+]] (
+    float Base = 0,
+    float Exponent = 1,
+    output float Output = 0
+) {
+    Output = pow(Base, Exponent);
+}

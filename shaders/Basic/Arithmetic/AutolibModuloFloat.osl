@@ -1,0 +1,9 @@
+shader AutolibModuloFloat [[
+    string category = "autolib"
+]] (
+    float A = 0,
+    float B = 1,
+    output float Output = 0
+) {
+    Output = fmod(A, B);
+}

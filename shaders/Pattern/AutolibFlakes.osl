@@ -1,88 +1,90 @@
 // AutolibFlakes
-
 vector ID(vector x, int flakeSeed) {
     vector n = floor(x);
-    vector f = x-floor(x);
+    vector f = x - floor(x);
     vector m = vector(8);
-    for( int k = -1; k <= 1; k++ ) {
-		for( int j = -1; j <= 1; j++ ) {
-			for( int i = -1; i <= 1; i++ ) {
-				vector g = vector( float(i), float(j),float(k) );  	
-				vector o = noise("hash",n + g,flakeSeed);
-				vector r = g - f + (0.5 + (0.5 * sin(M_2PI * o)));
-				float s = dot(r, r);      
-				s < m.x ? m = vector(s, o.x, o.y) : 0;
-			}
-		}
-	}  
-	
-    return vector( sqrt(m.x), m.y + m.z, m.y + m.x);
+    for (int k = -1; k <= 1; k++) {
+        for (int j = -1; j <= 1; j++) {
+            for (int i = -1; i <= 1; i++) {
+                vector g = vector(float(i), float(j), float(k));
+                vector o = noise("hash", n + g, flakeSeed);
+                vector r = g - f + (0.5 + (0.5 * sin(M_2PI * o)));
+                float s = dot(r, r);
+                s < m.x ? m = vector(s, o.x, o.y) : 0;
+            }
+        }
+    }
+    return vector(sqrt(m.x), m.y + m.z, m.y + m.x);
 }
 
-float IDs( output float x, int flakeSeed ) { 
-	x = -1000 + x * 2000;
-	x = int(trunc(x));	
-	float xRatio = noise("cell", vector(abs(x), abs(flakeSeed), 11)); 
-	
-	return mix(0, 1, xRatio);
-}	
+float IDs(output float x, int flakeSeed) {
+    x = -1000 + x * 2000;
+    x = int(trunc(x));
+    float xRatio = noise("cell", vector(abs(x), abs(flakeSeed), 11));
+    return mix(0, 1, xRatio);
+}
 
-normal combineNormals(normal base, normal detail){
-    normal baseNormal = normalize(base);
+normal combineNormals(normal base, normal detail) {
+    normal BaseNormal   = normalize(base);
     normal detailNormal = normalize(detail);
-
-    vector baseAdjusted   = vector(baseNormal.x, baseNormal.y, baseNormal.z + 1.0);
+    vector baseAdjusted   = vector(BaseNormal.x,   BaseNormal.y,   BaseNormal.z + 1.0);
     vector detailAdjusted = vector(-detailNormal.x, -detailNormal.y, detailNormal.z);
-
-    float projection = dot(baseAdjusted, detailAdjusted);
-    vector combined  = baseAdjusted * projection - detailAdjusted * baseAdjusted.z;
-
+    float  projection = dot(baseAdjusted, detailAdjusted);
+    vector combined   = baseAdjusted * projection - detailAdjusted * baseAdjusted.z;
     return normalize(combined);
 }
 
-shader AutolibFlakes [[ 
-    string category = "autolib" 
-]] ( 
-    point position = P [[ string help = "The input point used to generate the flakes" ]], 
-    float scale = 0.1 [[ string help = "The density of the flakes" ]],
-    int seed = 0,
-    float density = 0.1 [[ float min = 0.0, float max = 1.0, string help = "Ratio of flakes to non-flakes. 1.0 is 100 percent flake`" ]],
-    normal baseNormal = normal(0.5, 0.5, 1.0) [[ string help = "The base normal used for the flakes" ]],
-    output float rehash = 0,
-    output float outAlpha = 1,
-    output normal outNormal = normal(0.5, 0.5, 1.0),
-    output normal outNormalDetail = normal(0.5, 0.5, 1.0) 
+shader AutolibFlakes [[
+    string category = "autolib"
+]] (
+    point Position = P   [[ string help = "The input point used to generate the flakes" ]],
+    float Scale = 0.1 [[ string help = "The density of the flakes", int interactive = 1 ]],
+    float Density = 0.1 [[ string help = "Ratio of flakes to non-flakes. 1.0 is 100% flake", float min = 0.0, float max = 1.0, int interactive = 1 ]],
+    float MorphStrength = 1.0 [[ string help = "How much flake normals deviate from the base normal. 0 = flat, 1 = full flake deflection", float min = 0.0, float max = 1.0, int interactive = 1 ]],
+    normal BaseNormal = Ng  [[ string help = "The base normal used for the flakes" ]],
+    int Seed = 0,
+
+    output float  Rehash       = 0,
+    output float  Alpha        = 1,
+    output normal Normal       = N,
+    output normal NormalDetail = N
 ) {
-    point scaledPosition = scale * position;
-
-	vector k = ID(scaledPosition, seed);
-
-    float angle = k.y * M_2PI;
+    point  scaledPosition = Scale * Position;
+    vector k     = ID(scaledPosition, Seed);
+    float  angle = k.y * M_2PI;
 
     float x = 0.5 + 0.5 * cos(angle);
     float y = 0.5 + 0.5 * sin(angle);
-    float z = 0.5 + 0.5 * tan(angle);
+    float z = 0.5 + 0.5 * cos(angle * 0.5);   // was tan() — unbounded, replaced
 
-	outNormal = normalize(vector(x, y, z) * 2.0 - 1.0);
-    outNormal = outNormal * 0.5 + 0.5;
+    Normal = normalize(vector(x, y, z) * 2.0 - 1.0);
+    Normal = Normal * 0.5 + 0.5;
 
-	int seeds[3] = {4, 4, 1};
-
-	for (int i = 0; i < 3; i++) {
-		outNormal[i] = IDs(outNormal[i], seeds[i]);
-	}
-
-    outNormal.z = 0.5 + 0.5 * outNormal.z;
-
-    float h = -1000.0 + outNormal.x * 2000.0;
-    h = int(trunc(h));
-    rehash = noise("cell", vector(abs(h), 16, 11));
-
-	if (density <= rehash) {
-        outNormal = vector(0.5, 0.5, 1.0);
+    int Seeds[3] = {4, 4, 1};
+    for (int i = 0; i < 3; i++) {
+        Normal[i] = IDs(Normal[i], Seeds[i]);
     }
+    Normal.z = 0.5 + 0.5 * Normal.z;
 
-	outAlpha = (outNormal.x != 0.5) ? 1.0 : 0.0;
+    float h = -1000.0 + Normal.x * 2000.0;
+    h = int(trunc(h));
+    Rehash = noise("cell", vector(abs(h), 16, 11));
 
-    outNormalDetail = combineNormals(baseNormal, outNormal);
+    // Track flake vs non-flake explicitly to avoid float equality check on Alpha
+     int isFlake = (Density > Rehash) ? 0 : 1;
+    if (!isFlake) {
+        Normal = vector(0.5, 0.5, 1.0);
+    }
+    Alpha = float(isFlake);
+
+    // Decode from [0,1] map space to [-1,1] geometric space before blending
+    normal decodedNormal = Normal * 2.0 - 1.0;
+
+    // Blend decoded flake normal toward neutral (0,0,1) based on MorphStrength
+    // At 0.0: flat tangent normal = no deviation from base
+    // At 1.0: full flake deflection
+    normal neutralNormal = normal(0.0, 0.0, 1.0);
+    normal blendedNormal = normalize(mix(neutralNormal, decodedNormal, MorphStrength));
+
+    NormalDetail = combineNormals(BaseNormal, blendedNormal);
 }

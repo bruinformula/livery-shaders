@@ -1,4 +1,4 @@
-shader AutolibRaySwitch [[
+surface AutolibRaySwitch [[
     string category = "autolib"   
 ]] (
     closure color CameraClosure = 0,

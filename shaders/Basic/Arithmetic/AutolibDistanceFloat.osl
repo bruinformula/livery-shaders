@@ -1,0 +1,10 @@
+shader AutolibDistanceFloat [[
+    string category = "autolib"
+]] (
+    float ValueA = 0,
+    float ValueB = 0,
+
+    output float Result = 0
+) {
+    Result = abs(ValueA - ValueB);
+}

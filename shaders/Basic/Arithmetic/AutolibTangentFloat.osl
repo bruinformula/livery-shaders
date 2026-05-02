@@ -1,0 +1,10 @@
+shader AutolibTangentFloat [[
+    string category = "autolib"
+]] (
+    float Opposite = 0,
+    float Adjacent = 1,
+
+    output float Output = 0
+) {
+    Output = tan(Opposite / Adjacent);
+}

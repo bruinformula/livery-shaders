@@ -1,0 +1,10 @@
+shader AutolibMultiplyFloat [[
+    string category = "autolib"
+]] (
+    float InputA = 1.0,
+    float InputB = 1.0,
+
+    output float Output = 0
+) {
+    Output = (InputA * InputB);
+}
