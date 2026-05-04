@@ -1,0 +1,9 @@
+shader AutolibTooledSteel [[ 
+    string category = "autolib"
+]] (
+
+) {
+
+} {
+
+}

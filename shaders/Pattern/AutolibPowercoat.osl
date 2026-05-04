@@ -5,7 +5,6 @@ float median(float r, float g, float b) {
 }
 
 struct DecalData {
-    point UV;
     float Mask;
     float SDFDistance;
     float WorldPerU;
@@ -13,6 +12,7 @@ struct DecalData {
 };
 
 void computeWorldUV(
+    point UV,
     output DecalData Data
 ) {
     // We need delP/delU and delP/delV — the world-space tangent vectors for the input UV
@@ -33,8 +33,8 @@ void computeWorldUV(
     vector dPdx = Dx(P);
     vector dPdy = Dy(P);
 
-    vector dUVdx = Dx(Data.UV);
-    vector dUVdy = Dy(Data.UV);
+    vector dUVdx = Dx(UV);
+    vector dUVdy = Dy(UV);
 
     float dUdx = dUVdx.x;
     float dVdx = dUVdx.y;
@@ -46,18 +46,15 @@ void computeWorldUV(
 
     float worldPerU, worldPerV;
 
-    if (abs(det) < 1e-12) return;
+    if (abs(det) > 1e-12) { // invert  
+        // delP/delU = ( dVdy * dPdx - dVdx * dPdy) / det
+        // delP/delV = (-dUdy * dPdx + dUdx * dPdy) / det
+        vector dPdU = ( dVdy * dPdx - dVdx * dPdy) / det;
+        vector dPdV = (-dUdy * dPdx + dUdx * dPdy) / det;
 
-    // delP/delU = ( dVdy * dPdx - dVdx * dPdy) / det
-    // delP/delV = (-dUdy * dPdx + dUdx * dPdy) / det
-    vector dPdU = ( dVdy * dPdx - dVdx * dPdy) / det;
-    vector dPdV = (-dUdy * dPdx + dUdx * dPdy) / det;
-
-    worldPerU = length(dPdU);
-    worldPerV = length(dPdV);
-
-    if (worldPerU <= 0) return;
-    if (worldPerV <= 0) return;
+        worldPerU = length(dPdU);
+        worldPerV = length(dPdV);
+    }
 
     Data.WorldPerU = worldPerU;
     Data.WorldPerV = worldPerV;
@@ -66,9 +63,9 @@ void computeWorldUV(
 shader AutolibDecal [[ 
     string category = "autolib",
     string help = "The driving UV set used to orient and scale the decal. "
-                  "In 'Sticker Mode', the shader uses this coordinate's "
-                  "world-space derivatives to ensure the decal maintains "
-                  "its physical width regardless of geometry density."
+                 "In 'Sticker Mode', the shader uses this coordinate's "
+                 "world-space derivatives to ensure the decal maintains "
+                 "its physical width regardless of geometry density."
 ]] (
     point UV = point(u,v,0) [[ string help = "If in sticker mode, this is used as a base space in mapping from screenspace to world space." ]],
     vector Offset = 0 [[ string help = "Offset applied to the decal projection", int interactive = 1 ]],
@@ -103,15 +100,8 @@ shader AutolibDecal [[
     // The user sets `width`; height follows from the image aspect ratio.
     vector worldDim = transform(Units, "world", vector(Width, Width * aspectRatio, 0));
 
-    int isConnectedUV = isconnected(UV);
-    if (isConnectedUV) {
-        Data.UV = UV;
-    } else {
-        Data.UV = OtherData.UV;
-    }
-
-    if (!isconnected(OtherData) || isConnectedUV) {
-        computeWorldUV(Data);
+    if (!isconnected(OtherData)) {
+        computeWorldUV(UV, Data);
     } else {
         Data.WorldPerU = OtherData.WorldPerU;
         Data.WorldPerV = OtherData.WorldPerV;
@@ -122,16 +112,14 @@ shader AutolibDecal [[
         float uvSpanU = worldDim.x / Data.WorldPerU;
         float uvSpanV = worldDim.y / Data.WorldPerV;
 
-        U = (Data.UV.x - 0.5) / uvSpanU + 0.5;
-        V = (Data.UV.y - 0.5) / uvSpanV + 0.5;
+        U = (UV.x - 0.5) / uvSpanU + 0.5;
+        V = (UV.y - 0.5) / uvSpanV + 0.5;
     } else {
-        point UVw = transform("world", Data.UV);
+        point UVw = transform("world", UV);
 
         U = ((UVw.x - 0.5) / worldDim.x) + 0.5;
         V = ((UVw.y - 0.5) / worldDim.y) + 0.5;
     }
-    // early exit outside the decal rectangle
-    if (SDFBlurAmount == 0 && (U < 0.0 || U > 1.0 || V < 0.0 || V > 1.0)) return;
 
     U -= Offset.x;
     V -= Offset.y;
@@ -178,5 +166,5 @@ shader AutolibDecal [[
 
     Data.Mask = max(OtherData.Mask, Mask);
     Data.SDFDistance = max(OtherData.SDFDistance, SDFDistance);
-}
+  }
     

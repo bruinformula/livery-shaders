@@ -23,15 +23,15 @@ float smoothMin(float a, float b, float k) {
 }
 
 color randomCellAlbedo(int x, int y, color BaseAlbedo, float JitterAmount, int Seed) {
-    float rR = noise("hash", vector(x, y, Seed + 100));
-    float rG = noise("hash", vector(x, y, Seed + 101));
-    float rB = noise("hash", vector(x, y, Seed + 102));
-    color jittered = color(
-        clamp(BaseAlbedo[0] * (1.0 + (rR - 0.5) * JitterAmount * 0.4), 0.0, 1.0),
-        clamp(BaseAlbedo[1] * (1.0 + (rG - 0.5) * JitterAmount * 0.4), 0.0, 1.0),
-        clamp(BaseAlbedo[2] * (1.0 + (rB - 0.5) * JitterAmount * 0.4), 0.0, 1.0)
-    );
-    return jittered;
+    if (JitterAmount <= 0) return BaseAlbedo;
+    float rS = noise("hash", vector(x, y, Seed + 100));
+    float rV = noise("hash", vector(x, y, Seed + 101));
+
+    color hsv = transformc("rgb", "hsv", BaseAlbedo);
+    float newS = clamp(hsv[1] * (1.0 + (rS - 0.5) * JitterAmount * 0.4), 0.0, 1.0);
+    float newV = clamp(hsv[2] * (1.0 + (rV - 0.5) * JitterAmount * 0.4), 0.0, 1.0);
+
+    return transformc("hsv", "rgb", color(hsv[0], newS, newV));
 }
 
 struct SplatterLayerParams {
@@ -59,9 +59,10 @@ struct SplatterLayerParams {
 SplatterLayerParams jitterSplatterParams(
     SplatterLayerParams baseParams,
     int sublayerIndex,
-    float JitterAmount
+    float jitterAmount,
+    float colorJitterAmount
 ) {
-    SplatterLayerParams Jittered = baseParams;
+    SplatterLayerParams jittered = baseParams;
     
     float rand1 = noise("hash", vector(baseParams.Seed + sublayerIndex, 0, 0));
     float rand2 = noise("hash", vector(baseParams.Seed + sublayerIndex, 1, 0));
@@ -69,29 +70,34 @@ SplatterLayerParams jitterSplatterParams(
     float rand4 = noise("hash", vector(baseParams.Seed + sublayerIndex, 3, 0));
     float rand5 = noise("hash", vector(baseParams.Seed + sublayerIndex, 4, 0));
     
-    Jittered.Seed = baseParams.Seed + sublayerIndex;
-    Jittered.MinRadius = baseParams.MinRadius * (1 + (rand2 - 0.5) * JitterAmount * 0.3);
-    Jittered.MaxRadius = baseParams.MaxRadius * (1 + (rand3 - 0.5) * JitterAmount * 0.3);
+    jittered.Seed = baseParams.Seed + sublayerIndex;
+    jittered.MinRadius = baseParams.MinRadius * (1 + (rand2 - 0.5) * jitterAmount * 0.3);
+    jittered.MaxRadius = baseParams.MaxRadius * (1 + (rand3 - 0.5) * jitterAmount * 0.3);
     
-    Jittered.SpikeAmount = clamp(baseParams.SpikeAmount + (rand4 - 0.5) * JitterAmount * 0.2, 0, 1);
-    Jittered.SpikePeak = baseParams.SpikePeak * (1 + (rand5 - 0.5) * JitterAmount * 0.4);
+    jittered.SpikeAmount = clamp(baseParams.SpikeAmount + (rand4 - 0.5) * jitterAmount * 0.2, 0, 1);
+    jittered.SpikePeak = baseParams.SpikePeak * (1 + (rand5 - 0.5) * jitterAmount * 0.4);
     
     float rand6 = noise("hash", vector(baseParams.Seed + sublayerIndex, 5, 0));
-    Jittered.BasinHeight = clamp(baseParams.BasinHeight + (rand6 - 0.5) * JitterAmount * 0.15, 0, 1);
+    jittered.BasinHeight = clamp(baseParams.BasinHeight + (rand6 - 0.5) * jitterAmount * 0.15, 0, 1);
     
     float rand7 = noise("hash", vector(baseParams.Seed + sublayerIndex, 6, 0));
-    Jittered.BumpStrength = clamp(baseParams.BumpStrength + (rand7 - 0.5) * JitterAmount * 0.1, 0, 1);
+    jittered.BumpStrength = clamp(baseParams.BumpStrength + (rand7 - 0.5) * jitterAmount * 0.1, 0, 1);
 
     float rand8  = noise("hash", vector(baseParams.Seed + sublayerIndex, 7, 0));
     float rand9  = noise("hash", vector(baseParams.Seed + sublayerIndex, 8, 0));
-    float rand10 = noise("hash", vector(baseParams.Seed + sublayerIndex, 9, 0));
-    Jittered.Albedo = color(
-        clamp(baseParams.Albedo[0] * (1.0 + (rand8  - 0.5) * JitterAmount * 0.3), 0.0, 1.0),
-        clamp(baseParams.Albedo[1] * (1.0 + (rand9  - 0.5) * JitterAmount * 0.3), 0.0, 1.0),
-        clamp(baseParams.Albedo[2] * (1.0 + (rand10 - 0.5) * JitterAmount * 0.3), 0.0, 1.0)
-    );
 
-    return Jittered;
+    if (colorJitterAmount > 0) {
+        color hsv = transformc("rgb", "hsv", baseParams.Albedo);
+
+        float newS = clamp(hsv[1] * (1.0 + (rand8  - 0.5) * colorJitterAmount * 0.3), 0.0, 1.0);
+        float newV = clamp(hsv[2] * (1.0 + (rand9  - 0.5) * colorJitterAmount * 0.3), 0.0, 1.0);
+
+        jittered.Albedo = transformc("hsv", "rgb", color(hsv[0], newS, newV));
+    } else {
+        jittered.Albedo = baseParams.Albedo;
+    }
+
+    return jittered;
 }
 
 struct SplatterData {
@@ -109,6 +115,7 @@ shader AutolibSplatter [[
     color LayerAlbedo = 1 [[ int interactive = 1 ]],
     float SplatterScale = 20 [[ string page = "Pattern", int interactive = 1 ]],
     int Seed = 433 [[ string page = "Pattern" ]],
+    float ColorJitter = 0 [[ string page = "Pattern", int interactive = 1 ]],
     float Jitter = 2.0 [[ string page = "Pattern", int interactive = 1 ]],
     vector SplatterDirection = 0 [[ string page = "Pattern", string help = "Used to distort the shape of each drop", int interactive = 1 ]],
     float MinRadius = 0.005 [[ string page = "Pattern", int interactive = 1 ]],
@@ -130,6 +137,7 @@ shader AutolibSplatter [[
     int NumLayers = 1 [[ int min = 0, string help = "Number of layered splatters to combine for more complexity" ]],
 
     SplatterData OtherData = {} [[ string page = "Chaining" ]],
+    int DisableChaining = 0 [[ string page = "Chaining", string help = "Disables chainging inputs", string widget = "checkBox", int min = 0, int max = 1 ]],
 
     output SplatterData Data = {},
     output float Height = 0,
@@ -158,7 +166,7 @@ shader AutolibSplatter [[
     float finalAlbedoWeight = 0.0;
 
     for (int layerIdx = 0; layerIdx < NumLayers; layerIdx++) {
-        jitteredParams = jitterSplatterParams(jitteredParams, layerIdx, Jitter * 0.2);
+        jitteredParams = jitterSplatterParams(jitteredParams, layerIdx, Jitter * 0.2, ColorJitter);
 
         float layerNoisedDist = 1e6;
         float layerSmoothDist = 1e6;
@@ -204,7 +212,7 @@ shader AutolibSplatter [[
                 if (x == -bound && y == -bound) layerSmoothDist = dist;
                 else layerSmoothDist = smoothMin(layerSmoothDist, dist, jitteredParams.UnionSmoothness);
 
-                color cellAlbedo = randomCellAlbedo(cx, cy, jitteredParams.Albedo, Jitter, jitteredParams.Seed);
+                color cellAlbedo = randomCellAlbedo(cx, cy, jitteredParams.Albedo, ColorJitter, jitteredParams.Seed);
                 float cellWeight = exp(-jitteredParams.UnionSmoothness * max(dist, 1e-6));
                 layerAlbedoAccum += cellWeight * cellAlbedo;
                 layerAlbedoWeight += cellWeight;
@@ -236,7 +244,7 @@ shader AutolibSplatter [[
     float compositeHeight = finalHeight;
     normal compositeNormal = finalNormal;
 
-    if (isconnected(OtherData)) {
+    if (isconnected(OtherData) && !DisableChaining) {
         thisLayerIdx = OtherData.LayerIdx + 1;
         compositeAlbedo = thisAlbedo + OtherData.Albedo * (1.0 - finalHeight);
         compositeMask = max(finalMask, OtherData.Mask);
