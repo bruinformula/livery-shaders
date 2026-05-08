@@ -1,10 +1,10 @@
 shader AutolibMixFloat [[
     string category = "autolib"
 ]] (
-    float Mixer = 0 [[ string widget = "number", int slider = 1, float slidermin = 0, float slidermax = 1 ]],
+    float Mixer = 0 [[ float min = 0, float max = 1 ]],
     float FloatA = 0,
     float FloatB = 1,
-    int Clamp = 0 [[ string widget = "checkBox", int min = 0, int max = 1 ]],
+    int Clamp = 0 [[ string widget = "boolean", int min = 0, int max = 1 ]],
 
     output float X = 0
 ) {

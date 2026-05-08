@@ -3,14 +3,14 @@ shader AutolibKuwaharaFilter [[
     string category = "autolib" 
 ]] (
     vector UV = vector(u, v, 0),
-    string fileName = "" [[ string widget = "filename", string page = "Image" ]],
-    string fileColorSpace = "" [[ string label = "Colorspace", string page = "Color Space Conversion", string widget = "colorspace" ]],
+    string FileName = "" [[ string path = "file", string page = "Image" ]],
+    string FileColorSpace = "" [[ string label = "Colorspace", string page = "Color Space Conversion", string widget = "colorspace" ]],
 
-    float radius = 0.003,
-    output color outColor = color(0.0))
+    float Radius = 0.003,
+    output color Color = color(0.0))
 
 {
-    int radSteps = int(radius * 1000); // Convert radius to integer steps
+    int radSteps = int(Radius * 1000); // Convert radius to integer steps
     if (radSteps < 1)
         radSteps = 1;
 
@@ -35,8 +35,8 @@ shader AutolibKuwaharaFilter [[
         for (int x = 0; x <= radSteps; x++) {
             for (int y = 0; y <= radSteps; y++) {
                 // Compute texture coordinates with offsets
-                float uOffset = offset_x[n] * x * radius;
-                float vOffset = offset_y[n] * y * radius;
+                float uOffset = offset_x[n] * x * Radius;
+                float vOffset = offset_y[n] * y * Radius;
                 float uNew = uv[0] + uOffset;
                 float vNew = uv[1] + vOffset;
 
@@ -45,7 +45,7 @@ shader AutolibKuwaharaFilter [[
                 vNew = vNew - floor(vNew);
 
                 // Sample texture at offset
-                color sample = texture(fileName, uNew, vNew);
+                color sample = texture(FileName, uNew, vNew);
                 sum += sample;
                 sumSq += dot(sample, sample);
                 count++;
@@ -71,6 +71,6 @@ shader AutolibKuwaharaFilter [[
     color output_mean = mean[minIndex];
 
     color textureSampleRAW = transformc("ACEScg", "scene-linear Rec.709-sRGB", output_mean);
-    outColor = transformc(fileColorSpace, "ACEScg", textureSampleRAW);
+    Color = transformc(FileColorSpace, "ACEScg", textureSampleRAW);
 
 }

@@ -85,53 +85,53 @@ shader AutolibWeaves [[
 ]] (
     point UV = point(u,v,0),
 
-    float scale = 0.2 [[ string help = "Pattern scale", float min = 0.001, float max = 10 ]],
+    float Scale = 0.2 [[ string help = "Pattern scale", float min = 0.001, float max = 10 ]],
 
-    color uColor = 0.2 [[ string help = "Color of U thread" ]],
-    color vColor = 0.5 [[ string help = "Color of V thread" ]],
+    color UColor = 0.2 [[ string help = "Color of U thread" ]],
+    color VColor = 0.5 [[ string help = "Color of V thread" ]],
 
-    float width = 0.5 [[ string help = "Thread width", float min = 0.0, float max = 1.0 ]],
-    float roundness = 1.0 [[ string help = "Thread roundness", float min = 0.0, float max = 1.0 ]],
+    float Width = 0.5 [[ string help = "Thread width", float min = 0.0, float max = 1.0 ]],
+    float Roundness = 1.0 [[ string help = "Thread roundness", float min = 0.0, float max = 1.0 ]],
 
-    float roundnessBump = 1.0 [[ string help = "Roundness outBumpiness strength", float min = 0.0, float max = 2.0 ]],
-    float roundShadow = 0.5 [[ string help = "Round shading strength", float min = 0.0, float max = 1.0 ]],
+    float RoundnessBump = 1.0 [[ string help = "Roundness outBumpiness strength", float min = 0.0, float max = 2.0 ]],
+    float RoundShadow = 0.5 [[ string help = "Round shading strength", float min = 0.0, float max = 1.0 ]],
 
-    float weaveBump = 0.5 [[ string help = "Weave outBumpiness intensity", float min = 0.0, float max = 2.0 ]],
-    float weaveShadow = 0.4 [[ string help = "Weave shadow strength", float min = 0.0, float max = 1.0 ]],
+    float WeaveBump = 0.5 [[ string help = "Weave outBumpiness intensity", float min = 0.0, float max = 2.0 ]],
+    float WeaveShadow = 0.4 [[ string help = "Weave shadow strength", float min = 0.0, float max = 1.0 ]],
 
-    float frizz = 0.0 [[ string help = "Fiber frizz amount", float min = 0.0, float max = 1.0 ]],
-    float frizzBump = 0.0 [[ string help = "Frizz outBumpiness intensity", float min = 0.0, float max = 2.0 ]],
-    float frizzScale = 0.1 [[ string help = "Frizz noise scale", float min = 0.0, float max = 10.0 ]],
+    float Frizz = 0.0 [[ string help = "Fiber frizz amount", float min = 0.0, float max = 1.0 ]],
+    float FrizzBump = 0.0 [[ string help = "Frizz outBumpiness intensity", float min = 0.0, float max = 2.0 ]],
+    float FrizzScale = 0.1 [[ string help = "Frizz noise scale", float min = 0.0, float max = 10.0 ]],
 
-    float bendyness = 0.2 [[ string help = "Thread bending randomness", float min = 0.0, float max = 1.0 ]],
-    float bendynessScale = 3.0 [[ string help = "Bending noise scale", float min = 0.0, float max = 10.0 ]],
+    float Bendyness = 0.2 [[ string help = "Thread bending randomness", float min = 0.0, float max = 1.0 ]],
+    float BendynessScale = 3.0 [[ string help = "Bending noise scale", float min = 0.0, float max = 10.0 ]],
 
-    float opacityFade = 0.0 [[ string help = "Thread edge opacity fade", float min = 0.0, float max = 1.0 ]],
+    float OpacityFade = 0.0 [[ string help = "Thread edge opacity fade", float min = 0.0, float max = 1.0 ]],
 
-    output color outColor = 0,
-    output float outBump = 0,
-    output float threadId = 0,
-    output float opacity = 0,
-    output vector outAnisotropicDirection = 0,
-    output float outAnisotropyAmount = 0
+    output color Color = 0,
+    output float Bump = 0,
+    output float ThreadId = 0,
+    output float Opacity = 0,
+    output vector AnisotropicDirection = 0,
+    output float AnisotropyAmount = 0
 ) {
-    vector uvw = UV / scale;
+    vector uvw = UV / Scale;
 
     WeaveParams params;
 
-    params.scale = scale;
-    params.width = width;
-    params.roundness = roundness;
-    params.roundnessBump = roundnessBump;
-    params.roundShadow = roundShadow;
-    params.weaveBump = weaveBump;
-    params.weaveShadow = weaveShadow;
-    params.frizz = frizz;
-    params.frizzBump = frizzBump;
-    params.frizzScale = frizzScale;
-    params.bendyness = bendyness;
-    params.bendynessScale = bendynessScale;
-    params.opacityFade = opacityFade;
+    params.scale = Scale;
+    params.width = Width;
+    params.roundness = Roundness;
+    params.roundnessBump = RoundnessBump;
+    params.roundShadow = RoundShadow;
+    params.weaveBump = WeaveBump;
+    params.weaveShadow = WeaveShadow;
+    params.frizz = Frizz;
+    params.frizzBump = FrizzBump;
+    params.frizzScale = FrizzScale;
+    params.bendyness = Bendyness;
+    params.bendynessScale = BendynessScale;
+    params.opacityFade = OpacityFade;
 
     WeaveData data = computeWeaveData(uvw, params);
 
@@ -148,12 +148,12 @@ shader AutolibWeaves [[
         onV = onU == 0;
     }
 
-    threadId = 1 + float((cellnoise(data.uf) * onV + cellnoise(data.vf) * onU) * 1024.0) + onU;
+    ThreadId = 1 + float((cellnoise(data.uf) * onV + cellnoise(data.vf) * onU) * 1024.0) + onU;
 
     if (onU) {
-        outColor = uColor;
+        Color = UColor;
     } else {
-        outColor = vColor;
+        Color = VColor;
     }
 
     float weave;
@@ -174,14 +174,14 @@ shader AutolibWeaves [[
     // When > 0, edges fade out based on the bulge profile.
     // We use the active thread's bulge only, so the inactive axis doesn't bleed in.
     float rawBulge = onU ? data.ubulge : data.vbulge;
-    opacity = (params.opacityFade > 0.0)
+    Opacity = (params.opacityFade > 0.0)
         ? pow(max(0.0, rawBulge), params.opacityFade)
         : 1.0;
 
-    outBump = 0.2 + (weave * params.weaveBump) + (bulge * params.roundnessBump) + (data.frizz * params.frizzBump);
+    Bump = 0.2 + (weave * params.weaveBump) + (bulge * params.roundnessBump) + (data.frizz * params.frizzBump);
 
-    outColor *= mix(1.0, bulge, params.roundShadow);
-    outColor *= mix(1.0, weave, params.weaveShadow);
+    Color *= mix(1.0, bulge, params.roundShadow);
+    Color *= mix(1.0, weave, params.weaveShadow);
 
     // Anisotropic direction along the thread's running axis,
     // incorporating bend so the direction follows the actual fiber curve.
@@ -189,13 +189,13 @@ shader AutolibWeaves [[
     // V-threads run along Y
     float bend;
     if (onU) {
-        outAnisotropicDirection = normalize(vector(1.0, data.ubend, 0.0));
+        AnisotropicDirection = normalize(vector(1.0, data.ubend, 0.0));
         bend = abs(data.ubend);
     } else {
-        outAnisotropicDirection = normalize(vector(data.vbend, 1.0, 0.0));
+        AnisotropicDirection = normalize(vector(data.vbend, 1.0, 0.0));
         bend = abs(data.vbend);
     }
 
     // Anisotropy is strongest at thread center (high bulge), reduced by frizz and bending
-    outAnisotropyAmount = bulge * max(0.0, 1.0 - data.frizz - bend);
+    AnisotropyAmount = bulge * max(0.0, 1.0 - data.frizz - bend);
 }

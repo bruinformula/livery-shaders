@@ -11,19 +11,23 @@ point fract(point p) {
     return fractional;
 }
 
+#define CELL 0
+#define HASH 1
+#define SIMPLEX 2
+
 shader AutolibNoisyVoronoi [[ 
     string category = "autolib" 
 ]] (
     // Input Mapping
     point UVW = transform("world", P) [[ string help = "World Space UVW" ]],
-    int objectUVW = 1 [[ string help = "Use Object Space UVW instead of World Space UVW", int min = 0, int max = 1 ]],
+    int ObjectUVW = 1 [[ string help = "Use Object Space UVW instead of World Space UVW", int min = 0, int max = 1 ]],
 
     // Color 
-    color color1 = 1,
-    color color2 = 0,
-    int multicolored = 0 [[ string help = "Output random colors. Color 1 and Color 2 are ignored.", int min = 0, int max = 1 ]],
+    color Color1 = 1,
+    color Color2 = 0,
+    int Multicolored = 0 [[ string help = "Output random colors. Color 1 and Color 2 are ignored.", int min = 0, int max = 1 ]],
 
-    float scale = 1 [[ string help = "Size of the cell pattern", float min = 0.001, float max = 10 ]],
+    float Scale = 1 [[ string help = "Size of the cell pattern", float min = 0.001, float max = 10 ]],
     float scaleMultiplier = 1 [[ string help = "Multiplier for finer control of pattern size", float min = 0.001, float max = 10 ]],
 
     int seed = 0 [[ string help = "Seed for random cell pattern", int min = 1, int max = 32767 ]],
@@ -35,16 +39,16 @@ shader AutolibNoisyVoronoi [[
     float noiseScale = 1 [[ string help = "Edge noise size", float min = 0, float max = 10  ]],
     float noiseAmount = 0.15 [[ string help = "Multiplier for the edge noise size", float min = 0, float max = 10  ]],
     int octaves = 1 [[ string help = "Number of noise iterations", int min = 1, int max = 20 ]],
-    int noiseType = 2 [[ string help = "Noise type", string widget = "mapper", string options = "cell:0|hash:1|simplex:2" ]],
+    int noiseType = SIMPLEX [[ string help = "Noise type", string widget = "mapper", string options = "cell|hash|simplex" ]],
 
-    output color outColor = 0
+    output color Color = 0
 ) {
     point uvw = point(0);
 
-    if (objectUVW == 1) {
-        uvw = transform("object", P) / (scale * scaleMultiplier); // object space uvw
+    if (ObjectUVW == 1) {
+        uvw = transform("object", P) / (Scale * scaleMultiplier); // object space uvw
     } else {
-        uvw = UVW / (scale * scaleMultiplier); // world space uvw
+        uvw = UVW / (Scale * scaleMultiplier); // world space uvw
     }
     
     uvw += 0.0001; // prevents z-fighting on objects with no depth
@@ -60,13 +64,11 @@ shader AutolibNoisyVoronoi [[
         for (int o = 1; o < octaves + 1; o++) {
             float n = noiseScale / (o * 4); // reduce noise size by 4 each iteration
             int shift = o; // prevents spiky striations from the origin
-            if (noiseType == 0) {
+            if (noiseType == CELL) {
                 positionNoise += noise("cell", point((uvw[0] + shift) / n, (uvw[1] + shift) / n, (uvw[2] + shift )/ n)) * noiseAmount;
-              }
-            else if (noiseType == 1) {
+            } else if (noiseType == HASH) {
                 positionNoise += noise("hash", point((uvw[0] + shift) / n, (uvw[1] + shift) / n, (uvw[2] + shift )/ n)) * noiseAmount;
-              }
-            else {
+            } else {
                 positionNoise += noise("simplex", point((uvw[0] + shift) / n, (uvw[1] + shift) / n, (uvw[2] + shift )/ n)) * noiseAmount;
              }
         }
@@ -102,11 +104,11 @@ shader AutolibNoisyVoronoi [[
     // greyscale values of the cells
     float cellValue = max(dot(minPoint, point(0.25,0.5,0.0)), step(cellExpansion + positionNoise, minDistance)) ;
 
-    if (multicolored == 1) {
-        outColor = color( max(dot(minPoint, point(1,0,0)), step(cellExpansion + positionNoise, minDistance)),
+    if (Multicolored == 1) {
+        Color = color( max(dot(minPoint, point(1,0,0)), step(cellExpansion + positionNoise, minDistance)),
                           max(dot(minPoint, point(0,1,0)), step(cellExpansion + positionNoise, minDistance)),
                           max(dot(minPoint, point(0,0,1)), step(cellExpansion + positionNoise, minDistance)) );
     } else {
-      outColor = mix(color1, color2, cellValue); 
+      Color = mix(Color1, Color2, cellValue); 
     }
 }

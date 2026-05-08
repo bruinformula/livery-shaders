@@ -3,7 +3,7 @@ shader AutolibCross [[
 ]] (
     vector VectorA = vector(1, 0, 0),
     vector VectorB = vector(0, 1, 0),
-    int NormalizeResult = 1 [[ string widget = "checkBox" ]],
+    int NormalizeResult = 1 [[ string widget = "boolean" ]],
 
     output vector Result = 0
 ) {

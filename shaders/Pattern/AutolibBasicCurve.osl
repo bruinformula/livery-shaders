@@ -59,7 +59,7 @@ shader AutolibBasicCurve [[
     string category = "autolib" 
 ]] (
     point UV = point(u, v, 0), 
-    int SwapUAndV = 0 [[ string widget = "checkBox", string help = "By default, the primary axis (length) is U. Turn this on to use V as the length." ]], 
+    int SwapUAndV = 0 [[ string widget = "boolean", string help = "By default, the primary axis (length) is U. Turn this on to use V as the length." ]], 
 
     float NoiseScale = 1 [[ string page = "Noise", float min = 0.1, float max = 10, int interactive = 1 ]],
     int Octaves = 1 [[ string page = "Noise", int min = 1, int max = 8 ]],
@@ -75,21 +75,21 @@ shader AutolibBasicCurve [[
     float TrimTransitionWidth = 0.05 [[ string page = "Trim", float min = 0, float max = 1 ]],
     float TrimExponent = 0.25 [[ string page = "Trim", float min = 0, float max = 1, int interactive = 1 ]],
 
-    int uniformNoiseScale = 1 [[ string widget = "checkBox", string help = "If enabled, the noise will scale uniformly based on world space size." ]],
+    int UniformNoiseScale = 1 [[ string widget = "boolean", string help = "If enabled, the noise will scale uniformly based on world space size." ]],
 
-    output float worldLengthFactor = 1,
-    output float inRegion = 0,
-    output float inRegionSmooth = 0
+    output float WorldLengthFactor = 1,
+    output float InRegion = 0,
+    output float InRegionSmooth = 0
 ) {
     float coordU = SwapUAndV ? UV.y : UV.x;
     float coordV = SwapUAndV ? UV.x : UV.y;
 
     // Calculate World Length Factor
-    if (uniformNoiseScale) {
+    if (UniformNoiseScale) {
         if (!isconnected(UV)) { // Standard geometric derivatives
             float worldPerU = SwapUAndV ? length(dPdv) : length(dPdu);
             if (worldPerU > 1e-6) 
-                worldLengthFactor = worldPerU;
+                WorldLengthFactor = worldPerU;
         } else { // Screen-space Jacobian
             vector dPdx = Dx(P);
             vector dPdy = Dy(P);
@@ -108,7 +108,7 @@ shader AutolibBasicCurve [[
                     dP_dLength = (dUVdy.y * dPdx - dUVdx.y * dPdy) / det;
                 }
                 float len = length(dP_dLength);
-                if (len > 1e-6) worldLengthFactor = len;
+                if (len > 1e-6) WorldLengthFactor = len;
             }
         }
     }
@@ -122,8 +122,8 @@ shader AutolibBasicCurve [[
     float lowerRandom = (float)(lowerHash & 0x7fffffff) / (float)0x7fffffff;
 
     // Noise 
-    float upperNoise = fractalNoise(upperRandom + coordU, NoiseScale * worldLengthFactor, Octaves, Lacunarity, Gain);
-    float lowerNoise = fractalNoise(lowerRandom + coordU, NoiseScale * worldLengthFactor, Octaves, Lacunarity, Gain);
+    float upperNoise = fractalNoise(upperRandom + coordU, NoiseScale * WorldLengthFactor, Octaves, Lacunarity, Gain);
+    float lowerNoise = fractalNoise(lowerRandom + coordU, NoiseScale * WorldLengthFactor, Octaves, Lacunarity, Gain);
 
     float centeredUpperNoise = (upperNoise - 0.5) * 0.2;
     float centeredLowerNoise = (lowerNoise - 0.5) * 0.2;
@@ -149,8 +149,8 @@ shader AutolibBasicCurve [[
     if (BorderSmoothness != 0) {
         float aboveLower = smoothstep(lowerEdge, lowerEdge + BorderSmoothness, coordV);
         float belowUpper = 1.0 - smoothstep(upperEdge - BorderSmoothness, upperEdge, coordV);
-        inRegionSmooth = aboveLower * belowUpper;
+        InRegionSmooth = aboveLower * belowUpper;
     }
 
-    inRegion = step(lowerEdge, coordV) * step(coordV, upperEdge);
+    InRegion = step(lowerEdge, coordV) * step(coordV, upperEdge);
 }

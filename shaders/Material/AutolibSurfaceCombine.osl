@@ -48,6 +48,8 @@ OpenPBRSpecular mix_specular(OpenPBRSpecular a, OpenPBRSpecular b, float x) {
     result.col = mix(a.col, b.col, lx);
     result.roughness = mix(a.roughness, b.roughness, lx);
     result.roughness_anisotropy = mix(a.roughness_anisotropy, b.roughness_anisotropy, lx);
+    result.haze = mix(a.haze, b.haze, lx);
+    result.haze_spread = mix(a.haze_spread, b.haze_spread, lx);
     result.ior = ior_lerp(a.ior, b.ior, lx);
     return result;
 }

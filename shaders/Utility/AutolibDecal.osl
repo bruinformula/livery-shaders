@@ -71,15 +71,16 @@ shader AutolibDecal [[
                   "its physical width regardless of geometry density."
 ]] (
     point UV = point(u,v,0) [[ string help = "If in sticker mode, this is used as a base space in mapping from screenspace to world space." ]],
-    vector Offset = 0 [[ string help = "Offset applied to the decal projection", int interactive = 1 ]],
+    vector Offset = 0 [[ string help = "Offset applied to the decal projection", int interactive = 1, vector min = -1, vector max = 1 ]],
     DecalData OtherData = {} [[ string widget = "null" ]], 
-    string Filename = "" [[ string widget = "filename" ]],
+    string Filename = "" [[ string path = "file" ]],
+
     float Width = 0.1 [[ string help = "The width of the decal in the specified units. Image maintains aspect ratio", int interactive = 1 ]],
     string Units = "m" [[ string widget = "units" ]],
-    int StickerMode = 1 [[ string widget = "checkBox", int min = 0, int max = 1, string help = "UV sizing correction for images to maintain their size in world space" ]],
+    int StickerMode = 1 [[ string widget = "boolean", int min = 0, int max = 1, string help = "UV sizing correction for images to maintain their size in world space" ]],
 
     float DistanceRange = 6.0 [[ float min = 0, string help = "The distance range in world units that the MSDF texture encodes" ]],
-    int IsMSDFTexture = 1 [[ string widget = "checkBox", int min = 0, int max = 1, string help = "Whether the input texture is an MSDF (multi-channel signed distance field) or a regular alpha texture", int interactive = 1 ]],
+    int IsMSDFTexture = 1 [[ string widget = "boolean", int min = 0, int max = 1, string help = "Whether the input texture is an MSDF (multi-channel signed distance field) or a regular alpha texture", int interactive = 1 ]],
     float SDFBlurAmount = 0 [[ float min = 0, float max = 1, string help = "Blurs the texture read of the SDF channel", int interactive = 1 ]],
     string ColorSpace = "linear" [[ string widget = "null" ]],
 

@@ -4,23 +4,23 @@ shader AutolibSurfaceComponentSeperate [[
     string category = "autolib"
 ]] (
     OpenPBRSurface mat = {},
-    output OpenPBRBase base = {},
-    output OpenPBRSpecular specular = {},
-    output OpenPBRTransmission transmission = {},
-    output OpenPBRSubsurface subsurface = {},
-    output OpenPBRCoat coat = {},
-    output OpenPBRFuzz fuzz = {},
-    output OpenPBRThinFilm thin_film = {},
-    output OpenPBREmission emission = {},
-    output OpenPBRGeometry geometry = {}
+    output OpenPBRBase Base = {},
+    output OpenPBRSpecular Specular = {},
+    output OpenPBRTransmission Transmission = {},
+    output OpenPBRSubsurface Subsurface = {},
+    output OpenPBRCoat Coat = {},
+    output OpenPBRFuzz Fuzz = {},
+    output OpenPBRThinFilm ThinFilm = {},
+    output OpenPBREmission Emission = {},
+    output OpenPBRGeometry Geometry = {}
 ) {
-    base = mat.base;
-    specular = mat.specular;
-    transmission = mat.transmission;
-    subsurface = mat.subsurface;
-    coat = mat.coat;
-    fuzz = mat.fuzz;
-    thin_film = mat.thin_film;
-    emission = mat.emission;
-    geometry = mat.geometry;
+    Base = mat.base;
+    Specular = mat.specular;
+    Transmission = mat.transmission;
+    Subsurface = mat.subsurface;
+    Coat = mat.coat;
+    Fuzz = mat.fuzz;
+    ThinFilm = mat.thin_film;
+    Emission = mat.emission;
+    Geometry = mat.geometry;
 }

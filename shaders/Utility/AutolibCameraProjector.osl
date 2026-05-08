@@ -3,47 +3,47 @@
 shader AutolibCameraProjector [[ 
     string category = "autolib" 
 ]] (
-    string filename = "" [[ string page = "Decal" ]],
-    vector aspect = vector(1, 1, 0) [[ string help = "Aspect ratio (width/height) of the projection" ]],
-    int useWidthImageAspect = 1 [[ int min = 0, int max = 1 ]],
+    string Filename = "" [[ string page = "Decal" ]],
+    vector Aspect = vector(1, 1, 0) [[ string help = "Aspect ratio (width/height) of the projection" ]],
+    int UseWidthImageAspect = 1 [[ int min = 0, int max = 1 ]],
 
     // Camera parameters
-    point cameraPosition = 0,
-    point targetPosition = 0,
-    vector rightDirection = vector(0,1,0),
-    vector upDirection = vector(0,0,1),
+    point CameraPosition = 0,
+    point TargetPosition = 0,
+    vector RightDirection = vector(0,1,0),
+    vector UpDirection = vector(0,0,1),
 
     // Projection controls
-    float fov = 1 [[ float min = 0 ]],
-    float overScan = 0.0 [[ float min = 0 ]],
-    int backface = 0 [[ string label = "Project on Back", int min = 0, int max = 1 ]],
-    int objectSpace = 0 [[ int min = 0, int max = 1 ]],
+    float FOV = 1 [[ float min = 0 ]],
+    float OverScan = 0.0 [[ float min = 0 ]],
+    int Backface = 0 [[ string label = "Project on Back", int min = 0, int max = 1 ]],
+    int ObjectSpace = 0 [[ int min = 0, int max = 1 ]],
 
     // Outputs
-    output point outUV = 0,
-    output float outAlpha = 0,
-    output color outColor = 0
+    output point UV = 0,
+    output float Alpha = 0,
+    output color Color = 0
 ) {
     point camPos, targetPos, surfacePos;
     vector rightDir, upDir, surfaceNormal;
 
     int textureExists = 0;
-    gettextureinfo(filename, "exists", textureExists);
+    gettextureinfo(Filename, "exists", textureExists);
     if (!textureExists)
         return;
     
-    if (objectSpace) {
-        camPos        = transform("", "object", cameraPosition);
-        targetPos     = transform("", "object", targetPosition);
-        rightDir      = normalize(transform("", "object", rightDirection));
-        upDir         = normalize(transform("", "object", upDirection));
+    if (ObjectSpace) {
+        camPos        = transform("", "object", CameraPosition);
+        targetPos     = transform("", "object", TargetPosition);
+        rightDir      = normalize(transform("", "object", RightDirection));
+        upDir         = normalize(transform("", "object", UpDirection));
         surfacePos    = transform("object", P);
         surfaceNormal = normalize(transform("", "object", N));
     } else {
-        camPos        = cameraPosition;
-        targetPos     = targetPosition;
-        rightDir      = normalize(rightDirection);
-        upDir         = normalize(upDirection);
+        camPos        = CameraPosition;
+        targetPos     = TargetPosition;
+        rightDir      = normalize(RightDirection);
+        upDir         = normalize(UpDirection);
         surfacePos    = P;
         surfaceNormal = N;
     }
@@ -51,7 +51,7 @@ shader AutolibCameraProjector [[
     vector toTarget = normalize(targetPos - camPos);
 
     // Backface culling
-    if (dot(surfaceNormal, toTarget) > 0.0 && backface == 0)
+    if (dot(surfaceNormal, toTarget) > 0.0 && Backface == 0)
         return;
 
     vector toRight = normalize(rightDir);
@@ -66,22 +66,22 @@ shader AutolibCameraProjector [[
     toPoint /= dotTarget;
 
     float aspectRatio;
-    if (useWidthImageAspect) {
+    if (UseWidthImageAspect) {
         int resolution[2];
-        gettextureinfo(filename, "resolution", resolution);
+        gettextureinfo(Filename, "resolution", resolution);
         aspectRatio = (float)resolution[1] / (float)resolution[0];
     } else {
-        aspectRatio = aspect[1] / aspect[0];
+        aspectRatio = Aspect[1] / Aspect[0];
     }
 
     float U = dot(toPoint, toRight);
     float V = dot(toPoint, toTop) / aspectRatio;
 
-    float fovRadians = fov > M_PI ? radians(fov) : fov;
+    float fovRadians = FOV > M_PI ? radians(FOV) : FOV;
     float invTan = 1.0 / tan(fovRadians * 0.5);
 
-    U *= invTan / (1.0 + overScan / 100.0);
-    V *= invTan / (1.0 + overScan / 100.0);
+    U *= invTan / (1.0 + OverScan / 100.0);
+    V *= invTan / (1.0 + OverScan / 100.0);
 
     U = (U + 1.0) * 0.5;
     V = (V + 1.0) * 0.5;
@@ -89,12 +89,12 @@ shader AutolibCameraProjector [[
     if (U < 0.0 || U > 1.0 || V < 0.0 || V > 1.0)
         return;
 
-    outUV = point(U, V, 0);
+    UV = point(U, V, 0);
 
-    outColor = texture(filename, U, 1.0 - V, "alpha", outAlpha);
+    Color = texture(Filename, U, 1.0 - V, "alpha", Alpha);
 
     int channels = 0;
-    gettextureinfo(filename, "channels", channels);
+    gettextureinfo(Filename, "channels", channels);
     if (channels < 4)
-        outAlpha = 1.0;
+        Alpha = 1.0;
 }

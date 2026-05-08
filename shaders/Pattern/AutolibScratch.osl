@@ -4,16 +4,16 @@ shader AutolibScratch [[
     string category = "autolib" 
 ]] (
     vector UV = vector(u, v, 0),
-    float density = 0.1,
-    float width = 0.001,
-    float normalStrength = 1.0,
-    output normal outNormal = normal(0, 0, 1),
-    output float outHeight = 0.0,
-    output float outAlpha = 0.0
+    float Density = 0.1 [[ float min = 0, int interactive = 1 ]],
+    float Width = 0.001 [[ float min = 0, int interactive = 1 ]],
+    float NormalStrength = 1.0 [[ float min = 0, int interactive = 1 ]],
+    output normal Normal = N,
+    output float Height = 0.0,
+    output float Alpha = 0.0
 ) {
 
     float delta = 1.0/(40 - 1);
-    float maxRadius = sqrt(density);
+    float maxRadius = sqrt(Density);
     int maxSearchCell = (int)ceil(maxRadius/delta);
     point index = point(round(UV.x/delta), round(UV.y/delta), 0.0);
 
@@ -31,14 +31,14 @@ shader AutolibScratch [[
             
             vector diff = UV - currentOrigin;
             float dist = dot(diff, bitangent);
-            float actualWidth = width * hashnoise(currentIndex);
+            float actualWidth = Width * hashnoise(currentIndex);
 
             if (abs(dist) < actualWidth * 0.5) {
                 float t = dist / (actualWidth * 0.5);
 
-                outNormal = normalize(normal(0,0,1) - bitangent * t * normalStrength);
-                outAlpha = 1.0;
-                outHeight = 1.0 - (t * t); // smooth parabolic dip across scratch width
+                Normal = normalize(normal(0,0,1) - bitangent * t * NormalStrength);
+                Alpha = 1.0;
+                Height = 1.0 - (t * t); // smooth parabolic dip across scratch Width
                 found = 1;
             }
         }

@@ -3,23 +3,23 @@
 shader AutolibTangentField [[ 
     string category = "autolib" 
 ]] (
-    float inputRotation = 0 [[ string label = "Input Rotation", string help = "A single float value to rotate the shading tangent. Takes precedence over inputVector."]],
-    vector inputVector = vector(0.5) [[ string label = "Input Vector", string help = "Red and green channels read as x and y coordinates of a 2d vector. Ignored if inputRotation is connected." ]],
-    float rotationOffset = 0 [[ string label = "Rotation Offset", string help = "A global rotation offset in degrees." ]],
-    float rotationRange = 1.0 [[ string label = "Rotation Range", string help = "Scales the rotation range. 1.0 equates 0 to 360 degrees." ]],
-    int centeredVectors = 0 [[ string label = "Centered Vectors", string help = "Centers the gradient values of the vector map. Ignored when inputRotation is used.", string widget = "checkBox", int interactive = 1 ]],
+    float InputRotation = 0 [[ string label = "Input Rotation", string help = "A single float value to rotate the shading tangent. Takes precedence over InputVector."]],
+    vector InputVector = vector(0.5) [[ string label = "Input Vector", string help = "Red and green channels read as x and y coordinates of a 2d vector. Ignored if InputRotation is connected." ]],
+    float RotationOffset = 0 [[ string label = "Rotation Offset", string help = "A global rotation offset in degrees." ]],
+    float RotationRange = 1.0 [[ string label = "Rotation Range", string help = "Scales the rotation range. 1.0 equates 0 to 360 degrees." ]],
+    int CenteredVectors = 0 [[ string label = "Centered Vectors", string help = "Centers the gradient values of the vector map. Ignored when InputRotation is used.", string widget = "boolean", int interactive = 1 ]],
 
-    output vector resultXYZ = 0 [[ string label = "Result XYZ", string help = "The final tangent vector that should be connected to the Bxdf's Shading Tangent input." ]]
+    output vector ResultXYZ = 0 [[ string label = "Result XYZ", string help = "The final tangent vector that should be connected to the Bxdf's Shading Tangent input." ]]
 ) {
     float rotationAngle = 0;
 
-    if (isconnected(inputRotation)) {
-        rotationAngle = inputRotation;
+    if (isconnected(InputRotation)) {
+        rotationAngle = InputRotation;
     } else {
-        float vecX = inputVector.x;
-        float vecY = inputVector.y;
+        float vecX = InputVector.x;
+        float vecY = InputVector.y;
 
-        if (centeredVectors) {
+        if (CenteredVectors) {
             vecX = vecX * 2.0 - 1.0;
             vecY = vecY * 2.0 - 1.0;
         }
@@ -31,9 +31,9 @@ shader AutolibTangentField [[
         }
     }
 
-    rotationAngle *= rotationRange;
+    rotationAngle *= RotationRange;
 
-    rotationAngle += rotationOffset / 360.0;
+    rotationAngle += RotationOffset / 360.0;
 
     float angleRadians = rotationAngle * 2.0 * M_PI;
     
@@ -47,6 +47,6 @@ shader AutolibTangentField [[
     float cosAngle = cos(angleRadians);
     float sinAngle = sin(angleRadians);
     
-    resultXYZ = cosAngle * T + sinAngle * B;
-    resultXYZ = normalize(resultXYZ);
+    ResultXYZ = cosAngle * T + sinAngle * B;
+    ResultXYZ = normalize(ResultXYZ);
 }

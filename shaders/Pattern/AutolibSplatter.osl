@@ -137,7 +137,7 @@ shader AutolibSplatter [[
     int NumLayers = 1 [[ int min = 0, string help = "Number of layered splatters to combine for more complexity" ]],
 
     SplatterData OtherData = {} [[ string page = "Chaining" ]],
-    int DisableChaining = 0 [[ string page = "Chaining", string help = "Disables chainging inputs", string widget = "checkBox", int min = 0, int max = 1 ]],
+    int DisableChaining = 0 [[ string page = "Chaining", string help = "Disables chainging inputs", string widget = "boolean", int min = 0, int max = 1 ]],
 
     output SplatterData Data = {},
     output float Height = 0,

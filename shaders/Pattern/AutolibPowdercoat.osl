@@ -1,0 +1,34 @@
+shader AutolibPowdercoat [[ 
+    string category = "autolib"
+]] (
+    point UV = point(u,v,0) [[ string widget = "null" ]],
+    float MicroScale = 100 [[ string page = "Base", float min = 0, int interactive = 1 ]],
+    float MicroStrength = 0.1 [[ string page = "Base", float min = 0, int interactive = 1 ]],
+    float MacroScale = 0.1 [[ string page = "Base", float min = 0, int interactive = 1 ]],
+    float MacroStrength = 1 [[ string page = "Base", float min = 0, int interactive = 1 ]],
+    float BumpStrength = 1 [[ string page = "Base", float min = 0, int interactive = 1 ]],
+
+    float BandAngle = 0 [[ string page = "Banding", string units = "degrees", int interactive = 1 ]],
+    float BandFrequency = 10 [[ string page = "Banding", int interactive = 1 ]],
+
+    output float Banding = 0,
+    output normal Normal = N,
+) {
+
+    //  Micro bump
+    point microScaledUV = MicroScale * UV;
+    float microBumpNoise = MicroStrength * noise("usimplex", microScaledUV);
+
+    point macroScaledUV = MacroScale * UV;
+    float macroBumpNoise = MacroStrength * noise("uperlin", macroScaledUV);
+
+    vector macroBumpedPoint = P + N * BumpStrength * (macroBumpNoise + microBumpNoise);
+    Normal = normalize(cross(Dx(macroBumpedPoint), Dy(macroBumpedPoint)));
+
+    float bandAngleRadians = radians(BandAngle);
+    vector bandDirection = vector(cos(bandAngleRadians), sin(bandAngleRadians), 0);
+    float offset = min(cos(bandAngleRadians), 0) + min(sin(bandAngleRadians), 0);
+    Banding = floor((dot(bandDirection, UV) - offset) * BandFrequency);
+
+    // TODO do shit with the bands 
+}

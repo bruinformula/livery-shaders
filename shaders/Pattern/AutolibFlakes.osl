@@ -37,22 +37,21 @@ normal combineNormals(normal base, normal detail) {
 shader AutolibFlakes [[
     string category = "autolib"
 ]] (
-    point Position = P   [[ string help = "The input point used to generate the flakes" ]],
-    float Scale = 0.1 [[ string help = "The density of the flakes", int interactive = 1 ]],
-    float Density = 0.1 [[ string help = "Ratio of flakes to non-flakes. 1.0 is 100% flake", float min = 0.0, float max = 1.0, int interactive = 1 ]],
-    float MorphStrength = 1.0 [[ string help = "How much flake normals deviate from the base normal. 0 = flat, 1 = full flake deflection", float min = 0.0, float max = 1.0, int interactive = 1 ]],
-    normal BaseNormal = N  [[ string help = "The base normal used for the flakes" ]],
+    point Position = P  [[ string help = "The input point used to generate the flakes" ]],
+    normal BaseNormal = N  [[ string widget = "null", string help = "The base normal used for the flakes" ]],
+    float Scale = 0.1  [[ string help = "The density of the flakes", int interactive = 1 ]],
+    float Density = 0.1  [[ string help = "Ratio of flakes to non-flakes. 1.0 is 100% flake", float min = 0.0, float max = 1.0, int interactive = 1 ]],
+    float NormalStrength = 1.0  [[ string help = "How strongly the flake normals affect the final normal. 0 = no effect, 1 = full flake normal", float min = 0.0, float max = 1.0, int interactive = 1 ]],
     int Seed = 0,
 
     output float Alpha = 1,
     output float Mask = 0,
     output normal Normal = N,
-    output normal NormalDetail = N,
     output float Rehash = 0
 ) {
-    point  scaledPosition = Scale * Position;
-    vector k     = ID(scaledPosition, Seed);
-    float  angle = k.y * M_2PI;
+    point scaledPosition = Scale * Position;
+    vector k = ID(scaledPosition, Seed);
+    float angle = k.y * M_2PI;
 
     float x = 0.5 + 0.5 * cos(angle);
     float y = 0.5 + 0.5 * sin(angle);
@@ -71,22 +70,16 @@ shader AutolibFlakes [[
     h = int(trunc(h));
     Rehash = noise("cell", vector(abs(h), 16, 11));
 
-    // Track flake vs non-flake explicitly to avoid float equality check on Alpha
-     int isFlake = (Density > Rehash) ? 0 : 1;
+    normal flakeDetail = normalize((normal)(vector(Normal) * 2.0 - 1.0));
+
+    normal combinedNormal = combineNormals(BaseNormal, flakeDetail);
+
+    Normal = (normal)normalize(mix(vector(BaseNormal), vector(combinedNormal), clamp(NormalStrength, 0.0, 1.0)));
+
+    int isFlake = (Density > Rehash) ? 0 : 1;
     if (!isFlake) {
-        Normal = vector(0.5, 0.5, 1.0);
+        Normal = BaseNormal;
     }
     Alpha = float(isFlake);
     Mask = Alpha > 0;
-
-    // Decode from [0,1] map space to [-1,1] geometric space before blending
-    normal decodedNormal = Normal * 2.0 - 1.0;
-
-    // Blend decoded flake normal toward neutral (0,0,1) based on MorphStrength
-    // At 0.0: flat tangent normal = no deviation from base
-    // At 1.0: full flake deflection
-    normal neutralNormal = normal(0.0, 0.0, 1.0);
-    normal blendedNormal = normalize(mix(neutralNormal, decodedNormal, MorphStrength));
-
-    NormalDetail = combineNormals(BaseNormal, blendedNormal);
 }

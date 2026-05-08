@@ -1,11 +1,43 @@
+#define COMMON 0
+#define OBJECT 1
+#define SHADER 2
+#define WORLD 3
+#define CAMERA 4
+#define SCREEN 5
+#define RASTER 6
+#define NDC 7
+
+string spaceIntToString(int space) {
+    if (space == COMMON) {
+        return "common";
+    } else if (space == OBJECT) {
+        return "object";
+    } else if (space == SHADER) {
+        return "shader";
+    } else if (space == WORLD) {
+        return "world";
+    } else if (space == CAMERA) {
+        return "camera";
+    } else if (space == SCREEN) {
+        return "screen";
+    } else if (space == RASTER) {
+        return "raster";
+    } else if (space == NDC) {
+        return "NDC";
+    } else {
+        return "common";
+    }
+}
+
 shader AutolibTransform [[
     string category = "autolib"   
 ]] (
     point Input = P,
-    string From = "common" [[ string widget = "popup", string options = "common|object|shader|world|camera|scren|raster|NDC" ]],
-    string To = "object" [[ string widget = "popup", string options = "common|object|shader|world|camera|scren|raster|NDC" ]],
+    int From = COMMON [[ string widget = "mapper", string options = "common|object|shader|world|camera|scren|raster|NDC" ]],
+    int To = OBJECT [[ string widget = "mapper", string options = "common|object|shader|world|camera|scren|raster|NDC" ]],
 
     output point Result = 0
 ) {
-    Result = transform(From, To, Input);
+    string fromString;
+    Result = transform(spaceIntToString(From), spaceIntToString(To), Input);
 }

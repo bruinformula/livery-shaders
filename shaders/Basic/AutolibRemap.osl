@@ -26,26 +26,31 @@ float smootherstep(float edge0, float edge1, float x) {
     return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
 }
 
+#define LINEAR 0
+#define STEPPED 1
+#define SMOOTHSTEP 2
+#define SMOOTHERSTEP 3
+
 shader AutolibMapRange [[
     string category = "autolib"
 ]] (
     float Value = 1.0 [[ string label = "Value" ]],
     
     // Input Range
-    float InputMin = 0.0 [[ string page = "Input Range", int slider = 1, float slidermin = -1, float slidermax = 1 ]],
-    float InputMax = 1.0 [[ string page = "Input Range", int slider = 1, float slidermin = -1, float slidermax = 1 ]],
-    int ClampInput = 1 [[ string page = "Input Range", string widget = "checkBox", int connectable = 0 ]],
+    float InputMin = 0.0 [[ string page = "Input Range", float min = -1, float max = 1 ]],
+    float InputMax = 1.0 [[ string page = "Input Range", float min = -1, float max = 1 ]],
+    int ClampInput = 1 [[ string page = "Input Range", string widget = "boolean" ]],
 
     // Shaping Controls
-    string RangeType = "linear" [[ string page = "Remap", string widget = "popup", string options = "linear|stepped|smoothstep|smootherstep" ]],
+    int RangeType = LINEAR [[ string page = "Remap", string widget = "mapper", string options = "linear|stepped|smoothstep|smootherstep" ]],
     float Steps = 4.0 [[ string page = "Remap", string help = "Only used for Stepped mode." ]],
-    float Bias = 0.5 [[ string page = "Remap", int slider = 1, float slidermin = 0.01, float slidermax = 0.99 ]],
-    float Gain = 0.5 [[ string page = "Remap", int slider = 1, float slidermin = 0.01, float slidermax = 0.99 ]],
+    float Bias = 0.5 [[ string page = "Remap", float min = 0.01, float max = 0.99 ]],
+    float Gain = 0.5 [[ string page = "Remap", float min = 0.01, float max = 0.99 ]],
 
     // Output Range
-    float OutputMin = 0.0 [[ string page = "Output Range", int slider = 1, float slidermin = -1, float slidermax = 1 ]],
-    float OutputMax = 1.0 [[ string page = "Output Range", int slider = 1, float slidermin = -1, float slidermax = 1 ]],
-    int ClampOutput = 1 [[ string page = "Output Range", string widget = "checkBox", int connectable = 0 ]],
+    float OutputMin = 0.0 [[ string page = "Output Range", float min = -1, float max = 1 ]],
+    float OutputMax = 1.0 [[ string page = "Output Range", float min = -1, float max = 1 ]],
+    int ClampOutput = 1 [[ string page = "Output Range", string widget = "boolean"]],
 
     output float Result = 0
 ) {
@@ -57,12 +62,12 @@ shader AutolibMapRange [[
     float factor = Value;
 
     if (InputMax != InputMin) {
-        if (RangeType == "stepped") {
+        if (RangeType == STEPPED) {
             factor = safeDivide((Value - InputMin), (InputMax - InputMin));
             factor = (Steps > 0) ? floor(factor * (Steps + 1.0)) / Steps : 0.0;
-        } else if (RangeType == "smoothstep") {
+        } else if (RangeType == SMOOTHSTEP) {
             factor = (InputMin > InputMax) ? 1.0 - smoothstep(InputMax, InputMin, Value) : smoothstep(InputMin, InputMax, Value);
-        } else if (RangeType == "smootherstep") {
+        } else if (RangeType == SMOOTHERSTEP) {
             factor = (InputMin > InputMax) ? 1.0 - smootherstep(InputMax, InputMin, Value) : smootherstep(InputMin, InputMax, Value);
         } else {
             factor = safeDivide((Value - InputMin), (InputMax - InputMin));

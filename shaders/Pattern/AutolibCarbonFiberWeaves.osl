@@ -62,25 +62,25 @@ void displacedWeaves (
     WeaveParams params,
     WeaveData weaveControlData,
     WeaveData weaveData,
-    output float fiberNoise,
-    output float fiberBump,
-    output vector fiberRotation
+    output float FiberNoise,
+    output float FiberBump,
+    output vector FiberRotation
 ) {
     vector mixedTextureCoordinates = mix(weaveControlData.textureCoordinates, weaveData.textureCoordinates, weaveData.mask);
     vector mixedPositionCoordinates = mix(weaveControlData.position, weaveData.position, weaveControlData.mask);
 
     // Noise
     vector biasedFactor = (mixedPositionCoordinates + mixedTextureCoordinates) * vector(500, 0.0001, 0);
-    fiberNoise = noise("cell", biasedFactor);//mix(0.0, 1, noisy);
+    FiberNoise = noise("cell", biasedFactor);//mix(0.0, 1, noisy);
 
     //Bump
     float weaveFactorBump = mix(weaveControlData.segmentFactor, weaveData.segmentFactor, weaveControlData.mask);
     float iBump = mirrorCurve(weaveFactorBump, params.zGamma);
     if (!params.verticalOnly) {
         float jBump = mirrorCurve(mixedTextureCoordinates.x, 6);
-        fiberBump = min(iBump, jBump);
+        FiberBump = min(iBump, jBump);
     } else {
-        fiberBump = iBump;
+        FiberBump = iBump;
     }
 
     //Normal
@@ -97,13 +97,13 @@ void displacedWeaves (
     jVec = vector(0, anotherFactor, 0);
     vector jWeaveFactorNormal = mix(iVec, jVec, weaveControlData.mask);
 
-    fiberRotation = min(iWeaveFactorNormal, jWeaveFactorNormal);
+    FiberRotation = min(iWeaveFactorNormal, jWeaveFactorNormal);
 }
 
 shader AutolibCarbonFiberWeaves [[ 
     string category = "autolib" 
 ]] (
-    point UV = point(u, v, 0),
+    point UV = point(u, v, 0) [[ string widget = "null" ]],
 
     vector FiberScale = vector(64, 32, 0) [[ string help = "Scale axis of the carbon fiber pattern", vector min = vector(64, 32, 0) ]],
     float FiberZGamma = 0.5 [[ string help = "Controls the Z gradient of the broad fiber pattern", float min = 0.1, float max = 4.0, int interactive = 1 ]],

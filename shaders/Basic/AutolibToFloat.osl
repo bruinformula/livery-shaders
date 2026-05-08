@@ -1,23 +1,29 @@
 
+#define CHANNEL_R 0
+#define CHANNEL_G 1
+#define CHANNEL_B 2
+#define LUMINANCE 3
+#define AVERAGE 4
+
 shader AutolibToFloat [[
     string category = "autolib"
 ]] (
     color Input = 0.0 [[ string label = "Input", string help = "The color or vector to extract a float from." ]],
-    int Mode = 0 [[ string widget = "mapper",  string options = "Channel R:0|Channel G:1|Channel B:2|Luminance:3|Average:4", int connectable = 0 ]],
+    int Mode = AVERAGE [[ string widget = "mapper",  string options = "ChannelR|ChannelG|ChannelB|Luminance|Average" ]],
 
-    output float resultF = 0
+    output float ResultF = 0
 ) {
-    if (Mode == 0) {
-        resultF = Input.r;
-    } else if (Mode == 1) {
-        resultF = Input.g;
-    } else if (Mode == 2) {
-        resultF = Input.b;
-    } else if (Mode == 3) {
-        resultF = luminance(Input);
-    } else if (Mode == 4) {
-        resultF = (Input.r + Input.g + Input.b) / 3.0;
+    if (Mode == CHANNEL_R) {
+        ResultF = Input.r;
+    } else if (Mode == CHANNEL_G) {
+        ResultF = Input.g;
+    } else if (Mode == CHANNEL_B) {
+        ResultF = Input.b;
+    } else if (Mode == LUMINANCE) {
+        ResultF = luminance(Input);
+    } else if (Mode == AVERAGE) {
+        ResultF = (Input.r + Input.g + Input.b) / 3.0;
     } else {
-        resultF = 0.5;
+        ResultF = 0.5;
     }
 }

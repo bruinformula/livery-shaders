@@ -3,7 +3,7 @@ shader AutolibFacingRatio [[
 ]] (
     vector Normal = N,
     vector View = I,
-    int Invert = 0 [[ string widget = "checkBox" ]],
+    int Invert = 0 [[ string widget = "boolean" ]],
     float Gain = 0.5,
 
     output float Result = 0

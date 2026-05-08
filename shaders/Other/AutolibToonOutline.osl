@@ -3,20 +3,20 @@
 int probeForOutline( 
     vector rayDir, 
     point rayOrigin, 
-    output string hitGeomName,
-    output point hitPoint, 
-    output normal hitNormal 
+    output string HitGeomName,
+    output point HitPoint, 
+    output normal HitNormal 
 ) {
     int hit = trace(rayOrigin, rayDir);   
 
     if (hit) {
-        getmessage("trace","geom:name", hitGeomName);
+        getmessage("trace","geom:name", HitGeomName);
 
-        getmessage("trace", "P", hitPoint);
-        hitPoint = transform("world", hitPoint);
+        getmessage("trace", "P", HitPoint);
+        HitPoint = transform("world", HitPoint);
 
-        getmessage("trace", "N", hitNormal);
-        hitNormal = normalize(transform("world", hitNormal));
+        getmessage("trace", "N", HitNormal);
+        HitNormal = normalize(transform("world", HitNormal));
     }
 
     return hit;
@@ -27,15 +27,15 @@ shader AutolibToonOutline [[
     string category = "autolib" 
 ]] (
     float width = 0.01 [[ string help = "Defines offset of the trace probe ray from the surface normal" ]],
-    float distanceThreadshold = 1.1 [[ string help = "Defines a distance based comparison threshold for the probe and hit point" ]],
-    float normalThreadshold = 0.1 [[ string help = "Defines a normal comparison threshold for the probe and hit point" ]],
-    float noiseScale = 0,
-    float noiseAmount = 0,
-    output float outAlpha = 0
+    float DistanceThreshold = 1.1 [[ string help = "Defines a distance based comparison threshold for the probe and hit point" ]],
+    float NormalThreshold = 0.1 [[ string help = "Defines a normal comparison threshold for the probe and hit point" ]],
+    float NoiseScale = 0,
+    float NoiseAmount = 0,
+    output float Alpha = 0
 ) {
 
     for (int i = -1; i <= 1; i++) {
-        float noisedWidth = width * noise("perlin", P * noiseScale) * noiseAmount;
+        float noisedWidth = width * noise("perlin", P * NoiseScale) * NoiseAmount;
 
         float eps = 1e-4;
 
@@ -55,23 +55,23 @@ shader AutolibToonOutline [[
 
         int hit1 = probeForOutline(rayDir, rayOrigin1, name1, hitPoint1, hitNormal1);
         if(!hit1) {
-            outAlpha = 1;
+            Alpha = 1;
             break;
         }
 
         int hit2 = probeForOutline(rayDir, rayOrigin2, name2, hitPoint2, hitNormal2);
         if(!hit2) {
-            outAlpha = 1;
+            Alpha = 1;
             break;
         }
 
         int meetsNameCriteria = (name1 != name2);
-        int meetsDistanceCriteria = dot(hitPoint1, hitPoint2) < (1 - distanceThreadshold);
-        int meetsNormalCriteria = dot(hitNormal1, hitNormal2) < (1.0 - normalThreadshold);
+        int meetsDistanceCriteria = dot(hitPoint1, hitPoint2) < (1 - DistanceThreshold);
+        int meetsNormalCriteria = dot(hitNormal1, hitNormal2) < (1.0 - NormalThreshold);
 
         //if the normals are different enough, or the distance is large enough, or the names are different enough, we have an outline
         if (meetsDistanceCriteria || meetsNormalCriteria || meetsNameCriteria) {
-            outAlpha = 1;
+            Alpha = 1;
             break;
         }
     }

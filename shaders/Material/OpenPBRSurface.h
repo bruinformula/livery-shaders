@@ -11,6 +11,8 @@ struct OpenPBRSpecular {
     color col;
     float roughness;
     float roughness_anisotropy;
+    float haze;
+    float haze_spread;
     float ior;
 };
 
