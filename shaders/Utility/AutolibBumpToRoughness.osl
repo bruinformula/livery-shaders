@@ -13,7 +13,7 @@ void computePartialDerivs(
     float C = Dy(a);
     float D = Dy(b);
     
-    float invdet = 1.0 / (A*D - B*C);
+    float invdet = 1 / (A*D - B*C);
 
     dQda = (dQdx*D - dQdy*B) * invdet;
     dQdb = (dQdy*A - dQdx*C) * invdet;
@@ -49,17 +49,15 @@ shader AutolibBumpToRoughness [[
     vector BumpNormal = vector(0, 0, 1) [[ string help = "Input bump/normal vector (in tangent space or world space)" ]],
     
     int IsTangentSpace = 1 [[ string widget = "boolean", string help = "Is the input normal in tangent space (vs world space)?" ]],
-    float BaseRoughness = 0.001 [[ string help = "Base roughness at the micro-facet level", float min = 0.0, float max = 1.0 ]],
-    float Gain = 1.0 [[ string help = "Multiplier for aggregate roughness", float min = 0.0, float max = 10.0 ]],
-    float AnisotropyGain = 1.0 [[ string help = "Multiplier for aggregate anisotropy", float min = 0.0, float max = 2.0 ]],
+    float BaseRoughness = 0.001 [[ string help = "Base roughness at the micro-facet level", float min = 0, float max = 1, int interactive = 1 ]],
+    float Gain = 1 [[ string help = "Multiplier for aggregate roughness", float min = 0, int interactive = 1 ]],
+    float AnisotropyGain = 1 [[ string help = "Multiplier for aggregate anisotropy", float min = 0, int interactive = 1 ]],
     
     // Outputs
     output normal Normal = N [[ string help = "Computed normal in world space" ]],
-    output float Roughness = 0.0 [[ string help = "Computed roughness value" ]],
-    output float Anisotropy = 0.0 [[ string help = "Computed anisotropy (0=isotropic, 1=max anisotropic)" ]],
+    output float Roughness = 0 [[ string help = "Computed roughness value" ]],
+    output float Anisotropy = 0 [[ string help = "Computed anisotropy (0=isotropic, 1=max anisotropic)" ]],
     output vector AnisotropyDirection = 0 [[ string help = "Direction of anisotropy in world space" ]],
-    output float RoughnessU = 0.0 [[ string help = "Roughness in U direction (major axis)" ]],
-    output float RoughnessV = 0.0 [[ string help = "Roughness in V direction (minor axis)" ]]
 ) {
 
     vector pPps, pPpt;
@@ -99,7 +97,7 @@ shader AutolibBumpToRoughness [[
         float C = Dy(UV.x);
         float D = Dy(UV.y);
         
-        float invdet = 1.0 / (A*D - B*C);
+        float invdet = 1 / (A*D - B*C);
         
         dNdu = (dNdx*D - dNdy*B) * invdet;
         dNdv = (dNdy*A - dNdx*C) * invdet;
@@ -148,25 +146,22 @@ shader AutolibBumpToRoughness [[
     
     // Compute anisotropy
     float rudivrv = roughnessU / roughnessV;
-    Anisotropy = (rudivrv - 1.0) / (rudivrv + 1.0);
+    Anisotropy = (rudivrv - 1) / (rudivrv + 1);
     
     // Apply anisotropy gain
-    if (AnisotropyGain != 1.0) {
-        Anisotropy = clamp(Anisotropy * AnisotropyGain, 0.0, 1.0);
+    if (AnisotropyGain != 1) {
+        Anisotropy = clamp(Anisotropy * AnisotropyGain, 0, 1);
         
-        float _alpha = 1.0 / (Anisotropy * Anisotropy - 
-                                2.0 * Anisotropy + 2.0);
+        float _alpha = 1 / (Anisotropy * Anisotropy - 2 * Anisotropy + 2);
         
         float variance = varianceU + varianceV;
         varianceU = variance * _alpha;
-        varianceV = variance * (1.0 - _alpha);
+        varianceV = variance * (1 - _alpha);
         
         roughnessU = sqrt(varianceU);
         roughnessV = sqrt(varianceV);
     }
 
-    Roughness = roughnessU / (1.0 + Anisotropy);
-    RoughnessU = roughnessU;
-    RoughnessV = roughnessV;
+    Roughness = roughnessU / (1 + Anisotropy);
     AnisotropyDirection = normalize(_pPpu);
 }

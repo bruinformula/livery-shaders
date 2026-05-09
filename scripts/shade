@@ -1,2 +1,2 @@
-oslc shaders/Pattern/AutolibBasicCurve.osl
-testshade -g 1024 1024 AutolibBasicCurve.oso  -o inRegion inRegion.png
+oslc shaders/Pattern/AutolibTooledSteel.osl
+testshade -g 1024 1024 AutolibTooledSteel.oso  -o Test test.png -o CircleNoise CircleNoise.png

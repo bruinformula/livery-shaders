@@ -1,7 +1,81 @@
 shader AutolibTooledSteel [[ 
     string category = "autolib"
 ]] (
-
+    point UV = point(u,v,0) [[ string widget = "null" ]],
+    vector Offset = 0.5 [[ int interactive = 1 ]],
+    float Scale = 0.1 [[ float min = 0, int interactive = 1 ]],
+    float Strength = 1 [[ string page = "Spiral Path", float min = 0, int interactive = 1 ]],
+    float Width = 4 [[ string page = "Spiral Path", float min = 0, int interactive = 1 ]],
+    float Gradient = 3 [[ string page = "Spiral Path", float min = 0, int interactive = 1 ]],
+    
+    float NoiseScaleU = 0.05 [[ string page = "Circles", float min = 0, int interactive = 1 ]],
+    float NoiseScaleV = 200 [[ string page = "Circles", float min = 0, int interactive = 1 ]],
+    int NumCircles = 100  [[ string page = "Circles", string help = "Controls number of circles in a span", int min = 1, int interactive = 1 ]],
+    float CircleAspect = 2 [[ string page = "Circles", string help = "Shapes the rings to be more or less elliptical", float min = 0, int interactive = 1 ]],
+    float CircleRingWidth = 0.01 [[ string page = "Circles", string help = "Perimeter width of the circle rings", float min = 0, int interactive = 1 ]],
+    float CircleSoftness = 0.0  [[ string page = "Circles", string help = "Perimeter softness of the circle rings", float min = 0, float max = 1, int interactive = 1 ]],
+    
+    output point SpiralCoord = 0,
+    output float Spiral = 0,
+    output float CircleNoise = 0,
+    output float CircleMask = 0,
+    output float CircleAnisotropy = 0
 ) {
-
+    point q = (UV - Offset);
+    q.z = 0;
+    float radius = length(q);
+    float theta = atan2(q.y, q.x);
+    
+    float remappedTheta = (theta < 0.0) ? theta + M_2PI : theta;
+    float b = Scale / M_2PI;
+    float phiAtRadius = radius / b;
+    float angularDelta = mod(remappedTheta - mod(phiAtRadius, M_2PI) + 3*M_PI, M_2PI) - M_PI;
+    float line = 1 - smoothstep(Gradient, Width, abs(angularDelta));
+    
+    float spiralU = mod(theta / M_2PI, 1.0);
+    float spiralV = mod((phiAtRadius - angularDelta) / M_2PI, 1.0);
+    
+    SpiralCoord = point(spiralU, spiralV, 0);
+    Spiral = line * Strength;
+    
+    float thetaSpacing = M_2PI / (float)NumCircles;
+    float bestRim = 1e10;
+    float bestDU = 0.0;
+    float bestDV = 0.0;
+    int bestC = 0;
+    
+    for (int c = 0; c < NumCircles; ++c) {
+        float thetaC = (float)c * thetaSpacing;
+        float du = mod(theta - thetaC + M_PI, M_2PI) - M_PI;
+        float duScaled = (du * radius / b) * CircleAspect;
+        float dvScaled = angularDelta;
+        float dist = sqrt(duScaled * duScaled + dvScaled * dvScaled);
+        float rim = abs(dist - Width);
+        
+        if (rim < CircleRingWidth) {
+            float thetaNext = (float)((c + 1) % NumCircles) * thetaSpacing;
+            float duNext = mod(theta - thetaNext + M_PI, M_2PI) - M_PI;
+            float duNextScaled = (duNext * radius / b) * CircleAspect;
+            float distNext = sqrt(duNextScaled * duNextScaled + dvScaled * dvScaled);
+            
+            if (distNext >= Width && rim < bestRim) {
+                bestRim = rim;
+                bestDU = duScaled;
+                bestDV = dvScaled;
+                bestC = c;
+            }
+        }
+    }
+    
+    if (bestRim < CircleRingWidth) {
+        float t = bestRim / CircleRingWidth;
+        CircleMask = smoothstep(t, 1, CircleSoftness);
+        float tangentAngle = atan2(bestDU, -bestDV);
+        CircleAnisotropy = mod(tangentAngle / M_PI, 1.0) * CircleMask;
+        // local circle UV: angle around the circle as U, rim distance as V
+        float circleAngle = atan2(bestDV, bestDU);
+        float circleV = bestRim / CircleRingWidth;
+        float nu = Width * NoiseScaleU;
+        CircleNoise = noise("usimplex", vector(cos(circleAngle) * nu, sin(circleAngle) * nu, (float)bestC * 137.508 + circleV * NoiseScaleV));
+    }
 }

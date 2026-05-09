@@ -6,5 +6,5 @@ shader AutolibCosineFloat [[
 
     output float Output = 0
 ) {
-    Output = cos(Adjacent / Hypotenuse);
+    Output = cos2(Adjacent, Hypotenuse);
 }
