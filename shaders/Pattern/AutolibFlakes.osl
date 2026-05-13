@@ -37,7 +37,7 @@ normal combineNormals(normal base, normal detail) {
 shader AutolibFlakes [[
     string category = "autolib"
 ]] (
-    point Position = P  [[ string help = "The input point used to generate the flakes" ]],
+    point Position = P  [[ string widget = "null", int interpolated = 1 ]],
     normal BaseNormal = N  [[ string widget = "null", string help = "The base normal used for the flakes" ]],
     float Scale = 0.1  [[ string help = "The density of the flakes", int interactive = 1 ]],
     float Density = 0.1  [[ string help = "Ratio of flakes to non-flakes. 1.0 is 100% flake", float min = 0.0, float max = 1.0, int interactive = 1 ]],
@@ -76,7 +76,8 @@ shader AutolibFlakes [[
 
     Normal = (normal)normalize(mix(vector(BaseNormal), vector(combinedNormal), clamp(NormalStrength, 0.0, 1.0)));
 
-    int isFlake = (Density > Rehash) ? 0 : 1;
+    int isFlake = Density > Rehash;
+    
     if (!isFlake) {
         Normal = BaseNormal;
     }

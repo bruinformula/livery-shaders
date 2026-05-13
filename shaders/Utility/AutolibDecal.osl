@@ -132,7 +132,7 @@ shader AutolibDecal [[
         V = ((UVw.y - 0.5) / worldDim.y) + 0.5;
     }
     // early exit outside the decal rectangle
-    if (SDFBlurAmount == 0 && (U < 0.0 || U > 1.0 || V < 0.0 || V > 1.0)) return;
+    //if (SDFBlurAmount == 0 && (U < 0.0 || U > 1.0 || V < 0.0 || V > 1.0)) return;
 
     U -= Offset.x;
     V -= Offset.y;

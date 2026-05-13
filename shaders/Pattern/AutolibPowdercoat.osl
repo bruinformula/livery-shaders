@@ -1,7 +1,7 @@
 shader AutolibPowdercoat [[ 
     string category = "autolib"
 ]] (
-    point UV = point(u,v,0) [[ string widget = "null" ]],
+    point UV = point(u,v,0) [[ string widget = "null", int interpolated = 1 ]],
     float MicroScale = 100 [[ string page = "Base", float min = 0, int interactive = 1 ]],
     float MicroStrength = 0.1 [[ string page = "Base", float min = 0, int interactive = 1 ]],
     float MacroScale = 0.1 [[ string page = "Base", float min = 0, int interactive = 1 ]],

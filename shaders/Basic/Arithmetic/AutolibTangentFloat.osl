@@ -6,5 +6,5 @@ shader AutolibTangentFloat [[
 
     output float Output = 0
 ) {
-    Output = tan2(Opposite, Adjacent);
+    Output = tan(Opposite / Adjacent);
 }

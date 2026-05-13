@@ -1,0 +1,183 @@
+// AutolibImage
+
+color colorUnpremultiply(color value, float alpha) {
+    if (alpha != 0.0 && alpha != 1.0) {
+        return value / alpha;
+    }
+
+    return value;
+}
+
+point texcoRemapSquare(point co) {
+    return (co - point(0.5, 0.5, 0.5)) * 2.0;
+}
+
+point mapToTube(vector dir) {
+    float u;
+    float v;
+
+    v = (dir[2] + 1.0) * 0.5;
+
+    float len = sqrt(dir[0] * dir[0] + dir[1] * dir[1]);
+    if (len > 0.0) {
+        u = (1.0 - (atan2(dir[0] / len, dir[1] / len) / M_PI)) * 0.5;
+    } else {
+        v = u = 0.0;
+    }
+
+    return point(u, v, 0.0);
+}
+
+point mapToSphere(vector dir) {
+    float len = length(dir);
+    float u;
+    float v;
+
+    if (len > 0.0) {
+        if (dir[0] == 0.0 && dir[1] == 0.0) {
+            u = 0.0;
+        } else {
+            u = (1.0 - atan2(dir[0], dir[1]) / M_PI) * 0.5;
+        }
+
+        v = 1.0 - acos(dir[2] / len) / M_PI;
+    } else {
+        v = u = 0.0;
+    }
+
+    return point(u, v, 0.0);
+}
+
+color sampleTexture(string filename,
+                    float u,
+                    float v,
+                    output float alpha,
+                    int ignoreAlpha,
+                    int unassociateAlpha,
+                    int isFloat,
+                    string interpolation,
+                    string extension,
+                    string colorSpace) {
+    color rgb = texture(filename,
+                        u,
+                        v,
+                        "wrap",
+                        extension,
+                        "interp",
+                        interpolation,
+                        "colorspace",
+                        colorSpace,
+                        "alpha",
+                        alpha);
+
+    if (ignoreAlpha) {
+        alpha = 1.0;
+    } else if (unassociateAlpha) {
+        rgb = colorUnpremultiply(rgb, alpha);
+        if (!isFloat) {
+            rgb = min(rgb, 1.0);
+        }
+    }
+
+    return rgb;
+}
+
+// based loosely on the blender equilivlent 
+shader AutolibImage [[ 
+    string category = "autolib",
+    string help = "Simple image texture with basic projections."
+]] (
+    int UseMapping = 0 [[ string widget = "boolean", int min = 0, int max = 1 ]],
+    matrix Mapping = 0,
+    point Position = P [[ string widget = "null", int interpolated = 1 ]],
+    string Filename = "" [[ string path = "file" ]],
+    string ColorSpace = "" [[ string widget = "colorspace" ]],
+    string Projection = "flat" [[ string widget = "mapper", string options = "flat|box|sphere|tube" ]],
+    string Interpolation = "smartcubic" [[ string widget = "mapper", string options = "smartcubic|cubic|linear|closest" ]],
+    string Extension = "periodic" [[ string widget = "mapper", string options = "default|periodic|clamp|mirror|black" ]],
+    int IgnoreAlpha = 0 [[ string widget = "boolean", int min = 0, int max = 1 ]],
+    int UnassociateAlpha = 0 [[ string widget = "boolean", int min = 0, int max = 1 ]],
+    int IsFloat = 1 [[ string widget = "boolean", int min = 0, int max = 1 ]],
+    output color Color = 0.0,
+    output float Alpha = 1.0
+) {
+    point p = Position;
+    string colorSpace = ColorSpace;
+
+    if (colorSpace == "") {
+        colorSpace = "linear";
+    }
+
+    if (UseMapping) {
+        p = transform(Mapping, p);
+    }
+
+    if (Projection == "flat") {
+        Color = sampleTexture(Filename,
+                              p[0],
+                              p[1],
+                              Alpha,
+                              IgnoreAlpha,
+                              UnassociateAlpha,
+                              IsFloat,
+                              Interpolation,
+                              Extension,
+                              colorSpace);
+        return;
+    }
+
+    if (Projection == "box") {
+        vector normalObj = transform("world", "object", N);
+        vector absNormal = vector(fabs(normalObj[0]), fabs(normalObj[1]), fabs(normalObj[2]));
+        point uv;
+
+        if (absNormal[0] >= absNormal[1] && absNormal[0] >= absNormal[2]) {
+            uv = point((normalObj[0] < 0.0) ? 1.0 - p[1] : p[1], p[2], 0.0);
+        } else if (absNormal[1] >= absNormal[2]) {
+            uv = point((normalObj[1] > 0.0) ? 1.0 - p[0] : p[0], p[2], 0.0);
+        } else {
+            uv = point((normalObj[2] > 0.0) ? 1.0 - p[1] : p[1], p[0], 0.0);
+        }
+
+        Color = sampleTexture(Filename,
+                              uv[0],
+                              uv[1],
+                              Alpha,
+                              IgnoreAlpha,
+                              UnassociateAlpha,
+                              IsFloat,
+                              Interpolation,
+                              Extension,
+                              colorSpace);
+        return;
+    }
+
+    if (Projection == "sphere") {
+        point projected = mapToSphere(texcoRemapSquare(p));
+        Color = sampleTexture(Filename,
+                              projected[0],
+                              projected[1],
+                              Alpha,
+                              IgnoreAlpha,
+                              UnassociateAlpha,
+                              IsFloat,
+                              Interpolation,
+                              Extension,
+                              colorSpace);
+        return;
+    }
+
+    if (Projection == "tube") {
+        point projected = mapToTube(texcoRemapSquare(p));
+        Color = sampleTexture(Filename,
+                              projected[0],
+                              projected[1],
+                              Alpha,
+                              IgnoreAlpha,
+                              UnassociateAlpha,
+                              IsFloat,
+                              Interpolation,
+                              Extension,
+                              colorSpace);
+    }
+}

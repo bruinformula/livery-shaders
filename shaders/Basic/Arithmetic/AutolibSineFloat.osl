@@ -6,5 +6,5 @@ shader AutolibSineFloat [[
 
     output float Output = 0
 ) {
-    Output = sin2(Opposite, Hypotenuse);
+    Output = sin(Opposite / Hypotenuse);
 }
