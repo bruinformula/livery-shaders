@@ -1,16 +1,8 @@
-// AutolibDecal
+#include "Decal.h"
 
 float median(float r, float g, float b) {
     return max(min(r, g), min(max(r, g), b));
 }
-
-struct DecalData {
-    point UV;
-    float Mask;
-    float SDFDistance;
-    float WorldPerU;
-    float WorldPerV;
-};
 
 void computeWorldUV(
     output DecalData Data
@@ -90,11 +82,13 @@ shader AutolibDecal [[
     DecalData OtherData = {} [[ string widget = "null" ]], 
     output DecalData Data = {},
     output float Mask = 0 [[ string help = "Clean linework computed from the SDF" ]],
+    output float Height = 1 [[ string help = "Accumulation of the decal mask values" ]],
     output float SDFDistance = 0 [[ string help = "Distance from the edge of the decal. Use for wear patterns or whatever." ]],
 ) {
     if (DisableChaining && isconnected(OtherData)) {
         Data = OtherData;
         Mask = OtherData.Mask;
+        Height = OtherData.Height;
         SDFDistance = OtherData.SDFDistance;
         return;
     }
@@ -179,7 +173,10 @@ shader AutolibDecal [[
     if (!IsMSDFTexture) {
         color dummy = texture(Filename, texCoord.x, texCoord.y, "firstchannel", 3, "colorspace", ColorSpace, "alpha", Mask);
         Data.Mask = max(OtherData.Mask, Mask);
+        Data.Height = OtherData.Height + Mask;
         Data.SDFDistance = OtherData.SDFDistance;
+        Data.SDFMedian = OtherData.SDFMedian;
+        Data.PxRange = OtherData.PxRange;
         return;
     }
 
@@ -210,11 +207,14 @@ shader AutolibDecal [[
         "blur", SDFBlurAmount, 
         "firstchannel", 3, 
         "fill", 0.0,
-        "swrap", "black", 
+        "swrap", "black",
         "twrap", "black"
     );
 
     Data.Mask = max(OtherData.Mask, Mask);
     Data.SDFDistance = max(OtherData.SDFDistance, SDFDistance);
+    Data.Height = OtherData.Height + Mask;
+    Data.SDFMedian = dist;
+    Data.PxRange = pxRange;
 }
     
