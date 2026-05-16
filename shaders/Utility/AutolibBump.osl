@@ -1,0 +1,52 @@
+
+shader AutolibBump [[
+    string category = "autolib"
+]] (
+    int Invert = 0 [[ string widget = "boolean", int min = 0, int max = 1, string help = "Invert the bump direction" ]],
+    int UseObjectSpace = 0 [[ string widget = "boolean", int min = 0, int max = 1, string help = "Interpret inputs in object space" ]],
+    normal BaseNormal = N [[ string widget = "null", string help = "Base normal to perturb" ]],
+    float Strength = 0.1 [[ string help = "Blend between base and bumped normal", float min = 0, float max = 1, int interactive = 1 ]],
+    float Distance = 1.0 [[ string help = "Height scale for the bump", float min = 0, int interactive = 1 ]],
+    float FilterWidth = 0.1 [[ string help = "Filter width for bump sampling", float min = 0 ]],
+    float SampleCenter = 0.0 [[ string widget = "null", string help = "Center height sample" ]],
+    float SampleX = 0.0 [[ string widget = "null", string help = "Height sample offset in +X" ]],
+    float SampleY = 0.0 [[ string widget = "null", string help = "Height sample offset in +Y" ]],
+
+    output normal Normal = N
+) {
+    point pTmp = P;
+    normal normalValue = BaseNormal;
+
+    if (UseObjectSpace) {
+        pTmp = transform("object", pTmp);
+        normalValue = normalize(transform("object", normalValue));
+    }
+
+    // Get surface tangents from normal.
+    vector dPdx = Dx(pTmp);
+    vector dPdy = Dy(pTmp);
+
+    vector Rx = cross(dPdy, normalValue);
+    vector Ry = cross(normalValue, dPdx);
+
+    // Compute surface gradient and determinant.
+    float det = dot(dPdx, Rx);
+    vector surfGrad = (SampleX - SampleCenter) * Rx + (SampleY - SampleCenter) * Ry;
+
+    float absDet = fabs(det);
+
+    float strength = max(Strength, 0.0);
+    float dist = Distance;
+
+    if (Invert) {
+        dist *= -1.0;
+    }
+
+    // Compute and output perturbed normal.
+    Normal = normalize(FilterWidth * absDet * normalValue - dist * sign(det) * surfGrad);
+    Normal = normalize(strength * Normal + (1.0 - strength) * normalValue);
+
+    if (UseObjectSpace) {
+        Normal = normalize(transform("object", "world", Normal));
+    }
+}

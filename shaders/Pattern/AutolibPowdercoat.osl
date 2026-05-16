@@ -12,6 +12,8 @@ shader AutolibPowdercoat [[
     float BandFrequency = 10 [[ string page = "Banding", int interactive = 1 ]],
 
     output float Banding = 0,
+    output float MacroBumpNoise = 0,
+    output float MicroBumpNoise = 0,
     output normal Normal = N,
 ) {
 
@@ -29,6 +31,9 @@ shader AutolibPowdercoat [[
     vector bandDirection = vector(cos(bandAngleRadians), sin(bandAngleRadians), 0);
     float offset = min(cos(bandAngleRadians), 0) + min(sin(bandAngleRadians), 0);
     Banding = floor((dot(bandDirection, UV) - offset) * BandFrequency);
+
+    MacroBumpNoise = macroBumpNoise;
+    MicroBumpNoise = microBumpNoise;
 
     // TODO do shit with the bands 
 }

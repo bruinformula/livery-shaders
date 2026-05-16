@@ -1,10 +1,10 @@
-shader AutolibSwitch [[
+shader AutolibSwitchFloat [[
     string category = "autolib"
 ]] (
     int Mask = 0 [[ string widget = "boolean" ]],
-    vector IfTrue = 0,
-    vector IfFalse = 0,
-    output vector Output = 0
+    float IfTrue = 0,
+    float IfFalse = 0,
+    output float Output = 0
 ) {
     Output = Mask ? IfTrue : IfFalse;
 }

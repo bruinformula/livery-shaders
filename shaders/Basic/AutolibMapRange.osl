@@ -1,0 +1,120 @@
+
+// Helper: Float Bias logic
+float computeBias(float x, float b) {
+    float biasClamped = clamp(b, 1e-4, 0.9999);
+    return x / ((1.0 / biasClamped - 2.0) * (1.0 - x) + 1.0);
+}
+
+// Helper: Float Gain logic
+float computeGain(float x, float g) {
+    float gainClamped = clamp(g, 1e-4, 0.9999);
+    float result;
+    if (x < 0.5)
+        result = x / ((1.0 / gainClamped - 2.0) * (1.0 - 2.0 * x) + 1.0);
+    else
+        result = ((1.0 / gainClamped - 2.0) * (1.0 - 2.0 * x) - x) /
+                 ((1.0 / gainClamped - 2.0) * (1.0 - 2.0 * x) - 1.0);
+    return clamp(result, 0.0, 1.0);
+}
+
+float safeDivide(float a, float b) {
+    return (b != 0.0) ? a / b : 0.0;
+}
+
+float smootherstep(float edge0, float edge1, float x) {
+    float t = clamp(safeDivide((x - edge0), (edge1 - edge0)), 0.0, 1.0);
+    return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
+}
+
+#define LINEAR 0
+#define STEPPED 1
+#define SMOOTHSTEP 2
+#define SMOOTHERSTEP 3
+
+float mapRangeScalar(
+    float value,
+    float inputMin,
+    float inputMax,
+    int clampInput,
+    int rangeType,
+    float steps,
+    float bias,
+    float gain,
+    float outputMin,
+    float outputMax,
+    int clampOutput
+) {
+    if (inputMin == outputMin && inputMax == outputMax) {
+        return value;
+    }
+
+    float factor = value;
+
+    if (inputMax != inputMin) {
+        if (rangeType == STEPPED) {
+            factor = safeDivide((value - inputMin), (inputMax - inputMin));
+            factor = (steps > 0) ? floor(factor * (steps + 1.0)) / steps : 0.0;
+        } else if (rangeType == SMOOTHSTEP) {
+            factor = (inputMin > inputMax)
+                ? 1.0 - smoothstep(inputMax, inputMin, value)
+                : smoothstep(inputMin, inputMax, value);
+        } else if (rangeType == SMOOTHERSTEP) {
+            factor = (inputMin > inputMax)
+                ? 1.0 - smootherstep(inputMax, inputMin, value)
+                : smootherstep(inputMin, inputMax, value);
+        } else {
+            factor = safeDivide((value - inputMin), (inputMax - inputMin));
+        }
+    } else {
+        factor = (value < inputMin) ? 0.0 : 1.0;
+    }
+
+    if (clampInput) {
+        factor = clamp(factor, 0.0, 1.0);
+    }
+
+    if (bias != 0.5) {
+        factor = computeBias(factor, bias);
+    }
+    if (gain != 0.5) {
+        factor = computeGain(factor, gain);
+    }
+
+    float result = mix(outputMin, outputMax, factor);
+
+    if (clampOutput) {
+        result = clamp(result, min(outputMin, outputMax), max(outputMin, outputMax));
+    }
+
+    return result;
+}
+
+shader AutolibMapRange [[
+    string category = "autolib"
+]] (
+    vector Value = 1 [[ string label = "Value" ]],
+
+    // Input Range
+    vector InputMin = 0 [[ string page = "Input Range", vector min = -1, vector max = 1 ]],
+    vector InputMax = 1 [[ string page = "Input Range", vector min = -1, vector max = 1 ]],
+    int ClampInput = 1 [[ string page = "Input Range", string widget = "boolean" ]],
+
+    // Shaping Controls
+    int RangeType = LINEAR [[ string page = "Remap", string widget = "mapper", string options = "linear|stepped|smoothstep|smootherstep" ]],
+    float Steps = 4.0 [[ string page = "Remap", string help = "Only used for Stepped mode." ]],
+    float Bias = 0.5 [[ string page = "Remap", float min = 0.01, float max = 0.99 ]],
+    float Gain = 0.5 [[ string page = "Remap", float min = 0.01, float max = 0.99 ]],
+
+    // Output Range
+    vector OutputMin = 0 [[ string page = "Output Range", vector min = -1, vector max = 1 ]],
+    vector OutputMax = 1 [[ string page = "Output Range", vector min = -1, vector max = 1 ]],
+    int ClampOutput = 1 [[ string page = "Output Range", string widget = "boolean"]],
+
+    output vector Result = 0
+) {
+    Result = vector(
+        mapRangeScalar(Value[0], InputMin[0], InputMax[0], ClampInput, RangeType, Steps, Bias, Gain, OutputMin[0], OutputMax[0], ClampOutput),
+        mapRangeScalar(Value[1], InputMin[1], InputMax[1], ClampInput, RangeType, Steps, Bias, Gain, OutputMin[1], OutputMax[1], ClampOutput),
+        mapRangeScalar(Value[2], InputMin[2], InputMax[2], ClampInput, RangeType, Steps, Bias, Gain, OutputMin[2], OutputMax[2], ClampOutput)
+    );
+}

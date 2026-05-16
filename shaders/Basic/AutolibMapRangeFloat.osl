@@ -31,7 +31,7 @@ float smootherstep(float edge0, float edge1, float x) {
 #define SMOOTHSTEP 2
 #define SMOOTHERSTEP 3
 
-shader AutolibMapRange [[
+shader AutolibMapRangeFloat [[
     string category = "autolib"
 ]] (
     float Value = 1.0 [[ string label = "Value" ]],

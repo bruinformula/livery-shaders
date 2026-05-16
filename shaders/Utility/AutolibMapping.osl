@@ -1,0 +1,74 @@
+/* SPDX-FileCopyrightText: 2011-2022 Blender Foundation
+ *
+ * SPDX-License-Identifier: Apache-2.0 */
+
+// AutolibMapping
+
+point safeDivide(point numerator, point denominator) {
+    return point(
+        (denominator[0] != 0.0) ? numerator[0] / denominator[0] : 0.0,
+        (denominator[1] != 0.0) ? numerator[1] / denominator[1] : 0.0,
+        (denominator[2] != 0.0) ? numerator[2] / denominator[2] : 0.0
+    );
+}
+
+matrix eulerToMat(point eulerRadians) {
+    float cosX = cos(eulerRadians[0]);
+    float cosY = cos(eulerRadians[1]);
+    float cosZ = cos(eulerRadians[2]);
+    float sinX = sin(eulerRadians[0]);
+    float sinY = sin(eulerRadians[1]);
+    float sinZ = sin(eulerRadians[2]);
+
+    matrix mat = matrix(1.0);
+    mat[0][0] = cosY * cosZ;
+    mat[0][1] = cosY * sinZ;
+    mat[0][2] = -sinY;
+
+    mat[1][0] = sinY * sinX * cosZ - cosX * sinZ;
+    mat[1][1] = sinY * sinX * sinZ + cosX * cosZ;
+    mat[1][2] = cosY * sinX;
+
+    mat[2][0] = sinY * cosX * cosZ + sinX * sinZ;
+    mat[2][1] = sinY * cosX * sinZ - sinX * cosZ;
+    mat[2][2] = cosY * cosX;
+
+    return mat;
+}
+
+shader AutolibMapping [[
+    string category = "autolib",
+]] (
+    string MappingType = "point" [[ string widget = "mapper", string options = "point|texture|vector|normal" ]],
+    point VectorIn = 0 [[ string widget = "null", string help = "Input coordinate", int interpolated = 1 ]],
+    point Location = 0 [[ string help = "Translation", int interactive = 1 ]],
+    vector Rotation = 0 [[ string units = "degrees", string help = "Rotation (XYZ) in degrees", int interactive = 1 ]],
+    vector Scale = 1 [[ string help = "Scale", int interactive = 1 ]],
+
+    output point VectorOut = 0 [[ string help = "Mapped coordinate" ]]
+) {
+    point rotationRadians = point(
+        radians(Rotation[0]),
+        radians(Rotation[1]),
+        radians(Rotation[2])
+    );
+
+    matrix rotationMat = eulerToMat(rotationRadians);
+    point scalePoint = point(Scale);
+
+    if (MappingType == "point") {
+        VectorOut = transform(rotationMat, (VectorIn * scalePoint)) + Location;
+    } else if (MappingType == "texture") {
+        VectorOut = safeDivide(
+            transform(transpose(rotationMat), (VectorIn - Location)),
+            scalePoint
+        );
+    } else if (MappingType == "vector") {
+        VectorOut = transform(rotationMat, (VectorIn * scalePoint));
+    } else if (MappingType == "normal") {
+        VectorOut = normalize((vector)transform(rotationMat, safeDivide(VectorIn, scalePoint)));
+    } else {
+        warning("Unknown mapping type: %s", MappingType);
+        VectorOut = VectorIn;
+    }
+}

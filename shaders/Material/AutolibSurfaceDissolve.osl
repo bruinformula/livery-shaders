@@ -1,0 +1,125 @@
+#include "OpenPBRSurface.h"
+
+shader AutolibSurfaceDissolve [[
+	string category = "autolib"
+]] (
+	OpenPBRSurface Mat = {},
+
+	// Base
+	output float BaseWeight = 1  [[ string page = "Base", float min = 0, float max = 1 ]],
+	output color BaseColor = color(0.8)  [[ string page = "Base" ]],
+	output float BaseDiffuseRoughness = 0  [[ string page = "Base", float min = 0, float max = 1 ]],
+	output float BaseMetalness = 0  [[ string page = "Base", float min = 0, float max = 1 ]],
+
+	// Specular
+	output float SpecularWeight = 1  [[ string page = "Specular", float min = 0, float max = 1 ]],
+	output color SpecularColor = 1  [[ string page = "Specular" ]],
+	output float SpecularRoughness = 0.3  [[ string page = "Specular", float min = 0, float max = 1 ]],
+	output float SpecularIOR = 1.5  [[ string page = "Specular", float min = 1, float max = 3.0 ]],
+	output float SpecularRoughnessAnisotropy = 0  [[ string page = "Specular", float min = 0, float max = 1 ]],
+	output float SpecularHaze = 0  [[ string page = "Specular", float min = 0, float max = 1 ]],
+	output float SpecularHazeSpread = 0.3  [[ string page = "Specular", float min = 0, float max = 1 ]],
+
+	// Transmission
+	output float TransmissionWeight = 0  [[ string page = "Transmission", float min = 0, float max = 1 ]],
+	output color TransmissionColor = 1  [[ string page = "Transmission" ]],
+	output float TransmissionDepth = 0  [[ string page = "Transmission", float min = 0 ]],
+	output color TransmissionScatter = 0  [[ string page = "Transmission" ]],
+	output float TransmissionScatterAnisotropy = 0  [[ string page = "Transmission", float min = -1, float max = 1 ]],
+
+	// Subsurface
+	output float SubsurfaceWeight = 0  [[ string page = "Subsurface", float min = 0, float max = 1 ]],
+	output color SubsurfaceColor = 1  [[ string page = "Subsurface" ]],
+	output float SubsurfaceRadius = 1  [[ string page = "Subsurface", float min = 0 ]],
+	output color SubsurfaceRadiusScale = 1  [[ string page = "Subsurface" ]],
+	output float SubsurfaceScatterAnisotropy = 0  [[ string page = "Subsurface", float min = -1, float max = 1 ]],
+
+	// Fuzz
+	output float FuzzWeight = 0  [[ string page = "Fuzz", float min = 0, float max = 1 ]],
+	output color FuzzColor = 1  [[ string page = "Fuzz" ]],
+	output float FuzzRoughness = 0.5  [[ string page = "Fuzz", float min = 0, float max = 1 ]],
+
+	// Coat
+	output float CoatWeight = 0  [[ string page = "Coat", float min = 0, float max = 1 ]],
+	output color CoatColor = 1  [[ string page = "Coat" ]],
+	output float CoatRoughness = 0  [[ string page = "Coat", float min = 0, float max = 1 ]],
+	output float CoatRoughnessAnisotropy = 0  [[ string page = "Coat", float min = 0, float max = 1 ]],
+	output float CoatIOR = 1.6  [[ string page = "Coat", float min = 1, float max = 3.0 ]],
+	output float CoatDarkening = 1  [[ string page = "Coat", float min = 0, float max = 1 ]],
+
+	// Thin Film
+	output float ThinFilmWeight = 0  [[ string page = "Thin Film", float min = 0, float max = 1 ]],
+	output float ThinFilmThickness = 0.5  [[ string page = "Thin Film", float min = 0, float max = 1 ]],
+	output float ThinFilmIOR = 1.4  [[ string page = "Thin Film", float min = 1, float max = 3.0 ]],
+
+	// Emission
+	output float EmissionLuminance = 0  [[ string page = "Emission", float min = 0, float max = 1000 ]],
+	output color EmissionColor = 1  [[ string page = "Emission" ]],
+
+	// Geometry
+	output float GeometryOpacity = 1  [[ string page = "Geometry", float min = 0, float max = 1 ]],
+	output int GeometryThinWalled = 0  [[ string page = "Geometry", string widget = "boolean" ]],
+	output normal GeometryNormal = N  [[ string page = "Geometry", string widget = "null" ]],
+	output normal GeometryCoatNormal = N  [[ string page = "Geometry", string widget = "null" ]],
+	output vector GeometryTangent = dPdu  [[ string page = "Geometry", string widget = "null" ]],
+	output vector GeometryCoatTangent = dPdu  [[ string page = "Geometry", string widget = "null" ]]
+) {
+	// Base
+	BaseWeight = Mat.base.weight;
+	BaseColor = Mat.base.col;
+	BaseDiffuseRoughness = Mat.base.diffuse_roughness;
+	BaseMetalness = Mat.base.metalness;
+
+	// Specular
+	SpecularWeight = Mat.specular.weight;
+	SpecularColor = Mat.specular.col;
+	SpecularRoughness = Mat.specular.roughness;
+	SpecularIOR = Mat.specular.ior;
+	SpecularRoughnessAnisotropy = Mat.specular.roughness_anisotropy;
+	SpecularHaze = Mat.specular.haze;
+	SpecularHazeSpread = Mat.specular.haze_spread;
+
+	// Transmission
+	TransmissionWeight = Mat.transmission.weight;
+	TransmissionColor = Mat.transmission.col;
+	TransmissionDepth = Mat.transmission.depth;
+	TransmissionScatter = Mat.transmission.scatter;
+	TransmissionScatterAnisotropy = Mat.transmission.scatter_anisotropy;
+
+	// Subsurface
+	SubsurfaceWeight = Mat.subsurface.weight;
+	SubsurfaceColor = Mat.subsurface.col;
+	SubsurfaceRadius = Mat.subsurface.radius;
+	SubsurfaceRadiusScale = Mat.subsurface.radius_scale;
+	SubsurfaceScatterAnisotropy = Mat.subsurface.scatter_anisotropy;
+
+	// Fuzz
+	FuzzWeight = Mat.fuzz.weight;
+	FuzzColor = Mat.fuzz.col;
+	FuzzRoughness = Mat.fuzz.roughness;
+
+	// Coat
+	CoatWeight = Mat.coat.weight;
+	CoatColor = Mat.coat.col;
+	CoatRoughness = Mat.coat.roughness;
+	CoatRoughnessAnisotropy = Mat.coat.roughness_anisotropy;
+	CoatIOR = Mat.coat.ior;
+	CoatDarkening = Mat.coat.darkening;
+
+	// Thin Film
+	ThinFilmWeight = Mat.thin_film.weight;
+	ThinFilmThickness = Mat.thin_film.thickness;
+	ThinFilmIOR = Mat.thin_film.ior;
+
+	// Emission
+	EmissionLuminance = Mat.emission.luminance;
+	EmissionColor = Mat.emission.col;
+
+	// Geometry
+	GeometryOpacity = Mat.geometry.opacity;
+	GeometryThinWalled = Mat.geometry.thin_walled;
+	GeometryNormal = Mat.geometry.norm;
+	GeometryCoatNormal = Mat.geometry.coat_normal;
+	GeometryTangent = Mat.geometry.tangent;
+	GeometryCoatTangent = Mat.geometry.coat_tangent;
+}

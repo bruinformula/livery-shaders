@@ -3,24 +3,24 @@
 shader AutolibSurfaceComponentMerge [[
     string category = "autolib"
 ]] (
-    OpenPBRBase base = {},
-    OpenPBRSpecular specular = {},
-    OpenPBRTransmission transmission = {},
-    OpenPBRSubsurface subsurface = {},
-    OpenPBRCoat coat = {},
-    OpenPBRFuzz fuzz = {},
-    OpenPBRThinFilm thin_film = {},
-    OpenPBREmission emission = {},
-    OpenPBRGeometry geometry = {},
-    output OpenPBRSurface mat = {}
+    OpenPBRBase Base = {},
+    OpenPBRSpecular Specular = {},
+    OpenPBRTransmission Transmission = {},
+    OpenPBRSubsurface Subsurface = {},
+    OpenPBRCoat Coat = {},
+    OpenPBRFuzz Fuzz = {},
+    OpenPBRThinFilm ThinFilm = {},
+    OpenPBREmission Emission = {},
+    OpenPBRGeometry Geometry = {},
+    output OpenPBRSurface Mat = {}
 ) {
-    mat.base = base;
-    mat.specular = specular;
-    mat.transmission = transmission;
-    mat.subsurface = subsurface;
-    mat.coat = coat;
-    mat.fuzz = fuzz;
-    mat.thin_film = thin_film;
-    mat.emission = emission;
-    mat.geometry = geometry;
+    Mat.base = Base;
+    Mat.specular = Specular;
+    Mat.transmission = Transmission;
+    Mat.subsurface = Subsurface;
+    Mat.coat = Coat;
+    Mat.fuzz = Fuzz;
+    Mat.thin_film = ThinFilm;
+    Mat.emission = Emission;
+    Mat.geometry = Geometry;
 }

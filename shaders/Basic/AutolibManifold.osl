@@ -1,14 +1,15 @@
 #define UV 0
-#define ST 1
+#define PRIMVAR 1
 #define POBJECT 2
 #define PWORLD 3
 
 shader AutolibManifold [[
     string category = "autolib"
 ]] (
-    int CoordType = UV [[ string widget = "mapper", string options = "uv|st|PObject|PWorld" ]],
+    int CoordType = UV [[ string widget = "mapper", string options = "uv|primvar|PObject|PWorld" ]],
+    string PrimvarName = "st" [[ string widget = "null", string help = "Name of the primvar to use if CoordType is set to primvar" ]],
     point OtherCoord = 0 [[ string widget = "null", string help = "Will only be used if connected"]],
-    float Scale = 1.0 [[ int interactive = 1 ]],
+    vector Scale = 1.0 [[ int interactive = 1 ]],
     vector Repeat = 1.0 [[ int interactive = 1 ]],
     vector Offset = 0.0 [[ int interactive = 1 ]],
     float Rotate = 0.0 [[ string units = "degrees", float min = 0, float max = 360 ]],
@@ -21,8 +22,8 @@ shader AutolibManifold [[
         p = OtherCoord;
     } else if (CoordType == UV) {
         p = point(u, v, 0);
-    } else if (CoordType == ST) {
-        getattribute("st", p);
+    } else if (CoordType == PRIMVAR) {
+        getattribute(PrimvarName, p);
     } else if (CoordType == POBJECT) {
         p = transform("object", P);
     } else if (CoordType == PWORLD) {

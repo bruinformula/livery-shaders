@@ -1,0 +1,9 @@
+shader AutolibLessThanOrEqualFloat [[
+    string category = "autolib"
+]] (
+    float A = 0,
+    float B = 0,
+    output float Output = 0
+) {
+    Output = (A <= B) ? 1.0 : 0.0;
+}
