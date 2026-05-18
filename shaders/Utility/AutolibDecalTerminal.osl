@@ -1,0 +1,14 @@
+#include "Decal.h"
+
+shader AutolibDecalTerminal [[
+    string category = "autolib"
+]] (
+    DecalData OtherData = {},
+    output float Mask = 0,
+    output float Height = 0,
+    output float SDFDistance = 0
+) {
+    Mask = OtherData.Mask;
+    Height = OtherData.Height;
+    SDFDistance = OtherData.SDFDistance;
+}

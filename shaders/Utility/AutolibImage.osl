@@ -45,7 +45,7 @@ point mapToSphere(vector dir) {
 }
 
 color imageTextureLookup(
-    string fileName,
+    string Filename,
     float u,
     float v,
     output float alpha,
@@ -56,8 +56,10 @@ color imageTextureLookup(
     string interpolation,
     string extension
 ) {
+
     color rgb = (color)texture(
-        fileName, u, v, "wrap", extension, "interp", interpolation, "alpha", alpha);
+        Filename, u, v, "wrap", extension, "interp", interpolation, "alpha", alpha
+    );
 
     if (ignoreAlpha) {
         alpha = 1.0;
@@ -81,7 +83,7 @@ shader AutolibImage [[
     string help = "Image texture lookup with optional projection mapping."
 ]] (
     point Vector = P [[ string label = "Vector", string help = "Input coordinate." ]],
-    string FileName = "" [[ string path = "file" ]],
+    string Filename = "" [[ string path = "file" ]],
     string Projection = "flat" [[ string widget = "mapper", string options = "flat|box|sphere|tube" ]],
     string Interpolation = "smartcubic" [[ string widget = "mapper", string options = "smartcubic|cubic|linear|closest" ]],
     string Extension = "periodic" [[ string widget = "mapper", string options = "periodic|clamp|mirror|black|default" ]],
@@ -95,6 +97,14 @@ shader AutolibImage [[
     output color Color = 0.0,
     output float Alpha = 1.0,
 ) {
+    if (Filename == "" || !isconstant(Filename))
+        return;
+
+    int textureExists = 0;
+    gettextureinfo(Filename, "exists", textureExists);
+    if (!textureExists)
+        return;
+
     point coord = Vector;
 
     if (FlipV) {
@@ -103,7 +113,7 @@ shader AutolibImage [[
 
     if (Projection == "flat") {
         Color = imageTextureLookup(
-            FileName,
+            Filename,
             coord[0],
             coord[1],
             Alpha,
@@ -163,7 +173,7 @@ shader AutolibImage [[
         if (weight[0] > 0.0) {
             point uv = point((signedNormalObject[0] < 0.0) ? 1.0 - coord[1] : coord[1], coord[2], 0.0);
             Color += weight[0] * imageTextureLookup(
-                FileName,
+                Filename,
                 uv[0],
                 uv[1],
                 tmpAlpha,
@@ -178,7 +188,7 @@ shader AutolibImage [[
         if (weight[1] > 0.0) {
             point uv = point((signedNormalObject[1] > 0.0) ? 1.0 - coord[0] : coord[0], coord[2], 0.0);
             Color += weight[1] * imageTextureLookup(
-                FileName,
+                Filename,
                 uv[0],
                 uv[1],
                 tmpAlpha,
@@ -193,7 +203,7 @@ shader AutolibImage [[
         if (weight[2] > 0.0) {
             point uv = point((signedNormalObject[2] > 0.0) ? 1.0 - coord[1] : coord[1], coord[0], 0.0);
             Color += weight[2] * imageTextureLookup(
-                FileName,
+                Filename,
                 uv[0],
                 uv[1],
                 tmpAlpha,
@@ -208,7 +218,7 @@ shader AutolibImage [[
     } else if (Projection == "sphere") {
         point projected = mapToSphere(texcoRemapSquare(coord));
         Color = imageTextureLookup(
-            FileName,
+            Filename,
             projected[0],
             projected[1],
             Alpha,
@@ -221,7 +231,7 @@ shader AutolibImage [[
     } else if (Projection == "tube") {
         point projected = mapToTube(texcoRemapSquare(coord));
         Color = imageTextureLookup(
-            FileName,
+            Filename,
             projected[0],
             projected[1],
             Alpha,

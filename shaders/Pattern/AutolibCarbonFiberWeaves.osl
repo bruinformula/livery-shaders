@@ -1,3 +1,7 @@
+/* SPDX-FileCopyrightText: 2011-2022 Blender Foundation
+ *
+ * SPDX-License-Identifier: Apache-2.0 */
+
 // AutolibCarbonFiberWeaves 
 
 struct WeaveData {
@@ -10,10 +14,13 @@ struct WeaveData {
 WeaveData createWeaves(
     vector coordinates
 ) {
-
     float scale = 4; // dimension of the grid weave
 
     WeaveData weaveData;
+    weaveData.mask = 0.0;
+    weaveData.position = vector(0.0, 0.0, 0.0);
+    weaveData.textureCoordinates = vector(0.0, 0.0, 0.0);
+    weaveData.segmentFactor = 0.0;
 
     vector coordinatesPrime = ((coordinates * scale) / 2) + 1;
 
@@ -40,17 +47,19 @@ WeaveData createWeaves(
 }
 
 float mirrorCurve(float input, float exponent) {
-    float inverseClamp = 1-clamp(input, 0, 1);
+    float safeExponent = max(exponent, 1e-5);
+    float inverseClamp = 1.0 - clamp(input, 0.0, 1.0);
     float factor = step(0.5, input);
     float stepped = mix(input, inverseClamp, factor);
-    return pow(clamp(stepped, 0, 1), 1/exponent);
+    return pow(clamp(stepped, 1e-6, 0.999999), 1.0 / safeExponent);
 }
 
 vector mirrorCurve(vector input, float exponent) {
-    vector inverseClamp = 1-clamp(input, 0, 1);
+    float safeExponent = max(exponent, 1e-5);
+    vector inverseClamp = 1.0 - clamp(input, 0.0, 1.0);
     vector factor = step(0.5, input);
     vector stepped = mix(input, inverseClamp, factor);
-    return pow(clamp(stepped, 0, 1), 1/exponent);
+    return pow(clamp(stepped, vector(1e-6), vector(0.999999)), 1.0 / safeExponent);
 }
 
 struct WeaveParams {
@@ -71,27 +80,27 @@ void displacedWeaves (
 
     // Noise
     vector biasedFactor = (mixedPositionCoordinates + mixedTextureCoordinates) * vector(500, 0.0001, 0);
-    FiberNoise = noise("cell", biasedFactor);//mix(0.0, 1, noisy);
+    FiberNoise = noise("cell", biasedFactor);
 
     //Bump
     float weaveFactorBump = mix(weaveControlData.segmentFactor, weaveData.segmentFactor, weaveControlData.mask);
     float iBump = mirrorCurve(weaveFactorBump, params.zGamma);
     if (!params.verticalOnly) {
-        float jBump = mirrorCurve(mixedTextureCoordinates.x, 6);
+        float jBump = mirrorCurve(mixedTextureCoordinates.x, 6.0);
         FiberBump = min(iBump, jBump);
     } else {
         FiberBump = iBump;
     }
 
     //Normal
-    float iVecFactor = (1 - weaveControlData.segmentFactor);
+    float iVecFactor = (1.0 - weaveControlData.segmentFactor);
     float jVecFactor = weaveData.segmentFactor;
 
     vector iVec = vector(iVecFactor, 0, 0);
     vector jVec = vector(0, jVecFactor, 0);
     vector iWeaveFactorNormal = mix(iVec, jVec, weaveControlData.mask);
 
-    float anotherFactor = pow(clamp(mixedTextureCoordinates.x, 0, 1), 0.1);
+    float anotherFactor = pow(clamp(mixedTextureCoordinates.x, 1e-6, 1.0), 0.1);
 
     iVec = vector(anotherFactor, 0, 0);
     jVec = vector(0, anotherFactor, 0);
@@ -103,9 +112,9 @@ void displacedWeaves (
 shader AutolibCarbonFiberWeaves [[ 
     string category = "autolib" 
 ]] (
-    point UV = point(u, v, 0) [[ string widget = "null" ]],
+    point UV = point(u, v, 0) [[ string widget = "null", int interpolated = 1 ]],
 
-    vector FiberScale = vector(64, 32, 0) [[ string help = "Scale axis of the carbon fiber pattern", vector min = vector(64, 32, 0) ]],
+    vector FiberScale = vector(64, 32, 0) [[ string help = "Scale axis of the carbon fiber pattern", vector min = 0, int interactive = 1 ]],
     float FiberZGamma = 0.5 [[ string help = "Controls the Z gradient of the broad fiber pattern", float min = 0.1, float max = 4.0, int interactive = 1 ]],
     float FiberBumpStrength = 0.01 [[ string help = "Strength of the bump effect", float min = 0, float max = 1, int interactive = 1 ]],
     float FiberStrandBoost = 1 [[ string help = "Boost the bump of the fiber strands", float min = 0, float max = 3, int interactive = 1 ]],
@@ -125,7 +134,6 @@ shader AutolibCarbonFiberWeaves [[
     point weaveControlDataCoordinates = fiberUV;
     point weaveDataCoordinates = vector(fiberUV.y, fiberUV.x, 0);
     
-    // Sample neighboring heights using texture derivatives
     point weaveControlDataCoordinatesU = weaveControlDataCoordinates + vector(Dx(weaveControlDataCoordinates));
     point weaveControlDataCoordinatesV = weaveControlDataCoordinates + vector(Dy(weaveControlDataCoordinates));
 
@@ -144,15 +152,30 @@ shader AutolibCarbonFiberWeaves [[
     displacedWeaves(weaveParams, createWeaves(weaveControlDataCoordinatesU), weaveData, fiberNoiseU, fiberBumpU, fiberRotationU);
     displacedWeaves(weaveParams, createWeaves(weaveControlDataCoordinatesV), weaveData, fiberNoiseV, fiberBumpV, fiberRotationV);
 
-    float fiberBumpiness = Height * pow(Noise, FiberStrandBoost);
+    // NAN FIX: Clean noise range logic
+    float safeNoise = max(Noise, 0.0);
+    float fiberBumpiness = Height * pow(safeNoise, FiberStrandBoost);
 
     float roughnessAlong = FiberSpecularRoughnessAlong * fiberBumpiness;
     float roughnessAcross = FiberSpecularRoughnessAcross * fiberBumpiness;
 
-    // OpenPBR wants a single roughness + anisotropy factor
     SpecularRoughness = max(roughnessAlong, roughnessAcross);
-    SpecularAnisotropy = 1.0 - (roughnessAlong / roughnessAcross);
+    
+    if (roughnessAcross > 1e-6) {
+        SpecularAnisotropy = 1.0 - (roughnessAlong / roughnessAcross);
+    } else {
+        SpecularAnisotropy = 0.0;
+    }
 
-    normal bumpedPoint = P + N * FiberBumpStrength * fiberBumpiness;
-    BumpedNormal = normalize(cross(Dx(bumpedPoint), Dy(bumpedPoint)));
+    vector dxPoint = Dx(P) + N * FiberBumpStrength * Dx(fiberBumpiness);
+    vector dyPoint = Dy(P) + N * FiberBumpStrength * Dy(fiberBumpiness);
+
+    vector bumpCross = cross(dxPoint, dyPoint);
+    float crossLen = length(bumpCross);
+
+    if (crossLen > 1e-6) {
+        BumpedNormal = normal(bumpCross / crossLen);
+    } else {
+        BumpedNormal = N;
+    }
 }

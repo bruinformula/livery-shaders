@@ -1,15 +1,15 @@
 #include "Decal.h"
-
 shader AutolibDecalOutline [[ 
     string category = "autolib"
 ]] (
-    float OutlineWidth = 2.0 [[ string help = "Outline thickness in screen pixels.", int interactive = 1, float min = 0.0 ]],
+    float OutlineWidthInner = 2.0 [[ string help = "Outline thickness in screen pixels.", int interactive = 1, float min = 0.0 ]],
+    float OutlineWidthOuter = 2.0 [[ string help = "Outer outline thickness in screen pixels.", int interactive = 1, float min = 0.0 ]],
     int DisableChaining = 0 [[ string help = "Disables chaining inputs", string widget = "boolean", int min = 0, int max = 1 ]],
     // Outputs
     DecalData OtherData = {} [[ string widget = "null" ]], 
     output DecalData Data = {},
     output float Mask = 0 [[ string help = "Outline-only mask" ]],
-    output float Height = 1 [[ string help = "Accumulation of the decal mask values" ]],
+    output float Height = 0 [[ string help = "Accumulation of the decal mask values" ]],
     output float SDFDistance = 0 [[ string help = "Distance from the edge of the decal. Use for wear patterns or whatever." ]],
 ) {
     if (DisableChaining && isconnected(OtherData)) {
@@ -19,29 +19,26 @@ shader AutolibDecalOutline [[
         SDFDistance = OtherData.SDFDistance;
         return;
     }
-
+    
     Data = OtherData;
-
     float pxRange = OtherData.PxRange;
     float dist = OtherData.SDFMedian;
+
     if (pxRange < 1e-6) {
         SDFDistance = OtherData.SDFDistance;
         Height = OtherData.Height;
         return;
     }
 
-    float outerPxDist = pxRange * (dist - 0.5);
-    float innerPxDist = pxRange * (dist - 0.5 - OutlineWidth);
-
+    float outerPxDist = pxRange * (dist - 0.5) + OutlineWidthOuter;
+    float innerPxDist = pxRange * (dist - 0.5 - OutlineWidthInner);
     float outerMask = clamp(outerPxDist + 0.5, 0.0, 1.0);
     float innerMask = clamp(innerPxDist + 0.5, 0.0, 1.0);
 
     Mask = max(0.0, outerMask - innerMask);
-
     Data.Mask = max(OtherData.Mask, Mask);
     Data.Height = OtherData.Height + Mask;
     Data.SDFDistance = OtherData.SDFDistance;
-
     Height = Data.Height;
     SDFDistance = Data.SDFDistance;
 }

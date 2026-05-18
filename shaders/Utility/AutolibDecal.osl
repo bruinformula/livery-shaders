@@ -7,21 +7,6 @@ float median(float r, float g, float b) {
 void computeWorldUV(
     output DecalData Data
 ) {
-    // We need delP/delU and delP/delV — the world-space tangent vectors for the input UV
-    // OSL gives us derivatives w.r.t. two screen differentials x,y:
-    //
-    //   dPdx = delP/delx    dPdy = delP/dely
-    //
-    //   dUdx = delU/delx    dUdy = delU/dely
-    //   dVdx = delV/delx    dVdy = delV/dely
-    //
-    // By the chain rule:
-    //   dPdx = delP/delU * dUdx + delP/delV * dVdx
-    //   dPdy = delP/delU * dUdy + delP/delV * dVdy
-    //
-    // A 2×2 system (per component of P).  Inverting the
-    // UV Jacobian gives us delP/delU and delP/delV.
-
     vector dPdx = Dx(P);
     vector dPdy = Dy(P);
 
@@ -33,15 +18,12 @@ void computeWorldUV(
     float dUdy = dUVdy.x;
     float dVdy = dUVdy.y;
 
-    // Determinant of the UV Jacobian
     float det = dUdx * dVdy - dVdx * dUdy;
 
     float worldPerU, worldPerV;
 
     if (abs(det) < 1e-12) return;
 
-    // delP/delU = ( dVdy * dPdx - dVdx * dPdy) / det
-    // delP/delV = (-dUdy * dPdx + dUdx * dPdy) / det
     vector dPdU = ( dVdy * dPdx - dVdx * dPdy) / det;
     vector dPdV = (-dUdy * dPdx + dUdx * dPdy) / det;
 
@@ -53,6 +35,17 @@ void computeWorldUV(
 
     Data.WorldPerU = worldPerU;
     Data.WorldPerV = worldPerV;
+}
+
+float unitToMeters(string unit) {
+    if (unit == "mm") return 0.001;
+    if (unit == "cm") return 0.01;
+    if (unit == "m")  return 1.0;
+    if (unit == "km") return 1000.0;
+    if (unit == "in") return 0.0254;
+    if (unit == "ft") return 0.3048;
+    if (unit == "mi") return 1609.344;
+    return 1.0; 
 }
 
 shader AutolibDecal [[ 
@@ -78,11 +71,10 @@ shader AutolibDecal [[
     float SDFBlurAmount = 0 [[ string page = "Texture", float min = 0, float max = 1, string help = "Blurs the texture read of the SDF channel", int interactive = 1 ]],
     string ColorSpace = "linear" [[ string page = "Texture", string widget = "null" ]],
 
-    // Outputs
     DecalData OtherData = {} [[ string widget = "null" ]], 
     output DecalData Data = {},
     output float Mask = 0 [[ string help = "Clean linework computed from the SDF" ]],
-    output float Height = 1 [[ string help = "Accumulation of the decal mask values" ]],
+    output float Height = 0 [[ string help = "Accumulation of the decal mask values" ]],
     output float SDFDistance = 0 [[ string help = "Distance from the edge of the decal. Use for wear patterns or whatever." ]],
 ) {
     if (DisableChaining && isconnected(OtherData)) {
@@ -93,20 +85,23 @@ shader AutolibDecal [[
         return;
     }
 
+    if (Filename == "" || !isconstant(Filename))
+        return;
+
     int textureExists = 0;
     gettextureinfo(Filename, "exists", textureExists);
     if (!textureExists)
         return;
     
-    int resolution[2]; // X, Y
+    int resolution[2];
     if (!gettextureinfo(Filename, "resolution", resolution))
         return;
 
     float aspectRatio = (float)resolution[1] / (float)resolution[0];
 
-    // Compute decal dimensions in the specified unit space.
-    // The user sets `width`; height follows from the image aspect ratio.
-    vector worldDim = transform(Units, "world", vector(Width, Width * aspectRatio, 0));
+    float sceneUnitsPerMeter = length(transform("common", "world", vector(1, 0, 0)));
+    float widthWorld = Width * unitToMeters(Units) * sceneUnitsPerMeter;
+    vector worldDim = vector(widthWorld, widthWorld * aspectRatio, 0);
 
     int isConnectedUV = isconnected(UV);
     if (isConnectedUV) {
@@ -138,29 +133,29 @@ shader AutolibDecal [[
         U = ((UVw.x - centerU) / worldDim.x) + 0.5;
         V = ((UVw.y - centerV) / worldDim.y) + 0.5;
     }
-    // early exit outside the decal rectangle
-    //if (SDFBlurAmount == 0 && (U < 0.0 || U > 1.0 || V < 0.0 || V > 1.0)) return;
 
     float uCentered = U - 0.5;
     float vCentered = V - 0.5;
-
-    float scaleU = (abs(Scale.x) > 1e-6) ? Scale.x : 1.0;
-    float scaleV = (abs(Scale.y) > 1e-6) ? Scale.y : 1.0;
-
-    uCentered /= scaleU;
-    vCentered /= scaleV;
 
     if (Rotation != 0) {
         float angle = radians(Rotation);
         float cosA = cos(angle);
         float sinA = sin(angle);
 
-        float uRot = uCentered * cosA - vCentered * sinA;
-        float vRot = uCentered * sinA + vCentered * cosA;
+        float vPhysical = vCentered * aspectRatio;
+
+        float uRot = uCentered * cosA - vPhysical * sinA;
+        float vRot = uCentered * sinA + vPhysical * cosA;
 
         uCentered = uRot;
-        vCentered = vRot;
+        vCentered = vRot / aspectRatio;
     }
+
+    float scaleU = (abs(Scale.x) > 1e-6) ? Scale.x : 1.0;
+    float scaleV = (abs(Scale.y) > 1e-6) ? Scale.y : 1.0;
+
+    uCentered /= scaleU;
+    vCentered /= scaleV;
 
     U = uCentered + 0.5;
     V = vCentered + 0.5;
@@ -177,11 +172,18 @@ shader AutolibDecal [[
         Data.SDFDistance = OtherData.SDFDistance;
         Data.SDFMedian = OtherData.SDFMedian;
         Data.PxRange = OtherData.PxRange;
+        Mask = Data.Mask;
+        Height = Data.Height;
+        SDFDistance = Data.SDFDistance;
         return;
     }
 
-    // Does the renderer actually support colorspace?
-    color texel = texture(Filename, texCoord.x, texCoord.y, "colorspace", ColorSpace);
+    color texel = texture(
+        Filename, texCoord.x, texCoord.y,
+        "colorspace", ColorSpace,
+        "swrap", "clamp",
+        "twrap", "clamp"
+    );
     float dist = median(texel.r, texel.g, texel.b);
 
     int res[2] = {1, 1};
@@ -198,23 +200,39 @@ shader AutolibDecal [[
     
     float pxRange = max(0.5 * (unitRangeX * screenTexSizeX + unitRangeY * screenTexSizeY), 1.0);
     
-    // Calculate final pixel distance and opacity
+    // Measure how far past the 0..1 border we are in UV coordinates
+    float uDist = max(0.0, max(-texCoord.x, texCoord.x - 1.0));
+    float vDist = max(0.0, max(-texCoord.y, texCoord.y - 1.0));
+    
+    // Convert UV boundary spill directly into an absolute pixel distance
+    float spillPxDist = length(vector(uDist * screenTexSizeX, vDist * screenTexSizeY, 0.0));
+
+    // Calculate real pixel distance inside the texture space
     float pxDist = pxRange * (dist - 0.5);
 
-    Mask = clamp(pxDist + 0.5, 0.0, 1.0);
-    SDFDistance = texture(
-        Filename, texCoord.x, texCoord.y, 
-        "blur", SDFBlurAmount, 
-        "firstchannel", 3, 
-        "fill", 0.0,
-        "swrap", "black",
-        "twrap", "black"
-    );
+    // If we've spilled outside the texture box, seamlessly subtract our raw pixel offset 
+    if (spillPxDist > 0.0) {
+        pxDist -= spillPxDist;
+        // Re-encode a normalized dist that remains proportional to the local pxRange
+        dist = (pxDist / pxRange) + 0.5;
+    }
 
-    Data.Mask = max(OtherData.Mask, Mask);
-    Data.SDFDistance = max(OtherData.SDFDistance, SDFDistance);
-    Data.Height = OtherData.Height + Mask;
-    Data.SDFMedian = dist;
-    Data.PxRange = pxRange;
-}
+    Mask = clamp(pxDist + 0.5, 0.0, 1.0);
     
+    SDFDistance = texture(Filename, texCoord.x, texCoord.y, "blur", SDFBlurAmount, "firstchannel", 3, "fill", 0.0, "swrap", "black", "twrap", "black");
+    Data.Mask = max(OtherData.Mask, Mask);
+    Data.Height = OtherData.Height + Mask;
+    Data.SDFDistance = max(OtherData.SDFDistance, SDFDistance);
+
+    if (dist >= OtherData.SDFMedian) {
+        Data.SDFMedian = dist;
+        Data.PxRange   = pxRange;
+    } else {
+        Data.SDFMedian = OtherData.SDFMedian;
+        Data.PxRange   = OtherData.PxRange;
+    }
+
+    Mask = Data.Mask;
+    Height = Data.Height;
+    SDFDistance = Data.SDFDistance;
+}

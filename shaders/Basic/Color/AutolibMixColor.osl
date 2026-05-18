@@ -1,0 +1,25 @@
+shader AutolibMixColor [[
+    string category = "autolib"
+]] (
+    float Mixer = 0 [[ float min = 0, float max = 1 ]],
+    color ColorA = 0,
+    color ColorB = 1,
+    int Clamp = 0 [[ string widget = "boolean", int min = 0, int max = 1 ]],
+
+    output color RGB = 0
+) {
+    float clampedMixer = Mixer;
+    if (Clamp == 1) {
+        clampedMixer = clamp(Mixer, 0.0, 1.0);
+    }
+
+    if (clampedMixer <= 0.0) {
+        RGB = ColorA;
+        return;
+    } else if (clampedMixer >= 1.0) {
+        RGB = ColorB;
+        return;
+    }
+
+    RGB = mix(ColorA, ColorB, clampedMixer);
+}
