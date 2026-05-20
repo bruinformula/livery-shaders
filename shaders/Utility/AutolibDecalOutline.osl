@@ -2,15 +2,17 @@
 shader AutolibDecalOutline [[ 
     string category = "autolib"
 ]] (
-    float OutlineWidthInner = 2.0 [[ string help = "Outline thickness in screen pixels.", int interactive = 1, float min = 0.0 ]],
-    float OutlineWidthOuter = 2.0 [[ string help = "Outer outline thickness in screen pixels.", int interactive = 1, float min = 0.0 ]],
+    color ColorIn = 1 [[ string help = "Base color to blend the decal with. Use in alpha mode to tint the decal color." ]],
+    float OutlineWidthInner = 2 [[ string help = "Outline thickness in screen pixels.", int interactive = 1, float min = 0.0 ]],
+    float OutlineWidthOuter = 0 [[ string help = "Outer outline thickness in screen pixels.", int interactive = 1, float min = 0.0 ]],
     int DisableChaining = 0 [[ string help = "Disables chaining inputs", string widget = "boolean", int min = 0, int max = 1 ]],
     // Outputs
     DecalData OtherData = {} [[ string widget = "null" ]], 
     output DecalData Data = {},
-    output float Mask = 0 [[ string help = "Outline-only mask" ]],
     output float Height = 0 [[ string help = "Accumulation of the decal mask values" ]],
+    output float Mask = 0 [[ string help = "Outline-only mask" ]],
     output float SDFDistance = 0 [[ string help = "Distance from the edge of the decal. Use for wear patterns or whatever." ]],
+    output color Color = 0 [[ string help = "Previous colors"]]
 ) {
     if (DisableChaining && isconnected(OtherData)) {
         Data = OtherData;
@@ -36,9 +38,13 @@ shader AutolibDecalOutline [[
     float innerMask = clamp(innerPxDist + 0.5, 0.0, 1.0);
 
     Mask = max(0.0, outerMask - innerMask);
-    Data.Mask = max(OtherData.Mask, Mask);
+
+    Data.Mask = Mask;
     Data.Height = OtherData.Height + Mask;
     Data.SDFDistance = OtherData.SDFDistance;
+    Data.Color = mix(OtherData.Color, ColorIn, Mask);
+
+    Color = Data.Color;
     Height = Data.Height;
     SDFDistance = Data.SDFDistance;
 }

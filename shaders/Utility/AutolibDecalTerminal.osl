@@ -4,11 +4,36 @@ shader AutolibDecalTerminal [[
     string category = "autolib"
 ]] (
     DecalData OtherData = {},
-    output float Mask = 0,
+    float HeightIn = 0,
+    float MaskIn = 0,
+    float SDFDistanceIn = 0,
+    color ColorIn = 1,
+    int Override = 1 [[ string widget = "boolean", int min = 0, int max = 1, string help = "If true, this terminal will override all previous data" ]],
+    output DecalData Data = {},
     output float Height = 0,
-    output float SDFDistance = 0
+    output float Mask = 0,
+    output float SDFDistance = 0,
+    output color Color = 0
 ) {
-    Mask = OtherData.Mask;
-    Height = OtherData.Height;
-    SDFDistance = OtherData.SDFDistance;
+    if (!isconnected(OtherData)) return;
+
+    Data = OtherData;
+    if (Override) {
+        if (isconnected(MaskIn)) Data.Height = HeightIn;
+        if (isconnected(MaskIn)) Data.Mask = MaskIn;
+        if (isconnected(MaskIn)) Data.SDFDistance = SDFDistanceIn;
+        if (isconnected(ColorIn)) Data.Color = ColorIn;
+    } else {
+        Data.Height = max(OtherData.Height, HeightIn);
+        Data.Mask = max(OtherData.Mask, MaskIn);
+        Data.SDFDistance = max(OtherData.SDFDistance, SDFDistanceIn);
+        Data.Color = mix(OtherData.Color, ColorIn, MaskIn); // topmost decal wins
+    }
+
+    Data.Color = mix(OtherData.Color, ColorIn, MaskIn);
+
+    Mask = Data.Mask;
+    Height = Data.Height;
+    SDFDistance = Data.SDFDistance;
+    Color = Data.Color;
 }

@@ -9,70 +9,54 @@ float cubicInterpolate(float t, float A, float B) {
 #define GOSSETT 1
 
 shader AutolibRYB [[
-    string nodegroup = "autolib"
+    string nodegroup = "autolib",
+    string help = "https://bahamas10.github.io/ryb/assets/ryb.pdf"
 ]] (
     float Red = 0.5 [[ float min = 0, float max = 1 ]],
     float Yellow = 0.5 [[ float min = 0, float max = 1 ]],
     float Blue = 0.5 [[ float min = 0, float max = 1 ]],
-    int Method = GOSSETT [[ string widget = "mapper", string options = "Sugita|Gossett" ]],
+    float White = 0.0 [[ float min = 0, float max = 1 ]],
+    float Black = 0.0 [[ float min = 0, float max = 1 ]],
     output color Color = 1
 ) {
 
-    if (Method != SUGITA && Method != GOSSETT) {
-        Color = color(1, 0, 1); // magenta for invalid Method
-        return;
+    vector corners[8] = {
+        {1,     1,     1    }, // [0] R=0,Y=0,B=0 - white
+        {1,     1,     0    }, // [1] R=0,Y=1,B=0 - Yellow
+        {1,     0,     0    }, // [2] R=1,Y=0,B=0 - Red
+        {1,     0.5,   0    }, // [3] R=1,Y=1,B=0 - orange
+        {0.163, 0.373, 0.6  }, // [4] R=0,Y=0,B=1 - Blue
+        {0,     0.66,  0.2  }, // [5] R=0,Y=1,B=1 - green
+        {0.5,   0,     0.5  }, // [6] R=1,Y=0,B=1 - purple
+        {0.2,   0.094, 0    }  // [7] R=1,Y=1,B=1 - dark brown
+    };
+
+    // Paint-like mixing: white reduces pigment, black increases pigment density.
+    float r = Red;
+    float y = Yellow;
+    float b = Blue;
+
+    float pigmentScale = 1.0 - White;
+    r *= pigmentScale;
+    y *= pigmentScale;
+    b *= pigmentScale;
+
+    color rgb;
+    for (int i = 0; i < 3; i++) {
+        float x0 = cubicInterpolate(b, corners[0][i], corners[4][i]);
+        float x1 = cubicInterpolate(b, corners[1][i], corners[5][i]);
+        float x2 = cubicInterpolate(b, corners[2][i], corners[6][i]);
+        float x3 = cubicInterpolate(b, corners[3][i], corners[7][i]);
+        float y0 = cubicInterpolate(y, x0, x1);
+        float y1 = cubicInterpolate(y, x2, x3);
+        rgb[i]   = cubicInterpolate(r, y0, y1);
     }
 
-    // https://bahamas10.github.io/ryb/assets/ryb.pdf
-    if (Method == GOSSETT) {
-        vector corners[8] = {
-            {1,     1,     1    }, // [0] R=0,Y=0,B=0 - white
-            {1,     1,     0    }, // [1] R=0,Y=1,B=0 - Yellow
-            {1,     0,     0    }, // [2] R=1,Y=0,B=0 - Red
-            {1,     0.5,   0    }, // [3] R=1,Y=1,B=0 - orange
-            {0.163, 0.373, 0.6  }, // [4] R=0,Y=0,B=1 - Blue
-            {0,     0.66,  0.2  }, // [5] R=0,Y=1,B=1 - green
-            {0.5,   0,     0.5  }, // [6] R=1,Y=0,B=1 - purple
-            {0.2,   0.094, 0    }  // [7] R=1,Y=1,B=1 - dark brown
-        };
+    Color = rgb;
 
-        color rgb;
-        for (int i = 0; i < 3; i++) {
-            float x0 = cubicInterpolate(Blue, corners[0][i], corners[4][i]);
-            float x1 = cubicInterpolate(Blue, corners[1][i], corners[5][i]);
-            float x2 = cubicInterpolate(Blue, corners[2][i], corners[6][i]);
-            float x3 = cubicInterpolate(Blue, corners[3][i], corners[7][i]);
-            float y0 = cubicInterpolate(Yellow, x0, x1);
-            float y1 = cubicInterpolate(Yellow, x2, x3);
-            rgb[i]   = cubicInterpolate(Red, y0, y1);
-        }
-        Color = rgb;
+    if (Black > 0.0) {
+        // Black pigment darkens after RYB->RGB conversion.
+        Color = mix(Color, color(0, 0, 0), Black);
     }
-
-    // https://history.siggraph.org/wp-content/uploads/2022/10/2015-Poster-83-Sugita_Paint-like-Compositing-Based-on-RYB-Color-Model.pdf
-    if (Method == SUGITA) {
-        // Eq 5
-        float black = min(Red, min(Yellow, Blue));
-        float RedNoBlack = Red - black;
-        float YellowNoBlack = Yellow - black;
-        float BlueNoBlack = Blue - black;
-
-        // Eq 6
-        float RedRGB   = RedNoBlack + YellowNoBlack - min(YellowNoBlack, BlueNoBlack);
-        float greenRGB = YellowNoBlack + 2.0 * min(YellowNoBlack, BlueNoBlack);
-        float BlueRGB  = 2.0 * (BlueNoBlack - min(YellowNoBlack, BlueNoBlack));
-
-        // Eq 7
-        float maxRYB = max(RedNoBlack, max(YellowNoBlack, BlueNoBlack));
-        float maxRGB = max(RedRGB, max(greenRGB, BlueRGB));
-        float scale = (maxRYB > 0.0 && maxRGB > 0.0) ? maxRGB / maxRYB : 1.0;
-        RedRGB   /= scale;
-        greenRGB /= scale;
-        BlueRGB  /= scale;
-
-        // Eq 8
-        float white = min(1.0 - RedRGB, min(1.0 - greenRGB, 1.0 - BlueRGB));
-        Color = color(RedRGB + white, greenRGB + white, BlueRGB + white);
-    }
-
+    
 }

@@ -1,4 +1,5 @@
 struct DecalData {
+    color Color;
     point UV;
     float Mask;
     float Height;
