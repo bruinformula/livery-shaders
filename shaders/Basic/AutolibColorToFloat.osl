@@ -5,7 +5,7 @@
 #define LUMINANCE 3
 #define AVERAGE 4
 
-shader AutolibToFloat [[
+shader AutolibColorToFloat [[
     string category = "autolib"
 ]] (
     color Input = 0.0 [[ string label = "Input", string help = "The color or vector to extract a float from." ]],

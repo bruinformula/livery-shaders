@@ -434,6 +434,35 @@ static void findLayers(const tx2::XMLElement* e, std::vector<SvgLayer>& out) {
         findLayers(c, out);
 }
 
+// Map the full SVG viewBox to the bitmap so every layer shares the same
+// coordinate frame.  vbY is the SVG top-left Y (positive = down); the
+// shape was built with Y_UPWARD so we negate the Y axis.
+static void docFrame(
+    double vbX, double vbY, double vbW, double vbH,
+    int w, int h, double pxRange,
+    Vector2& scale, Vector2& translate, Range& range
+) {
+    double margin = pxRange * 0.5;
+    double fw = w - 2.0 * margin;
+    double fh = h - 2.0 * margin;
+    if (fw <= 0) fw = 1;
+    if (fh <= 0) fh = 1;
+
+    // Shape-space matches SVG space directly; Y_UPWARD only affects
+    // which bitmap row msdfgen writes to, not the coordinate values.
+    double l = vbX,      r = vbX + vbW;
+    double b = vbY,      t = vbY + vbH;
+    double dx = r - l,   dy = t - b;
+
+    double s = std::min(fw / dx, fh / dy);
+
+    translate.x = -l + (fw / s - dx) * 0.5 + margin / s;
+    translate.y = -b + (fh / s - dy) * 0.5 + margin / s;
+
+    scale = s;
+    range = Range(pxRange / s);
+}
+
 static bool parseViewBox(
     const tx2::XMLElement* svg,           
     double& x, 
@@ -491,7 +520,7 @@ static bool bakeShape(
     const std::string& targetLayerId,
     bool flatMode,
     const std::string& outPath,
-    double vbW, double vbH,
+    double vbX, double vbY, double vbW, double vbH,
     double snapRange,
     int width,
     double pxRange,
@@ -534,7 +563,7 @@ static bool bakeShape(
     // Auto-frame: always fit the actual shape bounds
     Vector2 sc, tr;
     Range rng;
-    autoFrame(shape, width, height, pxRange, sc, tr, rng);
+    docFrame(vbX, vbY, vbW, vbH, width, height, pxRange, sc, tr, rng);
     SDFTransformation xform(Projection(sc, tr), DistanceMapping(rng));
 
     // At this point sign (inside/outside) is determined from contour winding alone,
@@ -645,8 +674,8 @@ int main(int argc, char* const argv[]) {
         fs::path out = fs::path(base).replace_extension("tx");
         if (verbose) std::cout << "Baking (flat): " << out << "\n";
         return bakeShape(svgRoot, {}, true, out.string(),
-                         vbW, vbH, snapRange, width,
-                         args.pxRange, args.angleThreshold, args.seed) ? 0 : 1;
+                 vbX, vbY, vbW, vbH, snapRange, width,
+                 args.pxRange, args.angleThreshold, args.seed) ? 0 : 1;
     }
 
     // Layer stuff
@@ -657,8 +686,8 @@ int main(int argc, char* const argv[]) {
         if (verbose) std::cout << "No Inkscape layers found – flat bake.\n";
         fs::path out = fs::path(base).replace_extension("tx");
         return bakeShape(svgRoot, {}, true, out.string(),
-                         vbW, vbH, snapRange, width,
-                         args.pxRange, args.angleThreshold, args.seed) ? 0 : 1;
+                 vbX, vbY, vbW, vbH, snapRange, width,
+                 args.pxRange, args.angleThreshold, args.seed) ? 0 : 1;
     }
 
     // Per-layer parallel bake
@@ -688,8 +717,8 @@ int main(int argc, char* const argv[]) {
                 }
 
                 bool ok = bakeShape(svgRoot, L.id, false, out.string(),
-                                    vbW, vbH, snapRange, width,
-                                    args.pxRange, args.angleThreshold, args.seed);
+                    vbX, vbY, vbW, vbH, snapRange, width,
+                    args.pxRange, args.angleThreshold, args.seed);
                 results[idx] = ok;
                 if (!ok) {
                     std::lock_guard<std::mutex> lk(logMu);

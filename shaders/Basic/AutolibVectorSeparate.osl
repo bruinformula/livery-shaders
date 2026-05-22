@@ -1,7 +1,7 @@
-shader AutolibSeparate [[
+shader AutolibSeparateVector [[
     string category = "autolib"
 ]] (
-    color Input = 0,
+    vector Input = 0,
 
     output float X = 0,
     output float Y = 0,

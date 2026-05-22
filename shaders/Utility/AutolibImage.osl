@@ -12,6 +12,14 @@ color colorUnpremultiply(color c, float alpha) {
     return c;
 }
 
+float valueUnpremultiply(float c, float alpha) {
+    if (alpha != 1.0 && alpha != 0.0) {
+        return c / alpha;
+    }
+
+    return c;
+}
+
 point texcoRemapSquare(point co) {
     return (co - point(0.5, 0.5, 0.5)) * 2.0;
 }
@@ -44,38 +52,57 @@ point mapToSphere(vector dir) {
     return point(u, v, 0.0);
 }
 
-color imageTextureLookup(
+void imageTextureLookup(
     string Filename,
     float u,
     float v,
-    output float alpha,
     int compressAsSrgb,
     int ignoreAlpha,
     int unassociateAlpha,
+    int singleChannel,
     int isFloat,
     string interpolation,
-    string extension
+    string extension,
+    output color rgb,
+    output float value,
+    output float alpha
 ) {
 
-    color rgb = (color)texture(
-        Filename, u, v, "wrap", extension, "interp", interpolation, "alpha", alpha
-    );
+    if (singleChannel) {
+        value = (float)texture(
+            Filename, u, v, "wrap", extension, "interp", interpolation, "alpha", alpha
+        );
 
-    if (ignoreAlpha) {
-        alpha = 1.0;
-    } else if (unassociateAlpha) {
-        rgb = colorUnpremultiply(rgb, alpha);
+        if (ignoreAlpha) {
+            alpha = 1.0;
+        } else if (unassociateAlpha) {
+            value = valueUnpremultiply(value, alpha);
 
-        if (!isFloat) {
-            rgb = min(rgb, 1.0);
+            if (!isFloat) {
+                value = min(value, 1.0);
+            }
+        }
+
+
+    } else {
+        rgb = texture(
+            Filename, u, v, "wrap", extension, "interp", interpolation, "alpha", alpha
+        );
+
+        if (ignoreAlpha) {
+            alpha = 1.0;
+        } else if (unassociateAlpha) {
+            rgb = colorUnpremultiply(rgb, alpha);
+
+            if (!isFloat) {
+                rgb = min(rgb, 1.0);
+            }
+        }
+
+        if (compressAsSrgb) {
+            rgb = transformc("sRGB", "RGB", rgb);
         }
     }
-
-    if (compressAsSrgb) {
-        rgb = transformc("sRGB", "RGB", rgb);
-    }
-
-    return rgb;
 }
 
 shader AutolibImage [[
@@ -91,10 +118,12 @@ shader AutolibImage [[
     int CompressAsSrgb = 0 [[ string widget = "boolean", string label = "Convert sRGB" ]],
     int IgnoreAlpha = 0 [[ string widget = "boolean" ]],
     int UnassociateAlpha = 0 [[ string widget = "boolean" ]],
+    int SingleChannel = 0 [[ string widget = "boolean", string help = "Output a single channel from the texture instead of a color." ]],
     int IsFloat = 1 [[ string widget = "boolean", string help = "Disable clamping for float textures." ]],
     int FlipV = 0 [[ string widget = "boolean", string help = "Flip the V coordinate" ]],
 
-    output color Color = 0.0,
+    output color Color = 0,
+    output float Value = 0,
     output float Alpha = 1.0,
 ) {
     if (Filename == "" || !isconstant(Filename))
@@ -112,17 +141,21 @@ shader AutolibImage [[
     }
 
     if (Projection == "flat") {
-        Color = imageTextureLookup(
+        imageTextureLookup(
             Filename,
             coord[0],
             coord[1],
-            Alpha,
             CompressAsSrgb,
             IgnoreAlpha,
             UnassociateAlpha,
+            SingleChannel,
             IsFloat,
             Interpolation,
-            Extension);
+            Extension,
+            Color,
+            Value,
+            Alpha
+        );
     } else if (Projection == "box") {
         vector normalObject = transform("world", "object", N);
 
@@ -166,80 +199,111 @@ shader AutolibImage [[
         }
 
         Color = color(0.0);
+        Value = 0.0;
         Alpha = 0.0;
 
         float tmpAlpha;
+        color tmpColor;
+        float tmpValue;
+        
 
         if (weight[0] > 0.0) {
             point uv = point((signedNormalObject[0] < 0.0) ? 1.0 - coord[1] : coord[1], coord[2], 0.0);
-            Color += weight[0] * imageTextureLookup(
+            imageTextureLookup(
                 Filename,
                 uv[0],
                 uv[1],
-                tmpAlpha,
                 CompressAsSrgb,
                 IgnoreAlpha,
                 UnassociateAlpha,
+                SingleChannel,
                 IsFloat,
                 Interpolation,
-                Extension);
+                Extension,
+                tmpColor,
+                tmpValue,
+                tmpAlpha
+            );
+
             Alpha += weight[0] * tmpAlpha;
+            Color += weight[0] * tmpColor;
+            Value += weight[0] * tmpValue;
         }
         if (weight[1] > 0.0) {
             point uv = point((signedNormalObject[1] > 0.0) ? 1.0 - coord[0] : coord[0], coord[2], 0.0);
-            Color += weight[1] * imageTextureLookup(
+            imageTextureLookup(
                 Filename,
                 uv[0],
                 uv[1],
-                tmpAlpha,
                 CompressAsSrgb,
                 IgnoreAlpha,
                 UnassociateAlpha,
+                SingleChannel,
                 IsFloat,
                 Interpolation,
-                Extension);
+                Extension,
+                tmpColor,
+                tmpValue,
+                tmpAlpha
+            );
+            Color += weight[1] * tmpColor;
+            Value += weight[1] * tmpValue;
             Alpha += weight[1] * tmpAlpha;
         }
         if (weight[2] > 0.0) {
             point uv = point((signedNormalObject[2] > 0.0) ? 1.0 - coord[1] : coord[1], coord[0], 0.0);
-            Color += weight[2] * imageTextureLookup(
+            imageTextureLookup(
                 Filename,
                 uv[0],
                 uv[1],
-                tmpAlpha,
                 CompressAsSrgb,
                 IgnoreAlpha,
                 UnassociateAlpha,
+                SingleChannel,
                 IsFloat,
                 Interpolation,
-                Extension);
+                Extension,
+                tmpColor,
+                tmpValue,
+                tmpAlpha
+            );
+            Color += weight[2] * tmpColor;
+            Value += weight[2] * tmpValue;
             Alpha += weight[2] * tmpAlpha;
         }
     } else if (Projection == "sphere") {
         point projected = mapToSphere(texcoRemapSquare(coord));
-        Color = imageTextureLookup(
+        imageTextureLookup(
             Filename,
             projected[0],
             projected[1],
-            Alpha,
             CompressAsSrgb,
             IgnoreAlpha,
             UnassociateAlpha,
+            SingleChannel,
             IsFloat,
             Interpolation,
-            Extension);
+            Extension,
+            Color,
+            Value,
+            Alpha
+        );
     } else if (Projection == "tube") {
         point projected = mapToTube(texcoRemapSquare(coord));
-        Color = imageTextureLookup(
+        imageTextureLookup(
             Filename,
             projected[0],
             projected[1],
-            Alpha,
             CompressAsSrgb,
             IgnoreAlpha,
             UnassociateAlpha,
+            SingleChannel,
             IsFloat,
             Interpolation,
-            Extension);
+            Extension,
+            Color,
+            Value,
+            Alpha
+        );
     }
 }

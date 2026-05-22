@@ -1,52 +1,49 @@
-
 shader AutolibBump [[
     string category = "autolib"
 ]] (
     int Invert = 0 [[ string widget = "boolean", int min = 0, int max = 1, string help = "Invert the bump direction" ]],
-    int UseObjectSpace = 0 [[ string widget = "boolean", int min = 0, int max = 1, string help = "Interpret inputs in object space" ]],
     normal BaseNormal = N [[ string widget = "null", string help = "Base normal to perturb" ]],
-    float Strength = 0.1 [[ string help = "Blend between base and bumped normal", float min = 0, float max = 1, int interactive = 1 ]],
-    float Distance = 1.0 [[ string help = "Height scale for the bump", float min = 0, int interactive = 1 ]],
-    float FilterWidth = 0.1 [[ string help = "Filter width for bump sampling", float min = 0 ]],
-    float SampleCenter = 0.0 [[ string widget = "null", string help = "Center height sample" ]],
-    float SampleX = 0.0 [[ string widget = "null", string help = "Height sample offset in +X" ]],
-    float SampleY = 0.0 [[ string widget = "null", string help = "Height sample offset in +Y" ]],
-
+    vector Tangent = dPdu [[ string widget = "null", string help = "Surface tangent" ]],
+    vector Bitangent = dPdv [[ string widget = "null", string help = "Surface bitangent" ]],
+    float Scale = 1.0 [[ float min = 0, int interactive = 1 ]],
+    float Height = 0.0 [[ string widget = "null", string help = "Height value to bump from", int interpolated = 1 ]],
     output normal Normal = N
 ) {
-    point pTmp = P;
-    normal normalValue = BaseNormal;
-
-    if (UseObjectSpace) {
-        pTmp = transform("object", pTmp);
-        normalValue = normalize(transform("object", normalValue));
-    }
-
-    // Get surface tangents from normal.
-    vector dPdx = Dx(pTmp);
-    vector dPdy = Dy(pTmp);
-
-    vector Rx = cross(dPdy, normalValue);
-    vector Ry = cross(normalValue, dPdx);
-
-    // Compute surface gradient and determinant.
-    float det = dot(dPdx, Rx);
-    vector surfGrad = (SampleX - SampleCenter) * Rx + (SampleY - SampleCenter) * Ry;
-
-    float absDet = fabs(det);
-
-    float strength = max(Strength, 0.0);
-    float dist = Distance;
-
+    float scale = Scale;
     if (Invert) {
-        dist *= -1.0;
+        scale *= -1.0;
     }
 
-    // Compute and output perturbed normal.
-    Normal = normalize(FilterWidth * absDet * normalValue - dist * sign(det) * surfGrad);
-    Normal = normalize(strength * Normal + (1.0 - strength) * normalValue);
+    float SOBEL_SCALE_FACTOR = 1.0 / 16.0;
 
-    if (UseObjectSpace) {
-        Normal = normalize(transform("object", "world", Normal));
+    // Compute screen-space gradients of height and UVs.
+    float dHdx = Dx(Height) * scale * SOBEL_SCALE_FACTOR;
+    float dHdy = Dy(Height) * scale * SOBEL_SCALE_FACTOR;
+    float dUdx = Dx(u);
+    float dUdy = Dy(u);
+    float dVdx = Dx(v);
+    float dVdy = Dy(v);
+
+    // Build a screen-space tangent frame from the height field.
+    vector tgt = vector(dUdx, dVdx, dHdx);
+    vector btn = vector(dUdy, dVdy, dHdy);
+    vector n   = cross(tgt, btn);
+
+    // Decode into a 0-1 encoded normal.
+    vector heightNormal;
+    if (dot(n, n) < 1e-16) {
+        heightNormal = vector(0, 0, 1);
+    } else if (n[2] < 0.0) {
+        heightNormal = normalize(-n) * 0.5 + 0.5;
+    } else {
+        heightNormal = normalize(n) * 0.5 + 0.5;
     }
+
+    vector v3 = heightNormal * 2.0 - 1.0;
+
+    vector N_ = BaseNormal;
+    vector Tn = normalize(Tangent - dot(Tangent, N_) * N_);
+    vector Bn = normalize(Bitangent - dot(Bitangent, N_) * N_ - dot(Bitangent, Tn) * Tn);
+
+    Normal = normalize(Tn * v3[0] + Bn * v3[1] + N_ * v3[2]);
 }

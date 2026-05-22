@@ -1,4 +1,4 @@
-shader AutolibToColor [[
+shader AutolibFloatToColor [[
     string category = "autolib",
 ]] (
     float Input = 0.0 [[ string label = "Input", string help = "The float to convert to a triple (copied to all channels)."  ]],
@@ -6,7 +6,7 @@ shader AutolibToColor [[
     float InputG = 0.0 [[ string label = "Input G", string help = "The float to place in the G component."  ]],
     float InputB = 0.0 [[ string label = "Input B", string help = "The float to place in the B component."  ]],
 
-    output color resultRGB = 0
+    output color RGB = 0
 ) {
     // Check if the primary 'Input' or the individual channels are connected
     int inputConnected = isconnected(Input);
@@ -16,13 +16,13 @@ shader AutolibToColor [[
 
     if (inputConnected) {
         // If the main float is connected, use it for all three channels
-        resultRGB = color(Input);
+        RGB = color(Input);
     } else if (rConnected || gConnected || bConnected || Input == 0.0) {
         // If any specific channel is connected, or Input is just at default 0
         // build the color from the R, G, and B parameters
-        resultRGB = color(InputR, InputG, InputB);
+        RGB = color(InputR, InputG, InputB);
     } else {
         // Fallback: Use the main input value
-        resultRGB = color(Input);
+        RGB = color(Input);
     }
 }

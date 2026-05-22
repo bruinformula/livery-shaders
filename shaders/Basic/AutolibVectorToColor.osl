@@ -1,0 +1,8 @@
+shader AutolibToColor [[
+    string category = "autolib",
+]] (
+    vector Input = 0,
+    output color RGB = 0
+) {
+    RGB = (color)Input;
+}
