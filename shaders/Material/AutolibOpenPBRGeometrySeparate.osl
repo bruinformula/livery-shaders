@@ -1,0 +1,20 @@
+#include "OpenPBRSurface.h"
+
+shader AutolibOpenPBRGeometrySeparate [[
+    string category = "autolib"
+]] (
+    OpenPBRGeometry In = {},
+    output float Opacity = 0,
+    output int ThinWalled = 0,
+    output normal Normal = N,
+    output normal CoatNormal = N,
+    output vector Tangent = dPdu,
+    output vector CoatTangent = dPdu
+) {
+    Opacity = In.opacity;
+    ThinWalled = In.thin_walled;
+    Normal = In.norm;
+    CoatNormal = In.coat_normal;
+    Tangent = In.tangent;
+    CoatTangent = In.coat_tangent;
+}

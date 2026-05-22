@@ -1,0 +1,20 @@
+#include "OpenPBRSurface.h"
+
+shader AutolibOpenPBRCoatCreate [[
+    string category = "autolib"
+]] (
+    float Weight = 0  [[ float min = 0, float max = 1 ]],
+    color Color = 1,
+    float Roughness = 0  [[ float min = 0, float max = 1 ]],
+    float RoughnessAnisotropy = 0  [[ float min = 0, float max = 1 ]],
+    float IOR = 1.6  [[ float min = 1, float max = 3.0 ]],
+    float Darkening = 1  [[ float min = 0, float max = 1 ]],
+    output OpenPBRCoat Out = {}
+) {
+    Out.weight = Weight;
+    Out.col = Color;
+    Out.roughness = Roughness;
+    Out.roughness_anisotropy = RoughnessAnisotropy;
+    Out.ior = IOR;
+    Out.darkening = Darkening;
+}

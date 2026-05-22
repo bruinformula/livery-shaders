@@ -1,0 +1,14 @@
+#include "OpenPBRSurface.h"
+
+shader AutolibOpenPBRFuzzSeparate [[
+    string category = "autolib"
+]] (
+    OpenPBRFuzz In = {},
+    output float Weight = 0,
+    output color Color = 0,
+    output float Roughness = 0
+) {
+    Weight = In.weight;
+    Color = In.col;
+    Roughness = In.roughness;
+}

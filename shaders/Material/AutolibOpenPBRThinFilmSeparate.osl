@@ -1,0 +1,14 @@
+#include "OpenPBRSurface.h"
+
+shader AutolibOpenPBRThinFilmSeparate [[
+    string category = "autolib"
+]] (
+    OpenPBRThinFilm In = {},
+    output float Weight = 0,
+    output float Thickness = 0,
+    output float IOR = 1.4
+) {
+    Weight = In.weight;
+    Thickness = In.thickness;
+    IOR = In.ior;
+}

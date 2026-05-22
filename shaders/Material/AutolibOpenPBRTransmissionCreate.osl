@@ -1,0 +1,22 @@
+#include "OpenPBRSurface.h"
+
+shader AutolibOpenPBRTransmissionCreate [[
+    string category = "autolib"
+]] (
+    float Weight = 0  [[ float min = 0, float max = 1 ]],
+    color Color = 1,
+    float Depth = 0  [[ float min = 0 ]],
+    color Scatter = 0,
+    float ScatterAnisotropy = 0  [[ float min = -1, float max = 1 ]],
+    float DispersionScale = 0,
+    float DispersionAbbeNumber = 50,
+    output OpenPBRTransmission Out = {}
+) {
+    Out.weight = Weight;
+    Out.col = Color;
+    Out.depth = Depth;
+    Out.scatter = Scatter;
+    Out.scatter_anisotropy = ScatterAnisotropy;
+    Out.dispersion_scale = DispersionScale;
+    Out.dispersion_abbe_number = DispersionAbbeNumber;
+}

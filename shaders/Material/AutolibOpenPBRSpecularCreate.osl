@@ -1,0 +1,22 @@
+#include "OpenPBRSurface.h"
+
+shader AutolibOpenPBRSpecularCreate [[
+    string category = "autolib"
+]] (
+    float Weight = 1  [[ float min = 0, float max = 1 ]],
+    color Color = 1,
+    float Roughness = 0.3  [[ float min = 0, float max = 1 ]],
+    float RoughnessAnisotropy = 0  [[ float min = 0, float max = 1 ]],
+    float Haze = 0  [[ float min = 0, float max = 1 ]],
+    float HazeSpread = 0.3  [[ float min = 0, float max = 1 ]],
+    float IOR = 1.5  [[ float min = 1, float max = 3.0 ]],
+    output OpenPBRSpecular Out = {}
+) {
+    Out.weight = Weight;
+    Out.col = Color;
+    Out.roughness = Roughness;
+    Out.roughness_anisotropy = RoughnessAnisotropy;
+    Out.haze = Haze;
+    Out.haze_spread = HazeSpread;
+    Out.ior = IOR;
+}

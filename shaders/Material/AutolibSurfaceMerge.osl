@@ -1,6 +1,6 @@
 #include "OpenPBRSurface.h"
 
-shader AutolibSurfaceComponentMerge [[
+shader AutolibSurfaceMerge [[
     string category = "autolib"
 ]] (
     OpenPBRBase Base = {},

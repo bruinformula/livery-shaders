@@ -1,0 +1,14 @@
+#include "OpenPBRSurface.h"
+
+shader AutolibOpenPBRFuzzCreate [[
+    string category = "autolib"
+]] (
+    float Weight = 0  [[ float min = 0, float max = 1 ]],
+    color Color = 1,
+    float Roughness = 0.5  [[ float min = 0, float max = 1 ]],
+    output OpenPBRFuzz Out = {}
+) {
+    Out.weight = Weight;
+    Out.col = Color;
+    Out.roughness = Roughness;
+}

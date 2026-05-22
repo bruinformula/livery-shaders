@@ -1,0 +1,12 @@
+#include "OpenPBRSurface.h"
+
+shader AutolibOpenPBREmissionCreate [[
+    string category = "autolib"
+]] (
+    float Luminance = 0  [[ float min = 0, float max = 1000 ]],
+    color Color = 1,
+    output OpenPBREmission Out = {}
+) {
+    Out.luminance = Luminance;
+    Out.col = Color;
+}

@@ -1,6 +1,6 @@
 #include "OpenPBRSurface.h"
 
-shader AutolibSurfaceComponentSeperate [[
+shader AutolibSurfaceSeperate [[
     string category = "autolib"
 ]] (
     OpenPBRSurface mat = {},

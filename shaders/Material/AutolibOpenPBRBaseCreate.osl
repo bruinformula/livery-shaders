@@ -1,0 +1,16 @@
+#include "OpenPBRSurface.h"
+
+shader AutolibOpenPBRBaseCreate [[
+    string category = "autolib"
+]] (
+    float Weight = 1  [[ float min = 0, float max = 1 ]],
+    color Color = color(0.8),
+    float DiffuseRoughness = 0  [[ float min = 0, float max = 1 ]],
+    float Metalness = 0  [[ float min = 0, float max = 1 ]],
+    output OpenPBRBase Out = {}
+) {
+    Out.weight = Weight;
+    Out.col = Color;
+    Out.diffuse_roughness = DiffuseRoughness;
+    Out.metalness = Metalness;
+}

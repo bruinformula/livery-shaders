@@ -1,0 +1,58 @@
+#include "OpenPBRSurfaceCombine.h"
+
+shader AutolibSurfaceComponentCombine [[
+    string category = "autolib"
+]] (
+    float BaseFactor = 0.5  [[ float min = 0.0, float max = 1.0 ]],
+    float SpecularFactor = 0.5  [[ float min = 0.0, float max = 1.0 ]],
+    float TransmissionFactor = 0.5  [[ float min = 0.0, float max = 1.0 ]],
+    float SubsurfaceFactor = 0.5  [[ float min = 0.0, float max = 1.0 ]],
+    float CoatFactor = 0.5  [[ float min = 0.0, float max = 1.0 ]],
+    float FuzzFactor = 0.5  [[ float min = 0.0, float max = 1.0 ]],
+    float ThinFilmFactor = 0.5  [[ float min = 0.0, float max = 1.0 ]],
+    float EmissionFactor = 0.5  [[ float min = 0.0, float max = 1.0 ]],
+    float GeometryFactor = 0.5  [[ float min = 0.0, float max = 1.0 ]],
+
+    OpenPBRSurface MaterialA = {},
+    OpenPBRSurface MaterialB = {},
+    output OpenPBRSurface mat = {}
+) {
+    float x_base = clamp(BaseFactor, 0, 1);
+    float x_specular = clamp(SpecularFactor, 0, 1);
+    float x_transmission = clamp(TransmissionFactor, 0, 1);
+    float x_subsurface = clamp(SubsurfaceFactor, 0, 1);
+    float x_coat = clamp(CoatFactor, 0, 1);
+    float x_fuzz = clamp(FuzzFactor, 0, 1);
+    float x_thin_film = clamp(ThinFilmFactor, 0, 1);
+    float x_emission = clamp(EmissionFactor, 0, 1);
+    float x_geometry = clamp(GeometryFactor, 0, 1);
+
+    if (!isconnected(MaterialA)) {
+        mat = MaterialB;
+        return;
+    }
+    if (!isconnected(MaterialB)) {
+        mat = MaterialA;
+        return;
+    }
+
+    if (MaterialA.geometry.thin_walled != MaterialB.geometry.thin_walled) {
+        printf(
+            "Error in AutolibSurfaceCombine: cannot combine thin-walled" 
+            "and non-thin-walled materials. MaterialA thin_walled = %d, "
+            "MaterialB thin_walled = %d\n", 
+            MaterialA.geometry.thin_walled, 
+            MaterialB.geometry.thin_walled);
+        exit();
+    }
+
+    mat.base = mix_base(MaterialA.base, MaterialB.base, x_base);
+    mat.specular = mix_specular(MaterialA.specular, MaterialB.specular, x_specular);
+    mat.transmission = mix_transmission(MaterialA.transmission, MaterialB.transmission, x_transmission);
+    mat.subsurface = mix_subsurface(MaterialA.subsurface, MaterialB.subsurface, x_subsurface);
+    mat.coat = mix_coat(MaterialA.coat, MaterialB.coat, x_coat);
+    mat.fuzz = mix_fuzz(MaterialA.fuzz, MaterialB.fuzz, x_fuzz);
+    mat.thin_film = mix_thin_film(MaterialA.thin_film, MaterialB.thin_film, x_thin_film);
+    mat.emission = mix_emission(MaterialA.emission, MaterialB.emission, x_emission);
+    mat.geometry = mix_geometry(MaterialA.geometry, MaterialB.geometry, x_geometry);
+}
