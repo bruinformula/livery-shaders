@@ -48,7 +48,7 @@ shader AutolibDecal [[
     vector Offset = 0 [[ string help = "Offset applied to the decal projection", int interactive = 1, vector min = -1, vector max = 1 ]],
     float Rotation = 0 [[ string help = "Rotation in degrees around the decal center", int interactive = 1 ]],
     vector Scale = 1 [[ string help = "Scale multiplier for the decal size", int interactive = 1 ]],
-    int DisableChaining = 0 [[ string help = "Disables chaining inputs", string widget = "boolean", int min = 0, int max = 1 ]],
+    int DisableChaining = 0 [[ string help = "Disables chaining inputs", string widget = "boolean", int min = 0, int max = 1, int interactive = 1 ]],
     string Filename = "" [[ string path = "file" ]],
 
     color ColorIn = 1 [[ string help = "Base color to blend the decal with. Use in alpha mode to tint the decal color." ]],

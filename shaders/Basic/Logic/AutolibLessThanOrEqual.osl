@@ -3,7 +3,7 @@ shader AutolibLessThanOrEqual [[
 ]] (
     float A = 0,
     float B = 0,
-    output float Output = 0
+    output int Output = 0 [[ string widget = "boolean" ]]
 ) {
-    Output = (A <= B) ? 1.0 : 0.0;
+    Output = (A <= B);
 }

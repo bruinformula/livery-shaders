@@ -12,12 +12,12 @@ shader AutolibRYB [[
     string nodegroup = "autolib",
     string help = "https://bahamas10.github.io/ryb/assets/ryb.pdf"
 ]] (
-    float Red = 0.5 [[ float min = 0, float max = 1 ]],
-    float Yellow = 0.5 [[ float min = 0, float max = 1 ]],
-    float Blue = 0.5 [[ float min = 0, float max = 1 ]],
-    float White = 0.0 [[ float min = 0, float max = 1 ]],
-    float Black = 0.0 [[ float min = 0, float max = 1 ]],
-    output color Color = 1
+    float Red = 0.5 [[ float min = 0, float max = 1, int interactive = 1 ]],
+    float Yellow = 0.5 [[ float min = 0, float max = 1, int interactive = 1 ]],
+    float Blue = 0.5 [[ float min = 0, float max = 1, int interactive = 1 ]],
+    float White = 0.0 [[ float min = 0, float max = 1 , int interactive = 1 ]],
+    float Black = 0.0 [[ float min = 0, float max = 1, int interactive = 1 ]],
+    output color Color = 1 [[ int interactive = 1 ]]
 ) {
 
     vector corners[8] = {
