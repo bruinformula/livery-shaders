@@ -1,4 +1,4 @@
-shader AutolibSeparateVector [[
+shader AutolibVectorCombine [[
     string category = "autolib"
 ]] (
     float X = 0,

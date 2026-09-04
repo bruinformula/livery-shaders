@@ -1,4 +1,4 @@
-shader AutolibSeparateVector [[
+shader AutolibVectorSeparate [[
     string category = "autolib"
 ]] (
     vector Input = 0,

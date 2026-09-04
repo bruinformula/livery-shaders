@@ -1,0 +1,52 @@
+// AutolibNoTile
+shader AutolibNoTile [[
+string category = "autolib"
+]] (
+    vector UV = vector(u, v, 0) [[ int interpolated = 1 ]],
+    string Filename = "" [[ string widget = "filename" ]],
+    string FileColorSpace = "" [[ string widget = "colorspace" ]],
+    float Gain = 1.0 [[ float min = 0, float softmax = 10, int interactive = 1 ]],
+    float GradientScale = 2.0 [[ float min = 0, float max = 25, int interactive = 1 ]],
+    float Offset = 1.0 [[ float min = 0, float max = 25, int interactive = 1 ]],
+    float Rescale = 0.0 [[ float min = 0, float max = 25, int interactive = 1 ]],
+    float Rotate = 0.0 [[ float min = -180, float max = 180, int interactive = 1 ]],
+    int LevelCount = 8 [[ int min = 0, int max = 25, int interactive = 1 ]],
+    int Seed = 0 [[ int min = 0, int max = 100, int interactive = 1 ]],
+    output point GeneratedPositionA = 0,
+    output point GeneratedPositionB = 0,
+    output color OutColor = 0
+) {
+    point position;
+    if (isconnected(UV)) {
+        position = UV;
+    } else {
+        position = vector(u, v, 0);
+    }
+
+    float k = noise("uperlin", position / GradientScale, Seed);
+    float l = k * LevelCount + position[1] / GradientScale;
+    float i = floor(l);
+    float f = l - i;
+
+    vector offa = cellnoise(i + 0.0, Seed) * vector(Offset, Offset, 1.0);
+    vector offb = cellnoise(i + 1.0, Seed) * vector(Offset, Offset, 1.0);
+
+    float sca = 1.0 / (1.0 + (offa[2] - 0.5) * Rescale);
+    float scb = 1.0 / (1.0 + (offb[2] - 0.5) * Rescale);
+    float rota = offa[2] * Rotate;
+    float rotb = offb[2] * Rotate;
+
+    point rotA = rotate(position, rota, vector(0.5, 0.5, 0), vector(0.5, 0.5, 1.0));
+    point rotB = rotate(position, rotb, vector(0.5, 0.5, 0), vector(0.5, 0.5, 1.0));
+
+    GeneratedPositionA = point(rotA[0] * sca + offa[0], rotA[1] * sca + offa[1], 0);
+    GeneratedPositionB = point(rotB[0] * scb + offb[0], rotB[1] * scb + offb[1], 0);
+
+    color cola = texture(Filename, GeneratedPositionA[0], 1.0 - GeneratedPositionA[1], "wrap", "periodic");
+    color colb = texture(Filename, GeneratedPositionB[0], 1.0 - GeneratedPositionB[1], "wrap", "periodic");
+
+    float blend = smoothstep(0.1, 0.9, f - 0.1 * (cola[0]+cola[1]+cola[2] - colb[0]-colb[1]-colb[2]));
+    color Col = mix(cola, colb, blend);
+    color Raw = transformc("ACEScg", "scene-linear Rec.709-sRGB", Col);
+    OutColor = transformc(FileColorSpace, "ACEScg", Raw) * Gain;
+}

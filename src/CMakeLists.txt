@@ -17,8 +17,3 @@ install(TARGETS svgtx
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
-
-# Arnold Plugin
-if (${BUILD_AUTOLIB_MTL_ARNOLD})
-    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/arnold")
-endif()
