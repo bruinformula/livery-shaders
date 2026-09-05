@@ -1,0 +1,74 @@
+shader AutolibCurvatureField (
+    float SampleDist = 0.01 [[ float min = 0, string help = "Tangent-plane step size for the curvature probes." ]],
+    float ProbeHeight = 0.02 [[ float min = 0, string help = "How far above the tangent plane the probe rays start." ]],
+    float MaxDist = 1.0 [[ float min = 0, string help = "Max trace distance for the probe rays." ]],
+    int NumSamples = 3 [[ int min = 3, string help = "Number of equally spaced tangent directions sampled over a half turn (>=3)." ]],
+
+    output vector Field = 0,
+    output float GaussianCurvature = 0 [[ string help = "Positive = elliptic (dome/bowl), negative = hyperbolic (saddle), ~0 = flat." ]],
+    output float Confidence = 0
+) {
+    normal Nn = normalize(N);
+
+    // Orthonormal tangent basis.
+    vector U = dPdu - Nn * dot(dPdu, Nn);
+    if (length(U) < 1e-6)
+        U = cross(Nn, vector(0, 1, 0));
+    if (length(U) < 1e-6)
+        U = cross(Nn, vector(1, 0, 0));
+    U = normalize(U);
+    vector V = cross(Nn, U);
+
+    float sumA = 0, sumB = 0, sumC = 0;
+    int   hits = 0;
+
+    for (int i = 0; i < NumSamples; i += 1) {
+        float theta = M_PI * i / NumSamples;      // curvature is pi-periodic
+        vector T = cos(theta) * U + sin(theta) * V;
+
+        point  Pstart = P + T * SampleDist + Nn * ProbeHeight;
+        vector Dir    = -Nn;
+
+        int hit = trace(
+            Pstart, Dir, 
+            "mindist", 0.0001,
+            "maxdist", MaxDist
+        );
+
+        if (hit) {
+            normal Nhit = Nn; // fallback if the query fails
+            int gotN = getmessage("trace", "N", Nhit);
+            if (!gotN)
+                gotN = getmessage("trace", "Ng", Nhit);   // geometric-normal fallback
+
+            if (gotN) {
+                Nhit = normalize(Nhit);
+                float kappa = dot(Nn - Nhit, T) / SampleDist;
+
+                sumA += kappa;
+                sumB += kappa * cos(2.0 * theta);
+                sumC += kappa * sin(2.0 * theta);
+                hits += 1;
+            }
+        }
+    }
+
+    float A = sumA / hits;                    // mean curvature H = (k1+k2)/2
+    float B = (2.0 / hits) * sumB;
+    float C = (2.0 / hits) * sumC;
+
+    // (B, C) is the 2-RoSy representation vector of the curvature tensor.
+    float R2 = sqrt(B * B + C * C);            // (k1-k2)/2
+
+    // Complex-square it into the 4-RoSy / cross-field representation
+    // expected by CrossFieldHatch's FieldTex input:
+    //   (X4, Y4) = (B + iC)^2 = (B^2 - C^2, 2BC)
+    float X4 = B * B - C * C;
+    float Y4 = 2.0 * B * C;
+
+    // k1 = A + R2, k2 = A - R2  =>  K = k1*k2 = A^2 - R2^2
+    GaussianCurvature = A * A - R2 * R2;
+
+    Field = vector(X4, Y4, 0);
+    Confidence = smoothstep(0.0, 0.02, R2);   // fades near-umbilic regions to 0 like on the poles of a sphere
+}

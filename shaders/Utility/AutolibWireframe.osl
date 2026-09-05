@@ -5,7 +5,7 @@
 shader AutolibWireframe [[ 
     string category = "autolib" 
 ]] (
-    int EdgeType = POLYGONS [[ string widget = "mapper", string options = "triangles|polygons|patches" ]], 
+    int EdgeType = POLYGONS [[ string widget = "popup", string options = "triangles|polygons|patches" ]], 
     float LineWidth = 1  [[ float min = 0.0, int interactive = 1 ]], 
     int Raster = 1  [[ string widget = "boolean", int min = 0, int max = 1 ]],
     output float Value = 0

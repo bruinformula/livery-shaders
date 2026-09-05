@@ -6,10 +6,7 @@
     renderSettingsPrimPath = "/World/Render/RenderSettings"
 )
 
-def "World" (
-    references = @carbon_fiber_material.mtlx@</MaterialX>
-)
-{
+def "World" {
     def Scope "ShadeBalls"
     {
         def Xform "Ball" (

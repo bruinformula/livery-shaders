@@ -1,3 +1,0 @@
-testshade -g 1024 1024 --param fiberScale 16,16,1 --param fiberBumpStrength 1.0 ./build/autolib/oso/AutolibCarbonFiberWeaves.oso -o outBump carbon-fiber-bump.exr
-testshade -g 1024 1024 --param fiberScale 16,16,1 --param fiberBumpStrength 1.0 ./build/autolib/oso/AutolibCarbonFiberWeaves.oso -o outRotation carbon-fiber-rotation.exr
-testshade -g 1024 1024 --param fiberScale 16,16,1 --param fiberBumpStrength 1.0 ./build/autolib/oso/AutolibCarbonFiberWeaves.oso -o outBumpedNormal carbon-fiber-bumped-normal.exr

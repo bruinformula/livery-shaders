@@ -1,0 +1,14 @@
+shader AutolibCurvatureHatch(
+    vector Field = 0 [[ string widget = "null" ]],  // baked (R cos N*theta, R sin N*theta, 0)
+    int NumberRotations = 4 [[ int min = 0 ]],
+    float LineFreq  = 40 [[ int slider = 1, float max = 100, float min = 0 ]],
+    float LineWidth = 0.15,
+    output float Hatch = 1
+) {
+    
+    float theta = atan2(Field.y, Field.x) / NumberRotations; // one of N member directions
+    point p = transform("object", P);
+    float s = cos(theta)*p.x + sin(theta)*p.y;
+    float stripe = abs(sin(s * LineFreq));
+    Hatch = smoothstep(0.0, LineWidth, stripe);
+}

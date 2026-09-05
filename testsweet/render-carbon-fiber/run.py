@@ -1,2 +1,2 @@
-outputs = ["out-arnold.exr"]
-render("scene.usda", "out-arnold.exr", renderer="Arnold")
+outputs = ["out-renderman.exr"]
+render("scene.usda", "out-renderman.exr", renderer="RenderMan XPU")

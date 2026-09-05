@@ -65,9 +65,9 @@ if __name__ == "__main__":
     
     source_dir = Path(source_env).resolve()
 
-    mk11_root = os.environ.get('MK11_ROOT')
-    if mk11_root:
-        output_env = Path(mk11_root) / '_env' / 'shaders'
+    mk12_root = os.environ.get('MK12_ROOT')
+    if mk12_root:
+        output_env = Path(mk12_root) / '_env' / 'shaders'
     else:
         output_env = os.environ.get('OSL_OUTPUT_DIR', source_env)
     

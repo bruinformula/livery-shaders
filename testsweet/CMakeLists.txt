@@ -40,9 +40,8 @@ function(add_usd_render_test TEST_NAME)
     add_test(
         NAME "${TEST_NAME}"
         COMMAND ${CMAKE_COMMAND} -E env
-            "DYLD_LIBRARY_PATH=${ARNOLD_LIB_DIR}:$ENV{DYLD_LIBRARY_PATH}"
             "PXR_PLUGINPATH_NAME=$ENV{PXR_PLUGINPATH_NAME}"
-            "ARNOLD_PLUGIN_PATH=$ENV{ARNOLD_PLUGIN_PATH}"
+            "RMAN_SHADERPATH=$ENV{RMAN_SHADERPATH}"
             "${Python3_EXECUTABLE}"
             "${AUTOLIB_TESTSWEET_DIR}/runtest.py"
             "${TEST_SRC_DIR}"
@@ -55,22 +54,10 @@ function(add_usd_render_test TEST_NAME)
             AUTOLIB_TESTSWEET_DIR=${AUTOLIB_TESTSWEET_DIR};\
             Usd_TESTSUITE_SRC=${TEST_SRC_DIR};\
             AUTOLIB_BUILD_DIR=${AUTOLIB_BUILD_DIR};\
-            ARNOLD_PLUGIN_PATH=$ENV{ARNOLD_PLUGIN_PATH};\
-            PXR_PLUGINPATH_NAME=$ENV{PXR_PLUGINPATH_NAME};\
-            DYLD_LIBRARY_PATH=${ARNOLD_LIB_DIR}:$ENV{DYLD_LIBRARY_PATH}
+            RMAN_SHADERPATH=$ENV{RMAN_SHADERPATH};\
+            PXR_PLUGINPATH_NAME=$ENV{PXR_PLUGINPATH_NAME};
             "
     )
 endfunction()
 
-if (${BUILD_AUTOLIB_MTL_ARNOLD_BSDFS})
-    add_usd_render_test(render-ramp-diffuse-bsdf)
-    add_usd_render_test(render-ramp-phong-bsdf)
-    add_usd_render_test(render-toon-diffuse-bsdf)
-    add_usd_render_test(render-toon-glossy-bsdf)
-    add_usd_render_test(render-layer)
-endif()
-
-add_usd_render_test(render-ryb)
-add_usd_render_test(render-carbon-fiber)
-add_usd_render_test(render-splatter)
-add_usd_render_test(render-mk11-color-globals)
+add_usd_render_test(render-curvature)

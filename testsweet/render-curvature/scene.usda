@@ -1,0 +1,68 @@
+#usda 1.0 
+(
+    doc = "Test curvature shader node on stanford bunny"
+    metersPerUnit = 0.1
+    upAxis = "Y"
+    renderSettingsPrimPath = "/Render/RenderSettings"
+)
+
+def Material "TestCurvatureMaterial" {
+
+}
+
+def Xform "Ball" (
+    prepend apiSchemas = ["MaterialBindingAPI"]
+    references = @../assets/bunny.usdc@
+)
+{
+    rel material:binding = </Materials/TestCurvatureMaterial> (
+        bindMaterialAs = "strongerThanDescendants"
+    )
+    double3 xformOp:translate = (0, 0, 0)
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+}
+
+def Mesh "Background"
+{
+    int[] faceVertexCounts = [4]
+    int[] faceVertexIndices = [0, 1, 2, 3]
+    point3f[] points = [(-5, -5, 0), (5, -5, 0), (5, 5, 0), (-5, 5, 0)]
+    color3f[] primvars:displayColor = [(0.5, 0.5, 0.5)]
+    double3 xformOp:translate = (0, 0, -2)
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+}
+
+def Camera "Camera"
+{
+    float2 clippingRange = (0.001, 1000)
+    float focalLength = 36
+    float horizontalAperture = 36
+    float verticalAperture = 36
+    double3 xformOp:translate = (0, 0, 4)
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+}
+
+def Scope "Render"
+{
+    def RenderSettings "RenderSettings"
+    {
+        rel camera = </Camera>
+        rel products = </Render/Products/Beauty>
+        int2 resolution = (256, 256)
+    }
+    def Scope "Products"
+    {
+        def RenderProduct "Beauty"
+        {
+            token productName = "out.exr"
+            token productType = "raster"
+        }
+    }
+}
+
+def DomeLight "DomeLight1"
+{
+    asset inputs:texture:file = @../assets/env.exr@
+    token inputs:texture:format = "latlong"
+}
+
