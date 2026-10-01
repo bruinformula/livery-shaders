@@ -99,11 +99,17 @@ shader AutolibSketchFill (
     float LineSpacing = 0.05 [[ string help = "Distance between the lines as a fraction of the larger image dimension", float min = 0 ]],
     float LineWidth = 0.005 [[ string help = "Width of the lines as a fraction of the larger image dimension, independent of the spacing, the resolution and the aspect ratio", float min = 0 ]], 
     string TerminationType = "Round" [[ string help = "Specifies the type of termination for the lines", string widget = "mapper", string options = "Round|Square|Butt" ]],
+    
+    float TaperWidth = 0 [[ string help = "Specifies the width of the taper for the line terminations", float min = 0 ]],
+    float TaperSlope = 1 [[ string help = "Specifies the slope of the taper for the line terminations", float min = 0 ]],
+
     float BoundaryWidth = 0.005 [[ string page = "Perimeter", string help = "Width of the boundary. With constant width it is a fraction of the larger image dimension and stays the same on screen. Without constant width it is in world units and scales with the camera", float min = 0 ]],
     string BoundaryPrimvar = "" [[ string page = "Perimeter", string help = "Specifies the primvar that defines the boundary for the sketch fill" ]],
     string BoundaryEdgeType = "Triangles" [[ string page = "Perimeter", string help = "Specifies the type of edge for the boundary", string widget = "mapper", string options = "Triangles|Polygons|Patches" ]],    
     int EnableConstantWidth = 1 [[ string page = "Perimeter", string help = "Renders the lines as a constant screen space size", string widget = "checkBox" ]],
+    
     output float Value = 0,
+    output float TEST = 0,
     output float BoundaryMask = 0
 ) {
     // First step is to establish the diagonial lines acoss the screen 
@@ -132,7 +138,7 @@ shader AutolibSketchFill (
 
     // To get a distance between the lines and create a modulo stipe pattern
     // becuase the pattern goes from 0...1, 0...1
-    float distanceAcrossLines = horizontal * positionScaled.x + vertical * positionScaled.y;
+    float distanceAcrossLines = (horizontal * positionScaled.x) + (vertical * positionScaled.y);
     float valueAcross = mod(distanceAcrossLines, LineSpacing) / LineSpacing;
 
     // Mirror the pattern so it goes from 0...1 and then back to 0...1 
@@ -149,8 +155,8 @@ shader AutolibSketchFill (
     // It can't be wider than the spacing or neighboring lines would run
     // into each other.
     float lineHalfWidth = min(0.5 * LineWidth, 0.5 * LineSpacing);
-    
-    if (BoundaryWidth <= 0) {
+
+    if (BoundaryWidth <= 0 and TaperWidth == 0) { // need to add early out for 
         Value = (distanceToLine < lineHalfWidth) ? 1.0 : 0.0;
         return;
     }
@@ -263,10 +269,10 @@ shader AutolibSketchFill (
     int squareEnd = (TerminationType == "Square");
 
     // Walk the edges of the face and tighten the range along the
-    // hatch line that survives. sMin and sMax are the positions of
-    // the two ends of the line measured along the line direction.
-    // For a round termination these are the cap centers, for a
-    // square termination these are the flat tips.
+    // hatch line that survives. sMin and sMax (like as in s and t)
+    // are the positions of the two ends of the line measured along 
+    // the line direction. For a round termination these are the 
+    // cap centers, for a square termination these are the flat tips.
     float sMin = -1e6;
     float sMax = 1e6;
 
@@ -317,15 +323,56 @@ shader AutolibSketchFill (
     float beyond = max(max(sMin - along, along - sMax), 0.0);
     float across = abs(distanceAcrossLines - lineOffset);
 
-    if (TerminationType == "Round") {
-        // Distance to the closest cap center, which is what
-        // makes the half circle.
-        Value = (sqrt(beyond * beyond + across * across) < lineHalfWidth) ? 1.0 : 0.0;
-    }
+    if (TaperWidth == 0) {
+        if (TerminationType == "Round") {
+            // Distance to the closest cap center, which is what
+            // makes the half circle.
+            Value = (sqrt(beyond * beyond + across * across) < lineHalfWidth) ? 1.0 : 0.0;
+        }
 
-    if (TerminationType == "Square") {
-        // The ends are already the tips of the line, so nothing
-        // extends past them.
-        Value = (beyond <= 0.0) ? 1.0 : 0.0;
+        if (TerminationType == "Square") {
+            // The ends are already the tips of the line, so nothing
+            // extends past them.
+            Value = (beyond <= 0.0) ? 1.0 : 0.0;
+        }
+    } else {
+        float lineLength = max(sMax - sMin, 1e-9);
+        float distanceFromEnd = min(along - sMin, sMax - along);
+
+        // Normalize the distance from either line end.
+        // TaperWidth is a physical distance, so the taper length
+        // is independent of the total line length.
+        float uValueMirror = clamp(
+            distanceFromEnd / TaperWidth,
+            0.0,
+            1.0
+        );
+
+        float taperKnots[4] = {
+            0,    // value at u=0
+            TaperSlope, // tangent at u=0
+            1, // value at u=1
+            0  // tangent at u=1
+        };
+
+        float taper = spline(
+            "hermite",
+            uValueMirror,
+            taperKnots
+        );
+
+        float maxWidth = taper * lineHalfWidth;
+        if (TerminationType == "Round") {
+            Value = (
+                sqrt(beyond * beyond + across * across) < maxWidth
+            ) ? 1.0 : 0.0;
+        }
+
+        if (TerminationType == "Square") {
+            Value = (
+                (beyond <= maxWidth) &&
+                (across <= maxWidth)
+            ) ? 1.0 : 0.0;
+        }
     }
 }
