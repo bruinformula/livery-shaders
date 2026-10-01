@@ -26,21 +26,22 @@ point worldToHatch(
 // bound is the position along the hatch line:
 //     s = dot(position, lineDirection)
 int clipHatchEdge(
-    point A,
-    point B,
-    point Q,
-    float horizontal,
-    float vertical,
-    float lineOffset,
-    float inset,
+    point A, // Edge Point A
+    point B, // Edge Point B
+    point Q, // Shading Point
+    float horizontal, // X component of the hatch normal
+    float vertical, // Y component of the hatch normal
+    float lineOffset, // The current line (y offset)
+    float inset, // Padding between the end of the line and the edge
+    float halfWidth, // Half the width of the line
+    int squareEnd, // 1 for a flat end, 0 for a round end
     output float bound
 ) {
     // The edge is pushed inward by inset, toward the side of the face
     // that contains the shading point, and the hatch line is cut where
     // it crosses the pushed in edge. Pushing the edge in is what lets the
-    // line stop one cap radius plus the boundary width before the real
-    // boundary, no matter what angle the line meets the edge at.
-
+    // line stop before the real boundary, no matter what angle the line
+    // meets the edge at.
 
     // Edge goes A -> B
     vector edge = B - A;
@@ -64,6 +65,16 @@ int clipHatchEdge(
     vector lineNormal = vector(horizontal, vertical, 0);
     vector lineDirection = vector(-vertical, horizontal, 0);
 
+    // How far the end of the line reaches toward this edge. A round end
+    // reaches one radius whatever the angle. A flat end is as wide as the
+    // line, so its corner reaches toward the edge by an amount that
+    // depends on the angle between the line and the edge.
+    float reach = halfWidth;
+    if (squareEnd) {
+        reach = halfWidth * abs(dot(inward, lineNormal));
+    }
+    float required = inset + reach;
+
     // Walking along the line the distance to the edge is linear in s:
     //     distance(s) = start + rate * s
     float rate = dot(inward, lineDirection);
@@ -72,12 +83,12 @@ int clipHatchEdge(
     // The line is parallel to the edge so it is either always far
     // enough away from it or it is never far enough away from it.
     if (abs(rate) < 1e-6) {
-        return (start >= inset) ? 0 : -1;
+        return (start >= required) ? 0 : -1;
     }
 
-    // Solve distance(s) >= inset for s. Dividing by a negative rate
+    // Solve distance(s) >= required for s. Dividing by a negative rate
     // flips the inequality so the bound becomes an upper one.
-    bound = (inset - start) / rate;
+    bound = (required - start) / rate;
     return (rate > 0) ? 1 : 2;
 }
 
@@ -87,11 +98,11 @@ shader AutolibSketchFill (
     float Skew = 45 [[ string help = "This rotates the base space by degrees", float min = 0 ]],
     float LineSpacing = 0.05 [[ string help = "Distance between the lines as a fraction of the larger image dimension", float min = 0 ]],
     float LineWidth = 0.005 [[ string help = "Width of the lines as a fraction of the larger image dimension, independent of the spacing, the resolution and the aspect ratio", float min = 0 ]], 
+    string TerminationType = "Round" [[ string help = "Specifies the type of termination for the lines", string widget = "mapper", string options = "Round|Square|Butt" ]],
     float BoundaryWidth = 0.005 [[ string page = "Perimeter", string help = "Width of the boundary. With constant width it is a fraction of the larger image dimension and stays the same on screen. Without constant width it is in world units and scales with the camera", float min = 0 ]],
     string BoundaryPrimvar = "" [[ string page = "Perimeter", string help = "Specifies the primvar that defines the boundary for the sketch fill" ]],
-    string BoundaryEdgeType = "Triangles" [[ string page = "Perimeter", string help = "Specifies the type of edge for the boundary", string widget = "mapper", string options = "Triangles|Polygons|Patches" ]],
+    string BoundaryEdgeType = "Triangles" [[ string page = "Perimeter", string help = "Specifies the type of edge for the boundary", string widget = "mapper", string options = "Triangles|Polygons|Patches" ]],    
     int EnableConstantWidth = 1 [[ string page = "Perimeter", string help = "Renders the lines as a constant screen space size", string widget = "checkBox" ]],
-    int EnableRoundedCaps = 1 [[ string page = "Perimeter", string help = "Renders the line terminations as a radiated cap", string widget = "checkBox" ]],
     output float Value = 0,
     output float BoundaryMask = 0
 ) {
@@ -193,7 +204,7 @@ shader AutolibSketchFill (
         // the camera is. It gets smaller on screen as the surface moves
         // away and bigger as it comes closer. Here the width is in world
         // units, and the hatch width is whatever that looks like at
-        // this point so the line caps still stop at the boundary.
+        // this point so the line ends still stop at the boundary.
         boundaryHalfWorld = 0.5 * BoundaryWidth;
         boundaryHalfHatch = boundaryHalfWorld * hatchPerWorld;
     }
@@ -216,13 +227,13 @@ shader AutolibSketchFill (
         }
     }
 
-    // Early exit for when rounded caps are not enabled
+    // Early exit for when butt termination is enabled
     Value = (distanceToLine < lineHalfWidth) ? 1.0 : 0.0;
-    if (!EnableRoundedCaps) {
+    if (TerminationType == "Butt") {
         return;
     }
 
-    // The rounded line always sits inside the straight line so if
+    // The terminated line always sits inside the straight line so if
     // we are not on a line, or we are inside the boundary, there is
     // nothing to terminate.
     if (Value == 0.0) {
@@ -244,15 +255,18 @@ shader AutolibSketchFill (
     float lineIndex = (baseSpace < middleBound) ? lowerBound : upperBound;
     float lineOffset = lineIndex * LineSpacing;
 
-    // To terminate in a half circle right before the boundary the
-    // center of the cap has to sit one radius plus the boundary
-    // width away from every edge. Then the tip of the cap lands
-    // where the boundary starts.
-    float inset = boundaryHalfHatch + lineHalfWidth;
+    // The line has to stop where the boundary starts, so the end of
+    // the line sits half the boundary width away from every edge.
+    // How much extra room the end of the line needs on top of that
+    // depends on its shape, which is worked out for each edge.
+    float inset = boundaryHalfHatch;
+    int squareEnd = (TerminationType == "Square");
 
     // Walk the edges of the face and tighten the range along the
     // hatch line that survives. sMin and sMax are the positions of
-    // the two cap centers measured along the line direction.
+    // the two ends of the line measured along the line direction.
+    // For a round termination these are the cap centers, for a
+    // square termination these are the flat tips.
     float sMin = -1e6;
     float sMax = 1e6;
 
@@ -272,6 +286,8 @@ shader AutolibSketchFill (
             vertical,
             lineOffset,
             inset,
+            lineHalfWidth,
+            squareEnd,
             bound
         );
 
@@ -288,19 +304,28 @@ shader AutolibSketchFill (
         A = B;
     }
 
-    // The line is too short to fit a cap between the boundaries
+    // The line is too short to fit between the boundaries
     if (sMin > sMax) {
         Value = 0.0;
         return;
     }
 
     // Where the current point is along the line, and how far past
-    // the cap centers it is. Inside the cap centers it is only the
-    // distance across the line, past them it is the distance to the
-    // closest cap center, which is what makes the half circle.
+    // the ends it is. Between the ends it is only the distance across
+    // the line, past them it is the distance to the closest end.
     float along = -vertical * positionScaled.x + horizontal * positionScaled.y;
     float beyond = max(max(sMin - along, along - sMax), 0.0);
     float across = abs(distanceAcrossLines - lineOffset);
 
-    Value = (sqrt(beyond * beyond + across * across) < lineHalfWidth) ? 1.0 : 0.0;
+    if (TerminationType == "Round") {
+        // Distance to the closest cap center, which is what
+        // makes the half circle.
+        Value = (sqrt(beyond * beyond + across * across) < lineHalfWidth) ? 1.0 : 0.0;
+    }
+
+    if (TerminationType == "Square") {
+        // The ends are already the tips of the line, so nothing
+        // extends past them.
+        Value = (beyond <= 0.0) ? 1.0 : 0.0;
+    }
 }
