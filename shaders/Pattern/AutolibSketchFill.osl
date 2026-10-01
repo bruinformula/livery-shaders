@@ -1,0 +1,306 @@
+// Hatch space is screen space, normalized so that it doesn't depend
+// on the resolution or on the aspect ratio of the image
+point worldToHatch(
+    point world,
+    point resolution
+) {
+    point raster = transform("world", "raster", world);
+
+    // One unit is the larger dimension of the image. 
+    float scale = max(resolution.x, resolution.y);
+
+    // The origin is the center of the image
+    return point((raster.x - 0.5 * resolution.x) / scale,
+                 (raster.y - 0.5 * resolution.y) / scale,
+                 0);
+}
+
+
+// Clip an infinite hatch line against one edge of the boundary.
+// Returns:
+//     0 if the edge does not limit the line
+//     1 if the edge limits the line from below (s >= bound)
+//     2 if the edge limits the line from above (s <= bound)
+//    -1 if the edge removes the whole line
+//
+// bound is the position along the hatch line:
+//     s = dot(position, lineDirection)
+int clipHatchEdge(
+    point A,
+    point B,
+    point Q,
+    float horizontal,
+    float vertical,
+    float lineOffset,
+    float inset,
+    output float bound
+) {
+    // The edge is pushed inward by inset, toward the side of the face
+    // that contains the shading point, and the hatch line is cut where
+    // it crosses the pushed in edge. Pushing the edge in is what lets the
+    // line stop one cap radius plus the boundary width before the real
+    // boundary, no matter what angle the line meets the edge at.
+
+
+    // Edge goes A -> B
+    vector edge = B - A;
+    float edgeLength = length(edge);
+
+    // Degenerate edge, nothing to clip against.
+    if (edgeLength < 1e-9) {
+        return 0;
+    }
+
+    // The normal of the edge flipped so it points at the shading
+    // point, the shading point is always on the inside of the face
+    // so this doesn't depend on the winding of the vertices.
+    vector inward = vector(-edge.y, edge.x, 0) / edgeLength;
+    if (dot(inward, Q - A) < 0) {
+        inward = -inward;
+    }
+
+    // Any point on the hatch line can be written as:
+    //     lineOffset * lineNormal + s * lineDirection
+    vector lineNormal = vector(horizontal, vertical, 0);
+    vector lineDirection = vector(-vertical, horizontal, 0);
+
+    // Walking along the line the distance to the edge is linear in s:
+    //     distance(s) = start + rate * s
+    float rate = dot(inward, lineDirection);
+    float start = lineOffset * dot(inward, lineNormal) - dot(inward, A);
+
+    // The line is parallel to the edge so it is either always far
+    // enough away from it or it is never far enough away from it.
+    if (abs(rate) < 1e-6) {
+        return (start >= inset) ? 0 : -1;
+    }
+
+    // Solve distance(s) >= inset for s. Dividing by a negative rate
+    // flips the inequality so the bound becomes an upper one.
+    bound = (inset - start) / rate;
+    return (rate > 0) ? 1 : 2;
+}
+
+
+shader AutolibSketchFill (
+    point Position = P [[ string widget = "null", int interpolated = 1 ]],
+    float Skew = 45 [[ string help = "This rotates the base space by degrees", float min = 0 ]],
+    float LineSpacing = 0.05 [[ string help = "Distance between the lines as a fraction of the larger image dimension", float min = 0 ]],
+    float LineWidth = 0.005 [[ string help = "Width of the lines as a fraction of the larger image dimension, independent of the spacing, the resolution and the aspect ratio", float min = 0 ]], 
+    float BoundaryWidth = 0.005 [[ string page = "Perimeter", string help = "Width of the boundary. With constant width it is a fraction of the larger image dimension and stays the same on screen. Without constant width it is in world units and scales with the camera", float min = 0 ]],
+    string BoundaryPrimvar = "" [[ string page = "Perimeter", string help = "Specifies the primvar that defines the boundary for the sketch fill" ]],
+    string BoundaryEdgeType = "Triangles" [[ string page = "Perimeter", string help = "Specifies the type of edge for the boundary", string widget = "mapper", string options = "Triangles|Polygons|Patches" ]],
+    int EnableConstantWidth = 1 [[ string page = "Perimeter", string help = "Renders the lines as a constant screen space size", string widget = "checkBox" ]],
+    int EnableRoundedCaps = 1 [[ string page = "Perimeter", string help = "Renders the line terminations as a radiated cap", string widget = "checkBox" ]],
+    output float Value = 0,
+    output float BoundaryMask = 0
+) {
+    // First step is to establish the diagonial lines acoss the screen 
+    // this could be done either using like a trig then a step function 
+    // or using a predefined list of lines we want a notion of a termination 
+    // so the tips can be terminated in a fillet
+
+    // This is a bit of hacky way of getting the
+    // render resoltuion reguardless of the renderer
+    point resolution = transform("NDC", "raster", point(1, 1, 0));
+
+    // One hatch unit is the larger dimension of the image, this is
+    // how many pixels that is. Everything that is measured in hatch
+    // units looks the same at any resolution or aspect ratio.
+    float pixelsPerHatch = max(resolution.x, resolution.y);
+
+    // Rotate the base space by a user controlled number of degrees
+    float skewDegrees = radians(Skew);
+    float horizontal = cos(skewDegrees);
+    float vertical = sin(skewDegrees);
+
+    // The shading point in hatch space. The aspect ratio is already
+    // taken care of by normalizing with the larger dimension and
+    // measuring from the center of the image.
+    vector positionScaled = worldToHatch(Position, resolution);
+
+    // To get a distance between the lines and create a modulo stipe pattern
+    // becuase the pattern goes from 0...1, 0...1
+    float distanceAcrossLines = horizontal * positionScaled.x + vertical * positionScaled.y;
+    float valueAcross = mod(distanceAcrossLines, LineSpacing) / LineSpacing;
+
+    // Mirror the pattern so it goes from 0...1 and then back to 0...1 
+    // using a simple conditional to flip the value when it exceeds 0.5
+    float valueAcrossMirrored = 1.0 - abs(2.0 * valueAcross - 1.0);
+
+    // The mirrored value is 0 on the center of a line and 1 halfway
+    // between two lines, so half of it times the spacing is the actual
+    // distance from the center of the nearest line.
+    float distanceToLine = 0.5 * valueAcrossMirrored * LineSpacing;
+
+    // The line width lives in the same space as the spacing, which makes
+    // it independent of the spacing, the resolution and the aspect ratio.
+    // It can't be wider than the spacing or neighboring lines would run
+    // into each other.
+    float lineHalfWidth = min(0.5 * LineWidth, 0.5 * LineSpacing);
+    
+    if (BoundaryWidth <= 0) {
+        Value = (distanceToLine < lineHalfWidth) ? 1.0 : 0.0;
+        return;
+    }
+
+    // This basically ripped from the wireframe shader 
+    // For every point of the hit shader we loop through 
+    // the vertices to compute a distance to the current 
+    // shading point. Right now this is a fallback for 
+    // the case where no boundardy primvar is given.
+    int np = 0;
+    point p[64];
+    if (BoundaryEdgeType == "Triangles") { 
+        np = 3;
+        // TODO add the primvar reading which doesn't work in cycles right now 
+        if (!getattribute("geom:trianglevertices", p)) {
+            exit();
+        }
+    } else if (BoundaryEdgeType == "Polygons" || BoundaryEdgeType == "Patches") { 
+        getattribute("geom:numpolyvertices", np);
+        if (np < 3 || !getattribute("geom:polyvertices", p)) {
+            exit();
+        }
+    }
+
+    // Project the derivatives of P to the viewing plane defined
+    // by I so we have a measure of how big is a pixel at this point
+    float pixelWidthX = length(Dx(P) - dot(Dx(P), I) * I);
+    float pixelWidthY = length(Dy(P) - dot(Dy(P), I) * I);
+    // Take the average of both axis' length
+    float worldPerPixel = (pixelWidthX + pixelWidthY) / 2;
+
+    // How many world units are in one hatch unit at this point and
+    // the other way around. The pixel size shrinks as the resolution
+    // goes up and the pixels per hatch grows by the same amount so
+    // this doesn't depend on the resolution.
+    float worldPerHatch = max(worldPerPixel * pixelsPerHatch, 1e-9);
+    float hatchPerWorld = 1.0 / worldPerHatch;
+
+    // Use half the width as the neighbor face will render the
+    // other half. The boundary is measured both in hatch space, to
+    // shorten the lines, and in world space, to find the edges.
+    float boundaryHalfHatch = 0.5 * BoundaryWidth;
+    float boundaryHalfWorld = 0;
+
+    if (EnableConstantWidth) {
+        // The width is already in screen space, so the width in
+        // world units just follows how big a hatch unit is here.
+        boundaryHalfWorld = boundaryHalfHatch * worldPerHatch;
+    } else {
+        // The width is fixed in world space, so it doesn't care where
+        // the camera is. It gets smaller on screen as the surface moves
+        // away and bigger as it comes closer. Here the width is in world
+        // units, and the hatch width is whatever that looks like at
+        // this point so the line caps still stop at the boundary.
+        boundaryHalfWorld = 0.5 * BoundaryWidth;
+        boundaryHalfHatch = boundaryHalfWorld * hatchPerWorld;
+    }
+
+    // Take the square for fast comparison
+    float boundaryDistanceSquared = boundaryHalfWorld * boundaryHalfWorld;
+
+    for (int i = 0; i < np; i++) {
+        int i2 = i ? i - 1 : np - 1;
+        vector dir = P - p[i];
+        vector edge = p[i] - p[i2];
+        vector crs = cross(edge, dir);
+        // At this point dot(crs, crs) / dot(edge, edge) is
+        // the square of area / length(edge) == square of the
+        // distance to the edge.
+        if (dot(crs, crs) < (dot(edge, edge) * boundaryDistanceSquared)) {
+            BoundaryMask = 1;
+            distanceToLine = lineHalfWidth;
+            break;
+        }
+    }
+
+    // Early exit for when rounded caps are not enabled
+    Value = (distanceToLine < lineHalfWidth) ? 1.0 : 0.0;
+    if (!EnableRoundedCaps) {
+        return;
+    }
+
+    // The rounded line always sits inside the straight line so if
+    // we are not on a line, or we are inside the boundary, there is
+    // nothing to terminate.
+    if (Value == 0.0) {
+        return;
+    }
+
+    // We need to know which "hatch" is the current hatch
+    // and then derive the upper and lower bounds
+    // Lines are on the boundaries of the hatches
+    float baseSpace = distanceAcrossLines / LineSpacing;
+
+    // these are the offsets in the hatch line equation
+    // horizontal * x + vertical * y = lineOffset
+    // The current point belongs to whichever bound is closer
+    // so we split the hatch in the middle to pick one.
+    float upperBound = ceil(baseSpace);
+    float lowerBound = floor(baseSpace);
+    float middleBound = (upperBound + lowerBound) / 2;
+    float lineIndex = (baseSpace < middleBound) ? lowerBound : upperBound;
+    float lineOffset = lineIndex * LineSpacing;
+
+    // To terminate in a half circle right before the boundary the
+    // center of the cap has to sit one radius plus the boundary
+    // width away from every edge. Then the tip of the cap lands
+    // where the boundary starts.
+    float inset = boundaryHalfHatch + lineHalfWidth;
+
+    // Walk the edges of the face and tighten the range along the
+    // hatch line that survives. sMin and sMax are the positions of
+    // the two cap centers measured along the line direction.
+    float sMin = -1e6;
+    float sMax = 1e6;
+
+    // Edges go from the previous vertex to the current vertex which
+    // matches the boundary loop above.
+    point A = worldToHatch(p[np - 1], resolution);
+
+    for (int i = 0; i < np; i++) {
+        point B = worldToHatch(p[i], resolution);
+
+        float bound;
+        int clipped = clipHatchEdge(
+            A,
+            B,
+            positionScaled,
+            horizontal,
+            vertical,
+            lineOffset,
+            inset,
+            bound
+        );
+
+        if (clipped < 0) {
+            // This edge removed the whole line
+            Value = 0.0;
+            return;
+        } else if (clipped == 1) {
+            sMin = max(sMin, bound);
+        } else if (clipped == 2) {
+            sMax = min(sMax, bound);
+        }
+
+        A = B;
+    }
+
+    // The line is too short to fit a cap between the boundaries
+    if (sMin > sMax) {
+        Value = 0.0;
+        return;
+    }
+
+    // Where the current point is along the line, and how far past
+    // the cap centers it is. Inside the cap centers it is only the
+    // distance across the line, past them it is the distance to the
+    // closest cap center, which is what makes the half circle.
+    float along = -vertical * positionScaled.x + horizontal * positionScaled.y;
+    float beyond = max(max(sMin - along, along - sMax), 0.0);
+    float across = abs(distanceAcrossLines - lineOffset);
+
+    Value = (sqrt(beyond * beyond + across * across) < lineHalfWidth) ? 1.0 : 0.0;
+}

@@ -1,4 +1,4 @@
-shader AutolibCurvatureHatch(
+shader AutolibCurvatureBasicHatch(
     vector Field = 0 [[ string widget = "null" ]],  // baked (R cos N*theta, R sin N*theta, 0)
     int NumberRotations = 4 [[ int min = 0 ]],
     float LineFreq  = 40 [[ int slider = 1, float max = 100, float min = 0 ]],
