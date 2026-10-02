@@ -117,12 +117,15 @@ shader AutolibSketchFill (
     float PressureFrequency = 0.5 [[ string page = "Noise", string help = "Defines the frequency at which the thickness varys", float min = 0, float max = 1 ]],
    
     float BoundaryWidth = 0.005 [[ string page = "Boundary", string help = "Width of the boundary. With constant width it is a fraction of the larger image dimension and stays the same on screen. Without constant width it is in world units and scales with the camera", float min = 0 ]],
-    string BoundaryPrimvar = "" [[ string page = "Boundary", string help = "Specifies the primvar that defines the boundary for the sketch fill" ]],
+    vector BoundaryTangentOverride = dPdu [[ string page = "Boundary", string help = "Plug this into a boundary tangent primvar. This primvar should be linearly "
+                                                                                     "interpolated per face. When unconnected. Uses primedges as a default.", string widget = "null", int interpolated = 1 ]],
+    float BoundaryWeight = 0 [[ string page = "Boundary", string help = "1 on boundary vertices/edges, 0 away from the boundary.", string widget = "null", int interpolated = 1 ]],
+    
     string BoundaryEdgeType = "Triangles" [[ string page = "Boundary", string help = "Specifies the type of edge for the boundary", string widget = "mapper", string options = "Triangles|Polygons|Patches" ]],    
     int BoundaryEnableConstantWidth = 1 [[ string page = "Boundary", string help = "Renders the boundary as a constant screen space size", string widget = "checkBox" ]],
-    
+
     output float Value = 0,
-    output float TEST = 0,
+    output vector TEST = 0,
     output float BoundaryMask = 0
 ) {
     // First step is to establish the diagonial lines acoss the screen 
@@ -201,6 +204,106 @@ shader AutolibSketchFill (
             exit();
         }
     }
+   // Things get a little nuts here 
+
+    // When a boundary tangent is connected, the tangent is high on the
+    // vertices that sit on the boundary and runs along the boundary edge
+    // there, and it is 0 on the vertices that don't. 
+    
+    // We can use this to determine which edges are effective impostors and can 
+    // be skipped in later traversal of the points. In simple cases this
+    // determination is trivial (like for a quad), but other authoring
+    // tools must be responsiable for authoring a feild over a patch 
+    // with mulitple faces. This is interended to be used with 
+    // step-to-usd which (will) author exactly this. 
+    
+    // This value linear across the face, so with the derivatives of the
+    // tangent and of P we can walk from the shading point to every vertex
+    // and get the tangent there.
+
+    // Afterwards, we can transport the tangents of all the vertices to 
+    // to the shading point and loop over them in aa second pass. Importantly,
+    // we also determine the longest tangent to sus out deriv noise.
+    
+    // We then loop over the edges to determine the current 
+
+    // Some initialization
+    int useTangent = isconnected(BoundaryTangentOverride) and isconnected(BoundaryWeight);
+    int isBoundaryEdge[64];
+    for (int e = 0; e < np; e++) {
+        isBoundaryEdge[e] = !useTangent;
+    }
+ 
+    if (useTangent) {
+        // We first obtain two coordinate systems
+        vector dPdx = Dx(P);
+        vector dPdy = Dy(P);
+        vector dTdx = Dx(BoundaryTangentOverride);
+        vector dTdy = Dy(BoundaryTangentOverride);
+
+        // To go from the shading point to the vertex 
+        // we need to solve for the x and y components, a
+        // which is a 2x2 least squares problem since
+        // the face is flat.
+        float aa = dot(dPdx, dPdx);
+        float ab = dot(dPdx, dPdy);
+        float bb = dot(dPdy, dPdy);
+        float determinant = aa * bb - ab * ab;
+
+        // Avoid cases where the derivatives are zero and not parallel
+        if (aa * bb > 1e-30 and determinant > 1e-6 * aa * bb) {
+            vector vertexTangent[64];
+            float longestTangent = 0;
+
+            for (int vert = 0; vert < np; vert++) {
+                vector offset = p[vert] - P;
+                float offsetA = dot(dPdx, offset);
+                float offsetB = dot(dPdy, offset);
+
+                float stepX = (bb * offsetA - ab * offsetB) / determinant;
+                float stepY = (aa * offsetB - ab * offsetA) / determinant;
+
+                vertexTangent[vert] = BoundaryTangentOverride + stepX * dTdx + stepY * dTdy;
+                longestTangent = max(longestTangent, length(vertexTangent[vert]));
+            }
+
+            // A vertex only has a tangent that means something if it is
+            // not 0. The derivatives leave a tiny bit of float noise on
+            // the vertices that are 0 and the direction of that noise
+            // is meaningless.
+            float minimumTangent = max(1e-3 * longestTangent, 1e-6);
+
+            // How closely the tangent has to run along an edge. This is
+            // the cosine of the angle between them. It is loose enough to
+            // allow for a boundary that curves, and tight enough to tell
+            // an edge of the boundary from the diagonal of a square which
+            // is 45 degrees off.
+            float alignedCosine = 0.99;
+
+            for (int e = 0; e < np; e++) {
+                int e2 = e ? e - 1 : np - 1;
+                vector edgeDirection = normalize(p[e] - p[e2]);
+                float alignment = 0;
+
+                // Use both vertices that define the edge to determine 
+                // if either end aligns with the edge. At a corner of 
+                // the boundary the tangent follows one of the two 
+                // edges that meet there.
+                if (length(vertexTangent[e]) > minimumTangent) {
+                    float candidateAlignment = dot(normalize(vertexTangent[e]), edgeDirection);
+                    alignment = max(alignment, abs(candidateAlignment));
+                }
+                if (length(vertexTangent[e2]) > minimumTangent) {
+                    float candidateAlignment = dot(normalize(vertexTangent[e2]), edgeDirection);
+                    alignment = max(alignment, abs(candidateAlignment));
+                }
+                isBoundaryEdge[e] = (alignment > alignedCosine);
+            }
+        }
+
+        // Shows which of the first three edges are boundary edges
+        TEST = vector(isBoundaryEdge[0], isBoundaryEdge[1], isBoundaryEdge[2]);
+    }
 
     // Project the derivatives of P to the viewing plane defined
     // by I so we have a measure of how big is a pixel at this point
@@ -240,6 +343,11 @@ shader AutolibSketchFill (
     float boundaryDistanceSquared = boundaryHalfWorld * boundaryHalfWorld;
 
     for (int i = 0; i < np; i++) {
+        // Only the boundary edges get a boundary
+        if (!isBoundaryEdge[i]) {
+            continue;
+        }
+
         int i2 = i ? i - 1 : np - 1;
         vector dir = P - p[i];
         vector edge = p[i] - p[i2];
@@ -306,7 +414,8 @@ shader AutolibSketchFill (
     // the line direction. For a round termination these are the 
     // cap centers, for a square termination these are the flat tips.
     // A butt termination has no ends to find, the line just runs
-    // out at the boundary.
+    // out at the boundary. The same goes for a side of the face that
+    // has no boundary edge, the line carries on into the next face.
     float sMin = -1e6;
     float sMax = 1e6;
 
@@ -317,7 +426,7 @@ shader AutolibSketchFill (
     for (int i = 0; i < np; i++) {
         point B = worldToHatch(p[i], resolution);
 
-        if (!buttEnd) {
+        if (!buttEnd and isBoundaryEdge[i]) {
             float bound;
             int clipped = clipHatchEdge(
                 A,
@@ -361,9 +470,12 @@ shader AutolibSketchFill (
 
     // How far along the line this point is, measured from where the line
     // starts. This is in hatch units so it is scale invariant with
-    // respect to the screen. A butt line has no start so it is measured
-    // from the center of the image instead.
-    float distanceAlong = buttEnd ? along : along - sMin;
+    // respect to the screen. Without a start in this face, or when the
+    // line carries on into other faces, there is nothing to measure from
+    // so it is measured from the center of the image instead. That keeps
+    // the noise continuous from one face to the next.
+    int hasStart = (sMin > -1e5) and !useTangent;
+    float distanceAlong = hasStart ? along - sMin : along;
 
     // The squiggle moves the whole line sideways, perpendicular to the
     // direction it is drawn in, by an amount that changes smoothly
@@ -372,7 +484,6 @@ shader AutolibSketchFill (
     float squiggle = 0.0;
     if (SquiggleAmount != 0) {
         squiggle = squiggleMax * noise("simplex", SquiggleScale * distanceAlong, lineIndex);
-        TEST = squiggle;
     }
 
     // The distance across the line, measured from where the line
@@ -421,17 +532,22 @@ shader AutolibSketchFill (
         // makes the half circle.
         float dist = sqrt(beyond * beyond + across * across);
         Value = dist < maxWidth ? 1.0 : 0.0;
+        return;
     }
 
     if (TerminationType == "Square") {
-        // The ends are already the tips of the line, so nothing
-        // extends past them.
-        int withinSquare = (beyond <= maxWidth) && (across <= maxWidth);
+        int withinSquare =
+            (along >= sMin) &&
+            (along <= sMax) &&
+            (across <= maxWidth);
+
         Value = withinSquare ? 1.0 : 0.0;
+        return;
     }
 
     if (TerminationType == "Butt") {
         // Nothing ends the line, it just runs into the boundary
         Value = (across < maxWidth) ? 1.0 : 0.0;
+        return;
     }
 }
