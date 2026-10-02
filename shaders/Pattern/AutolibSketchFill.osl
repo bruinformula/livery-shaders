@@ -34,6 +34,7 @@ int clipHatchEdge(
     float lineOffset, // The current line (y offset)
     float inset, // Padding between the end of the line and the edge
     float halfWidth, // Half the width of the line
+    float wander, // How far the line can be shifted sideways by the squiggle
     int squareEnd, // 1 for a flat end, 0 for a round end
     output float bound
 ) {
@@ -65,15 +66,22 @@ int clipHatchEdge(
     vector lineNormal = vector(horizontal, vertical, 0);
     vector lineDirection = vector(-vertical, horizontal, 0);
 
+    // How much the line is angled toward this edge. 1 means the line
+    // runs straight at the edge, 0 means it runs along the edge.
+    float angle = abs(dot(inward, lineNormal));
+
     // How far the end of the line reaches toward this edge. A round end
     // reaches one radius whatever the angle. A flat end is as wide as the
     // line, so its corner reaches toward the edge by an amount that
     // depends on the angle between the line and the edge.
     float reach = halfWidth;
     if (squareEnd) {
-        reach = halfWidth * abs(dot(inward, lineNormal));
+        reach = halfWidth * angle;
     }
-    float required = inset + reach;
+
+    // A squiggled line is shifted sideways, which moves its end toward
+    // the edge by an amount that depends on the same angle.
+    float required = inset + reach + wander * angle;
 
     // Walking along the line the distance to the edge is linear in s:
     //     distance(s) = start + rate * s
@@ -98,15 +106,20 @@ shader AutolibSketchFill (
     float Skew = 45 [[ string help = "This rotates the base space by degrees", float min = 0 ]],
     float LineSpacing = 0.05 [[ string help = "Distance between the lines as a fraction of the larger image dimension", float min = 0 ]],
     float LineWidth = 0.005 [[ string help = "Width of the lines as a fraction of the larger image dimension, independent of the spacing, the resolution and the aspect ratio", float min = 0 ]], 
-    string TerminationType = "Round" [[ string help = "Specifies the type of termination for the lines", string widget = "mapper", string options = "Round|Square|Butt" ]],
     
-    float TaperWidth = 0 [[ string help = "Specifies the width of the taper for the line terminations", float min = 0 ]],
-    float TaperSlope = 1 [[ string help = "Specifies the slope of the taper for the line terminations", float min = 0 ]],
+    string TerminationType = "Square" [[ string page = "Termination", string help = "Specifies the type of termination for the lines", string widget = "mapper", string options = "Round|Square|Butt" ]],
+    float TerminationTaperWidth = 0 [[ string page = "Termination", string help = "Adds a thinned termination of hatches", float min = 0 ]],
+    float TerminationTaperSlope = 1 [[ string page = "Termination", string help = "Specifies the slope of the start and endpoints of the lines", float min = 0 ]],
 
-    float BoundaryWidth = 0.005 [[ string page = "Perimeter", string help = "Width of the boundary. With constant width it is a fraction of the larger image dimension and stays the same on screen. Without constant width it is in world units and scales with the camera", float min = 0 ]],
-    string BoundaryPrimvar = "" [[ string page = "Perimeter", string help = "Specifies the primvar that defines the boundary for the sketch fill" ]],
-    string BoundaryEdgeType = "Triangles" [[ string page = "Perimeter", string help = "Specifies the type of edge for the boundary", string widget = "mapper", string options = "Triangles|Polygons|Patches" ]],    
-    int EnableConstantWidth = 1 [[ string page = "Perimeter", string help = "Renders the lines as a constant screen space size", string widget = "checkBox" ]],
+    float SquiggleAmount = 0 [[ string page = "Noise", string help = "Moves the line sideways as it is drawn, similar to lines drawn by hand. 0 is a straight line and 1 lets the line wander through all the room between it and its neighbors", float min = 0, float max = 1 ]],
+    float SquiggleScale = 0.5 [[ string page = "Noise", string help = "Defines the XAxis scale of squiggle", float min = 0, float max = 1 ]],
+    float PressureAmount = 0 [[ string page = "Noise", string help = "Varys the thickness of the line", float min = 0 ]],
+    float PressureFrequency = 0.5 [[ string page = "Noise", string help = "Defines the frequency at which the thickness varys", float min = 0, float max = 1 ]],
+   
+    float BoundaryWidth = 0.005 [[ string page = "Boundary", string help = "Width of the boundary. With constant width it is a fraction of the larger image dimension and stays the same on screen. Without constant width it is in world units and scales with the camera", float min = 0 ]],
+    string BoundaryPrimvar = "" [[ string page = "Boundary", string help = "Specifies the primvar that defines the boundary for the sketch fill" ]],
+    string BoundaryEdgeType = "Triangles" [[ string page = "Boundary", string help = "Specifies the type of edge for the boundary", string widget = "mapper", string options = "Triangles|Polygons|Patches" ]],    
+    int BoundaryEnableConstantWidth = 1 [[ string page = "Boundary", string help = "Renders the boundary as a constant screen space size", string widget = "checkBox" ]],
     
     output float Value = 0,
     output float TEST = 0,
@@ -156,7 +169,15 @@ shader AutolibSketchFill (
     // into each other.
     float lineHalfWidth = min(0.5 * LineWidth, 0.5 * LineSpacing);
 
-    if (BoundaryWidth <= 0 and TaperWidth == 0) { // need to add early out for 
+    // A squiggled line has to stay inside its own hatch, otherwise it
+    // would run into its neighbors and we would have to check them too.
+    // So the squiggle is a fraction of the room that is left between
+    // the lines once the widest part of the line is taken out.
+    float widestHalfWidth = lineHalfWidth * (1.0 + PressureAmount);
+    float squiggleRoom = max(0.5 * LineSpacing - widestHalfWidth, 0.0);
+    float squiggleMax = clamp(SquiggleAmount, 0.0, 1.0) * squiggleRoom;
+
+    if (BoundaryWidth <= 0 and TerminationTaperWidth == 0 and PressureAmount == 0 and SquiggleAmount == 0) {
         Value = (distanceToLine < lineHalfWidth) ? 1.0 : 0.0;
         return;
     }
@@ -201,7 +222,7 @@ shader AutolibSketchFill (
     float boundaryHalfHatch = 0.5 * BoundaryWidth;
     float boundaryHalfWorld = 0;
 
-    if (EnableConstantWidth) {
+    if (BoundaryEnableConstantWidth) {
         // The width is already in screen space, so the width in
         // world units just follows how big a hatch unit is here.
         boundaryHalfWorld = boundaryHalfHatch * worldPerHatch;
@@ -233,16 +254,25 @@ shader AutolibSketchFill (
         }
     }
 
-    // Early exit for when butt termination is enabled
+    // This is the straight line, which is the final answer when
+    // nothing is shaping the line
     Value = (distanceToLine < lineHalfWidth) ? 1.0 : 0.0;
-    if (TerminationType == "Butt") {
+
+    // Early exit for when butt termination is enabled
+    if (TerminationType == "Butt" and SquiggleAmount == 0 and PressureAmount == 0) {
         return;
     }
 
-    // The terminated line always sits inside the straight line so if
-    // we are not on a line, or we are inside the boundary, there is
-    // nothing to terminate.
-    if (Value == 0.0) {
+    // There are no lines inside the boundary
+    if (BoundaryMask > 0.0) {
+        return;
+    }
+
+    // Squiggle and pressure move the edges of the line out of the straight
+    // line, so we can't reject points just because they are outside of it.
+    // But the line can't get further from its center than its widest part
+    // plus the squiggle, so anything past that is definitely not on a line.
+    if (distanceToLine >= widestHalfWidth + squiggleMax) {
         return;
     }
 
@@ -264,15 +294,19 @@ shader AutolibSketchFill (
     // The line has to stop where the boundary starts, so the end of
     // the line sits half the boundary width away from every edge.
     // How much extra room the end of the line needs on top of that
-    // depends on its shape, which is worked out for each edge.
+    // depends on its shape and on the squiggle, which is worked out
+    // for each edge.
     float inset = boundaryHalfHatch;
     int squareEnd = (TerminationType == "Square");
+    int buttEnd = (TerminationType == "Butt");
 
     // Walk the edges of the face and tighten the range along the
     // hatch line that survives. sMin and sMax (like as in s and t)
     // are the positions of the two ends of the line measured along 
     // the line direction. For a round termination these are the 
     // cap centers, for a square termination these are the flat tips.
+    // A butt termination has no ends to find, the line just runs
+    // out at the boundary.
     float sMin = -1e6;
     float sMax = 1e6;
 
@@ -283,28 +317,31 @@ shader AutolibSketchFill (
     for (int i = 0; i < np; i++) {
         point B = worldToHatch(p[i], resolution);
 
-        float bound;
-        int clipped = clipHatchEdge(
-            A,
-            B,
-            positionScaled,
-            horizontal,
-            vertical,
-            lineOffset,
-            inset,
-            lineHalfWidth,
-            squareEnd,
-            bound
-        );
+        if (!buttEnd) {
+            float bound;
+            int clipped = clipHatchEdge(
+                A,
+                B,
+                positionScaled,
+                horizontal,
+                vertical,
+                lineOffset,
+                inset,
+                lineHalfWidth,
+                squiggleMax,
+                squareEnd,
+                bound
+            );
 
-        if (clipped < 0) {
-            // This edge removed the whole line
-            Value = 0.0;
-            return;
-        } else if (clipped == 1) {
-            sMin = max(sMin, bound);
-        } else if (clipped == 2) {
-            sMax = min(sMax, bound);
+            if (clipped < 0) {
+                // This edge removed the whole line
+                Value = 0.0;
+                return;
+            } else if (clipped == 1) {
+                sMin = max(sMin, bound);
+            } else if (clipped == 2) {
+                sMax = min(sMax, bound);
+            }
         }
 
         A = B;
@@ -321,58 +358,80 @@ shader AutolibSketchFill (
     // the line, past them it is the distance to the closest end.
     float along = -vertical * positionScaled.x + horizontal * positionScaled.y;
     float beyond = max(max(sMin - along, along - sMax), 0.0);
-    float across = abs(distanceAcrossLines - lineOffset);
 
-    if (TaperWidth == 0) {
-        if (TerminationType == "Round") {
-            // Distance to the closest cap center, which is what
-            // makes the half circle.
-            Value = (sqrt(beyond * beyond + across * across) < lineHalfWidth) ? 1.0 : 0.0;
-        }
+    // How far along the line this point is, measured from where the line
+    // starts. This is in hatch units so it is scale invariant with
+    // respect to the screen. A butt line has no start so it is measured
+    // from the center of the image instead.
+    float distanceAlong = buttEnd ? along : along - sMin;
 
-        if (TerminationType == "Square") {
-            // The ends are already the tips of the line, so nothing
-            // extends past them.
-            Value = (beyond <= 0.0) ? 1.0 : 0.0;
-        }
-    } else {
+    // The squiggle moves the whole line sideways, perpendicular to the
+    // direction it is drawn in, by an amount that changes smoothly
+    // with the distance along the line. Every line gets its own noise
+    // by using the index of the line as the second coordinate.
+    float squiggle = 0.0;
+    if (SquiggleAmount != 0) {
+        squiggle = squiggleMax * noise("simplex", SquiggleScale * distanceAlong, lineIndex);
+        TEST = squiggle;
+    }
+
+    // The distance across the line, measured from where the line
+    // has been moved to.
+    float across = abs(distanceAcrossLines - lineOffset - squiggle);
+
+    float maxWidth = lineHalfWidth;
+
+    if (PressureAmount != 0) {
+        // Different pressure pattern for different positions across the screen.
+        point pressureNoiseCoordinate = {
+            PressureFrequency * distanceAlong,
+            PressureFrequency * distanceAcrossLines,
+            lineIndex
+        };
+
+        float pressure = noise(
+            "simplex", pressureNoiseCoordinate
+        );
+
+        maxWidth += maxWidth * PressureAmount * pressure;
+    }
+
+    if (TerminationTaperWidth != 0) {
         float lineLength = max(sMax - sMin, 1e-9);
         float distanceFromEnd = min(along - sMin, sMax - along);
 
         // Normalize the distance from either line end.
-        // TaperWidth is a physical distance, so the taper length
+        // TerminationTaperWidth is a physical distance, so the taper length
         // is independent of the total line length.
-        float uValueMirror = clamp(
-            distanceFromEnd / TaperWidth,
-            0.0,
-            1.0
-        );
+        float uValueMirror = clamp(distanceFromEnd / TerminationTaperWidth, 0.0, 1.0);
 
         float taperKnots[4] = {
-            0,    // value at u=0
-            TaperSlope, // tangent at u=0
-            1, // value at u=1
-            0  // tangent at u=1
+            0,                     // value at u=0
+            TerminationTaperSlope, // tangent at u=0
+            1,                     // value at u=1
+            0                      // tangent at u=1
         };
 
-        float taper = spline(
-            "hermite",
-            uValueMirror,
-            taperKnots
-        );
+        float taper = spline("hermite", uValueMirror, taperKnots);
+        maxWidth *= taper;
+    } 
 
-        float maxWidth = taper * lineHalfWidth;
-        if (TerminationType == "Round") {
-            Value = (
-                sqrt(beyond * beyond + across * across) < maxWidth
-            ) ? 1.0 : 0.0;
-        }
+    if (TerminationType == "Round") {
+        // Distance to the closest cap center, which is what
+        // makes the half circle.
+        float dist = sqrt(beyond * beyond + across * across);
+        Value = dist < maxWidth ? 1.0 : 0.0;
+    }
 
-        if (TerminationType == "Square") {
-            Value = (
-                (beyond <= maxWidth) &&
-                (across <= maxWidth)
-            ) ? 1.0 : 0.0;
-        }
+    if (TerminationType == "Square") {
+        // The ends are already the tips of the line, so nothing
+        // extends past them.
+        int withinSquare = (beyond <= maxWidth) && (across <= maxWidth);
+        Value = withinSquare ? 1.0 : 0.0;
+    }
+
+    if (TerminationType == "Butt") {
+        // Nothing ends the line, it just runs into the boundary
+        Value = (across < maxWidth) ? 1.0 : 0.0;
     }
 }
