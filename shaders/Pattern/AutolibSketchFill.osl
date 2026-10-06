@@ -117,15 +117,22 @@ shader AutolibSketchFill (
     float PressureFrequency = 0.5 [[ string page = "Noise", string help = "Defines the frequency at which the thickness varys", float min = 0, float max = 1 ]],
    
     float BoundaryWidth = 0.005 [[ string page = "Boundary", string help = "Width of the boundary. With constant width it is a fraction of the larger image dimension and stays the same on screen. Without constant width it is in world units and scales with the camera", float min = 0 ]],
-    vector BoundaryTangentOverride = dPdu [[ string page = "Boundary", string help = "Plug this into a boundary tangent primvar. This primvar should be linearly "
-                                                                                     "interpolated per face. When unconnected. Uses primedges as a default.", string widget = "null", int interpolated = 1 ]],
-    float BoundaryWeight = 0 [[ string page = "Boundary", string help = "1 on boundary vertices/edges, 0 away from the boundary.", string widget = "null", int interpolated = 1 ]],
-    
-    string BoundaryEdgeType = "Triangles" [[ string page = "Boundary", string help = "Specifies the type of edge for the boundary", string widget = "mapper", string options = "Triangles|Polygons|Patches" ]],    
+    // Cad tesselations can have an irregular distrobution of vertices 
+    // These distances are Candidate distances for the boundary edges.
+    // They are compared and the closest one is used to determine the 
+    // boundary proximity.
+    float BoundaryEdgeDistance0 = 0 [[ string page = "Boundary", string help = "Plug in the boundaryEdgeDistance0 faceVarying float primvar. Distance from this face corner to triangle edge 0, or 0 if that edge is not a boundary. When none of the three are connected, uses primedges as a default.", string widget = "null", int interpolated = 1 ]],
+    float BoundaryEdgeDistance1 = 0 [[ string page = "Boundary", string help = "Plug in the boundaryEdgeDistance1 faceVarying float primvar.", string widget = "null", int interpolated = 1 ]],
+    float BoundaryEdgeDistance2 = 0 [[ string page = "Boundary", string help = "Plug in the boundaryEdgeDistance2 faceVarying float primvar.", string widget = "null", int interpolated = 1 ]],
+    float BoundaryEdgeDistance3 = 0 [[ string page = "Boundary", string help = "Plug in the boundaryEdgeDistance3 faceVarying float primvar.", string widget = "null", int interpolated = 1 ]],
+    float BoundaryEdgeDistance4 = 0 [[ string page = "Boundary", string help = "Plug in the boundaryEdgeDistance4 faceVarying float primvar.", string widget = "null", int interpolated = 1 ]],
+    float BoundaryEdgeDistance5 = 0 [[ string page = "Boundary", string help = "Plug in the boundaryEdgeDistance5 faceVarying float primvar.", string widget = "null", int interpolated = 1 ]],
+
+    string BoundaryEdgeType = "Triangles" [[ string page = "Boundary", string help = "Specifies the type of edge for the boundary when the distance primvars are not connected", string widget = "mapper", string options = "Triangles|Polygons|Patches" ]],    
     int BoundaryEnableConstantWidth = 1 [[ string page = "Boundary", string help = "Renders the boundary as a constant screen space size", string widget = "checkBox" ]],
 
     output float Value = 0,
-    output vector TEST = 0,
+    output float DistanceToClosestEdge = 0,
     output float BoundaryMask = 0
 ) {
     // First step is to establish the diagonial lines acoss the screen 
@@ -185,126 +192,6 @@ shader AutolibSketchFill (
         return;
     }
 
-    // This basically ripped from the wireframe shader 
-    // For every point of the hit shader we loop through 
-    // the vertices to compute a distance to the current 
-    // shading point. Right now this is a fallback for 
-    // the case where no boundardy primvar is given.
-    int np = 0;
-    point p[64];
-    if (BoundaryEdgeType == "Triangles") { 
-        np = 3;
-        // TODO add the primvar reading which doesn't work in cycles right now 
-        if (!getattribute("geom:trianglevertices", p)) {
-            exit();
-        }
-    } else if (BoundaryEdgeType == "Polygons" || BoundaryEdgeType == "Patches") { 
-        getattribute("geom:numpolyvertices", np);
-        if (np < 3 || !getattribute("geom:polyvertices", p)) {
-            exit();
-        }
-    }
-   // Things get a little nuts here 
-
-    // When a boundary tangent is connected, the tangent is high on the
-    // vertices that sit on the boundary and runs along the boundary edge
-    // there, and it is 0 on the vertices that don't. 
-    
-    // We can use this to determine which edges are effective impostors and can 
-    // be skipped in later traversal of the points. In simple cases this
-    // determination is trivial (like for a quad), but other authoring
-    // tools must be responsiable for authoring a feild over a patch 
-    // with mulitple faces. This is interended to be used with 
-    // step-to-usd which (will) author exactly this. 
-    
-    // This value linear across the face, so with the derivatives of the
-    // tangent and of P we can walk from the shading point to every vertex
-    // and get the tangent there.
-
-    // Afterwards, we can transport the tangents of all the vertices to 
-    // to the shading point and loop over them in aa second pass. Importantly,
-    // we also determine the longest tangent to sus out deriv noise.
-    
-    // We then loop over the edges to determine the current 
-
-    // Some initialization
-    int useTangent = isconnected(BoundaryTangentOverride) and isconnected(BoundaryWeight);
-    int isBoundaryEdge[64];
-    for (int e = 0; e < np; e++) {
-        isBoundaryEdge[e] = !useTangent;
-    }
- 
-    if (useTangent) {
-        // We first obtain two coordinate systems
-        vector dPdx = Dx(P);
-        vector dPdy = Dy(P);
-        vector dTdx = Dx(BoundaryTangentOverride);
-        vector dTdy = Dy(BoundaryTangentOverride);
-
-        // To go from the shading point to the vertex 
-        // we need to solve for the x and y components, a
-        // which is a 2x2 least squares problem since
-        // the face is flat.
-        float aa = dot(dPdx, dPdx);
-        float ab = dot(dPdx, dPdy);
-        float bb = dot(dPdy, dPdy);
-        float determinant = aa * bb - ab * ab;
-
-        // Avoid cases where the derivatives are zero and not parallel
-        if (aa * bb > 1e-30 and determinant > 1e-6 * aa * bb) {
-            vector vertexTangent[64];
-            float longestTangent = 0;
-
-            for (int vert = 0; vert < np; vert++) {
-                vector offset = p[vert] - P;
-                float offsetA = dot(dPdx, offset);
-                float offsetB = dot(dPdy, offset);
-
-                float stepX = (bb * offsetA - ab * offsetB) / determinant;
-                float stepY = (aa * offsetB - ab * offsetA) / determinant;
-
-                vertexTangent[vert] = BoundaryTangentOverride + stepX * dTdx + stepY * dTdy;
-                longestTangent = max(longestTangent, length(vertexTangent[vert]));
-            }
-
-            // A vertex only has a tangent that means something if it is
-            // not 0. The derivatives leave a tiny bit of float noise on
-            // the vertices that are 0 and the direction of that noise
-            // is meaningless.
-            float minimumTangent = max(1e-3 * longestTangent, 1e-6);
-
-            // How closely the tangent has to run along an edge. This is
-            // the cosine of the angle between them. It is loose enough to
-            // allow for a boundary that curves, and tight enough to tell
-            // an edge of the boundary from the diagonal of a square which
-            // is 45 degrees off.
-            float alignedCosine = 0.99;
-
-            for (int e = 0; e < np; e++) {
-                int e2 = e ? e - 1 : np - 1;
-                vector edgeDirection = normalize(p[e] - p[e2]);
-                float alignment = 0;
-
-                // Use both vertices that define the edge to determine 
-                // if either end aligns with the edge. At a corner of 
-                // the boundary the tangent follows one of the two 
-                // edges that meet there.
-                if (length(vertexTangent[e]) > minimumTangent) {
-                    float candidateAlignment = dot(normalize(vertexTangent[e]), edgeDirection);
-                    alignment = max(alignment, abs(candidateAlignment));
-                }
-                if (length(vertexTangent[e2]) > minimumTangent) {
-                    float candidateAlignment = dot(normalize(vertexTangent[e2]), edgeDirection);
-                    alignment = max(alignment, abs(candidateAlignment));
-                }
-                isBoundaryEdge[e] = (alignment > alignedCosine);
-            }
-        }
-
-        // Shows which of the first three edges are boundary edges
-        TEST = vector(isBoundaryEdge[0], isBoundaryEdge[1], isBoundaryEdge[2]);
-    }
-
     // Project the derivatives of P to the viewing plane defined
     // by I so we have a measure of how big is a pixel at this point
     float pixelWidthX = length(Dx(P) - dot(Dx(P), I) * I);
@@ -339,23 +226,148 @@ shader AutolibSketchFill (
         boundaryHalfHatch = boundaryHalfWorld * hatchPerWorld;
     }
 
-    // Take the square for fast comparison
-    float boundaryDistanceSquared = boundaryHalfWorld * boundaryHalfWorld;
+    // The boundary edges of the face. Each one is kept in hatch space,
+    // to cut the lines, and as a distance in world units from the
+    // shading point, to draw the boundary.
+    point edgeA[64];
+    point edgeB[64];
+    float edgeDistance[64];
+    int edgeCount = 0;
 
-    for (int i = 0; i < np; i++) {
-        // Only the boundary edges get a boundary
-        if (!isBoundaryEdge[i]) {
-            continue;
+    int usePrimvar = isconnected(BoundaryEdgeDistance0)
+                  || isconnected(BoundaryEdgeDistance1)
+                  || isconnected(BoundaryEdgeDistance2)
+                  || isconnected(BoundaryEdgeDistance3)
+                  || isconnected(BoundaryEdgeDistance4)
+                  || isconnected(BoundaryEdgeDistance5);
+
+    if (usePrimvar) {
+        // Every corner of the triangle stores, for each of its three edges,
+        // the distance to that edge, or 0 if the edge is not a boundary.
+        // The distance is linear across the triangle and zero on the edge,
+        // so with the derivatives we can recover the edge from the value at
+        // the shading point. Its scale doesn't matter, because it is divided
+        // by its own gradient below.
+        //
+        // Walking one pixel to the right or down we get the gradient of
+        // the distance along the surface. This gradient points straight away
+        // from the edge and has a length of how fast the distance grows.
+        // Dividing the distance by that gives how far away the edge is in
+        // world units.
+        vector dPdx = Dx(P);
+        vector dPdy = Dy(P);
+
+        // To go from the shading point to the vertex
+        // we need to solve for the x and y components, a
+        // which is a 2x2 least squares problem since
+        // the face is flat.
+        float aa = dot(dPdx, dPdx);
+        float ab = dot(dPdx, dPdy);
+        float bb = dot(dPdy, dPdy);
+        float determinant = aa * bb - ab * ab;
+
+        // Avoid cases where the derivatives are zero and not parallel
+        if (aa * bb > 1e-30 and determinant > 1e-6 * aa * bb) {
+            vector planeNormal = normalize(cross(dPdx, dPdy));
+
+            // Two points on the edge are enough to place it in hatch
+            // space exactly, even with perspective. This is how far
+            // apart they are, which is a tenth of the image.
+            float edgeSpan = 0.1 * worldPerHatch;
+
+            float fields[6] = {
+                BoundaryEdgeDistance0, BoundaryEdgeDistance1, BoundaryEdgeDistance2,
+                BoundaryEdgeDistance3, BoundaryEdgeDistance4, BoundaryEdgeDistance5
+            };
+
+            for (int k = 0; k < 6; k++) {
+                float field = fields[k];
+                float fieldDx = Dx(field);
+                float fieldDy = Dy(field);
+
+                // An edge that is not a boundary is 0 everywhere. It doesn't
+                // change at all so there is no edge to find.
+                if (fieldDx == 0.0 and fieldDy == 0.0) {
+                    continue;
+                }
+
+                // The gradient of the distance along the surface
+                float stepX = (bb * fieldDx - ab * fieldDy) / determinant;
+                float stepY = (aa * fieldDy - ab * fieldDx) / determinant;
+                vector gradient = stepX * dPdx + stepY * dPdy;
+                float gradientLength = length(gradient);
+
+                if (gradientLength > 1e-9) {
+                    vector inwardWorld = gradient / gradientLength;
+                    float worldDistance = field / gradientLength;
+
+                    // Incident edges are lines, so the face can lie on the far side
+                    // of one (near a slightly reflex vertex). That side is covered
+                    // by the neighbouring edge, and a negative distance would
+                    // otherwise count as inside the boundary.
+                    if (worldDistance < 0.0) {
+                        continue;
+                    }
+
+                    // The closest point on the edge, and the direction
+                    // the edge runs in along the surface
+                    point onEdge = P - worldDistance * inwardWorld;
+                    vector alongEdge = cross(planeNormal, inwardWorld);
+
+                    edgeA[edgeCount] = worldToHatch(onEdge, resolution);
+                    edgeB[edgeCount] = worldToHatch(onEdge + alongEdge * edgeSpan, resolution);
+                    edgeDistance[edgeCount] = worldDistance;
+                    edgeCount += 1;
+                }
+            }
+        }
+    } else {
+        // This basically ripped from the wireframe shader 
+        // For every point of the hit shader we loop through 
+        // the vertices to compute a distance to the current 
+        // shading point. Right now this is a fallback for 
+        // the case where no boundardy primvar is given.
+        int np = 0;
+        point p[64];
+        if (BoundaryEdgeType == "Triangles") { 
+            np = 3;
+            // TODO add the primvar reading which doesn't work in cycles right now 
+            if (!getattribute("geom:trianglevertices", p)) {
+                exit();
+            }
+        } else if (BoundaryEdgeType == "Polygons" || BoundaryEdgeType == "Patches") { 
+            getattribute("geom:numpolyvertices", np);
+            if (np < 3 || !getattribute("geom:polyvertices", p)) {
+                exit();
+            }
         }
 
-        int i2 = i ? i - 1 : np - 1;
-        vector dir = P - p[i];
-        vector edge = p[i] - p[i2];
-        vector crs = cross(edge, dir);
-        // At this point dot(crs, crs) / dot(edge, edge) is
-        // the square of area / length(edge) == square of the
-        // distance to the edge.
-        if (dot(crs, crs) < (dot(edge, edge) * boundaryDistanceSquared)) {
+        for (int i = 0; i < np; i++) {
+            int i2 = i ? i - 1 : np - 1;
+            vector dir = P - p[i];
+            vector edge = p[i] - p[i2];
+            vector crs = cross(edge, dir);
+
+            // dot(crs, crs) / dot(edge, edge) is the square of
+            // area / length(edge) == square of the distance
+            // to the edge.
+            edgeA[edgeCount] = worldToHatch(p[i2], resolution);
+            edgeB[edgeCount] = worldToHatch(p[i], resolution);
+            edgeDistance[edgeCount] = sqrt(dot(crs, crs) / max(dot(edge, edge), 1e-18));
+            edgeCount += 1;
+        }
+    }
+
+    // Shows how far the closest boundary edge is, in hatch units
+    float closestEdge = 1e30;
+    for (int k = 0; k < edgeCount; k++) {
+        closestEdge = min(closestEdge, edgeDistance[k]);
+    }
+
+    DistanceToClosestEdge = (edgeCount > 0) ? closestEdge * hatchPerWorld : 0.0;
+
+    for (int k = 0; k < edgeCount; k++) {
+        if (edgeDistance[k] < boundaryHalfWorld) {
             BoundaryMask = 1;
             distanceToLine = lineHalfWidth;
             break;
@@ -408,52 +420,46 @@ shader AutolibSketchFill (
     int squareEnd = (TerminationType == "Square");
     int buttEnd = (TerminationType == "Butt");
 
-    // Walk the edges of the face and tighten the range along the
+    // Walk the edges of the boundary and tighten the range along the
     // hatch line that survives. sMin and sMax (like as in s and t)
     // are the positions of the two ends of the line measured along 
     // the line direction. For a round termination these are the 
     // cap centers, for a square termination these are the flat tips.
     // A butt termination has no ends to find, the line just runs
-    // out at the boundary. The same goes for a side of the face that
-    // has no boundary edge, the line carries on into the next face.
+    // out at the boundary. The same goes for a side that has no
+    // boundary edge, the line carries on into the next face.
     float sMin = -1e6;
     float sMax = 1e6;
 
-    // Edges go from the previous vertex to the current vertex which
-    // matches the boundary loop above.
-    point A = worldToHatch(p[np - 1], resolution);
-
-    for (int i = 0; i < np; i++) {
-        point B = worldToHatch(p[i], resolution);
-
-        if (!buttEnd and isBoundaryEdge[i]) {
-            float bound;
-            int clipped = clipHatchEdge(
-                A,
-                B,
-                positionScaled,
-                horizontal,
-                vertical,
-                lineOffset,
-                inset,
-                lineHalfWidth,
-                squiggleMax,
-                squareEnd,
-                bound
-            );
-
-            if (clipped < 0) {
-                // This edge removed the whole line
-                Value = 0.0;
-                return;
-            } else if (clipped == 1) {
-                sMin = max(sMin, bound);
-            } else if (clipped == 2) {
-                sMax = min(sMax, bound);
-            }
+    for (int k = 0; k < edgeCount; k++) {
+        if (buttEnd) {
+            break;
         }
 
-        A = B;
+        float bound;
+        int clipped = clipHatchEdge(
+            edgeA[k],
+            edgeB[k],
+            positionScaled,
+            horizontal,
+            vertical,
+            lineOffset,
+            inset,
+            lineHalfWidth,
+            squiggleMax,
+            squareEnd,
+            bound
+        );
+
+        if (clipped < 0) {
+            // This edge removed the whole line
+            Value = 0.0;
+            return;
+        } else if (clipped == 1) {
+            sMin = max(sMin, bound);
+        } else if (clipped == 2) {
+            sMax = min(sMax, bound);
+        }
     }
 
     // The line is too short to fit between the boundaries
@@ -474,7 +480,7 @@ shader AutolibSketchFill (
     // line carries on into other faces, there is nothing to measure from
     // so it is measured from the center of the image instead. That keeps
     // the noise continuous from one face to the next.
-    int hasStart = (sMin > -1e5) and !useTangent;
+    int hasStart = (sMin > -1e5) and !usePrimvar;
     float distanceAlong = hasStart ? along - sMin : along;
 
     // The squiggle moves the whole line sideways, perpendicular to the
