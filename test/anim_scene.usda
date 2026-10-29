@@ -1,0 +1,80 @@
+#usda 1.0
+(
+    defaultPrim = "World"
+    metersPerUnit = 1
+    upAxis = "Y"
+    startTimeCode = 1
+    endTimeCode = 24
+    framesPerSecond = 24
+    renderSettingsPrimPath = "/Render/Settings"
+)
+
+def Xform "World"
+{
+    def Sphere "Ball"
+    {
+        double radius = 0.5
+        float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+        color3f[] primvars:displayColor = [(0.8, 0.3, 0.1)] (
+            interpolation = "constant"
+        )
+        double3 xformOp:translate.timeSamples = {
+            1: (-2, 0, 0),
+            24: (2, 0, 0),
+        }
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+
+    def Camera "Camera"
+    {
+        float focalLength = 35
+        float horizontalAperture = 36
+        float verticalAperture = 20.25
+        float2 clippingRange = (0.1, 1000)
+        double3 xformOp:translate = (0, 0, 6)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+
+    def SphereLight "KeyLight"
+    {
+        float inputs:intensity = 50
+        float inputs:radius = 0.5
+        double3 xformOp:translate = (3, 4, 4)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+}
+
+def Scope "Render"
+{
+    def RenderSettings "Settings"
+    {
+        rel camera = </World/Camera>
+        rel products = </Render/Products/Beauty>
+        int2 resolution = (320, 180)
+        int ri:hider:maxsamples = 16
+    }
+
+    def Scope "Products"
+    {
+        def RenderProduct "Beauty"
+        {
+            token productName = "anim.$F4.exr"
+            rel orderedVars = [</Render/Vars/Ci>, </Render/Vars/a>]
+        }
+    }
+
+    def Scope "Vars"
+    {
+        def RenderVar "Ci"
+        {
+            uniform string sourceName = "Ci"
+            uniform token dataType = "color3f"
+        }
+
+        def RenderVar "a"
+        {
+            uniform string sourceName = "a"
+            uniform token dataType = "float"
+        }
+    }
+}

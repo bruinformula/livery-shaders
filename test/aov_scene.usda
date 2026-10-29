@@ -1,0 +1,392 @@
+#usda 1.0
+(
+    defaultPrim = "World"
+    metersPerUnit = 1
+    upAxis = "Y"
+    renderSettingsPrimPath = "/Render/Settings"
+)
+
+def Xform "World"
+{
+    def Sphere "Ball"
+    {
+        double radius = 1
+        color3f[] primvars:displayColor = [(0.8, 0.3, 0.1)] (
+            interpolation = "constant"
+        )
+    }
+
+    def Mesh "Ground"
+    {
+        int[] faceVertexCounts = [4]
+        int[] faceVertexIndices = [0, 1, 2, 3]
+        point3f[] points = [(-10, -1, 10), (10, -1, 10), (10, -1, -10), (-10, -1, -10)]
+        uniform token subdivisionScheme = "none"
+        int primvars:ri:attributes:trace:holdout = 1 (
+            interpolation = "constant"
+        )
+    }
+
+    def Camera "Camera"
+    {
+        float focalLength = 35
+        float horizontalAperture = 36
+        float verticalAperture = 27
+        float2 clippingRange = (0.1, 1000)
+        double3 xformOp:translate = (0, 0.5, 6)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+
+    def SphereLight "KeyLight"
+    {
+        float inputs:intensity = 50
+        float inputs:radius = 0.5
+        double3 xformOp:translate = (3, 4, 4)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+}
+
+def Scope "Render"
+{
+    def RenderSettings "Settings"
+    {
+        rel camera = </World/Camera>
+        rel products = </Render/Products/AOVs>
+        rel ri:sampleFilters = [</Render/ShadowFilter>, </Render/BackgroundFilter>]
+        int2 resolution = (6400, 4800)
+        int ri:hider:maxsamples = 4
+    }
+
+    def PxrShadowFilter "ShadowFilter"
+    {
+        string inputs:ri:occludedAov = "occluded"
+        string inputs:ri:unoccludedAov = "unoccluded"
+        string inputs:ri:shadowAov = "a"
+    }
+
+    def PxrBackgroundSampleFilter "BackgroundFilter"
+    {
+        string inputs:ri:aov = "Ci"
+        string inputs:ri:aovAlpha = "a"
+        color3f inputs:ri:backgroundColor = (0.5, 0.5, 0.5)
+    }
+
+    def Scope "Products"
+    {
+        def RenderProduct "AOVs"
+        {
+            token productName = "aov_test.exr"
+            rel orderedVars = [                </Render/Vars/Ci>,
+                </Render/Vars/a>,
+                </Render/Vars/sampleCount>,
+                </Render/Vars/lpe00>,
+                </Render/Vars/lpe01>,
+                </Render/Vars/lpe02>,
+                </Render/Vars/lpe03>,
+                </Render/Vars/lpe04>,
+                </Render/Vars/lpe05>,
+                </Render/Vars/lpe06>,
+                </Render/Vars/lpe07>,
+                </Render/Vars/lpe08>,
+                </Render/Vars/lpe09>,
+                </Render/Vars/lpe10>,
+                </Render/Vars/lpe11>,
+                </Render/Vars/lpe12>,
+                </Render/Vars/lpe13>,
+                </Render/Vars/lpe14>,
+                </Render/Vars/lpe15>,
+                </Render/Vars/lpe16>,
+                </Render/Vars/lpe17>,
+                </Render/Vars/lpe18>,
+                </Render/Vars/lpe19>,
+                </Render/Vars/lpe20>,
+                </Render/Vars/lpe21>,
+                </Render/Vars/lpe22>,
+                </Render/Vars/lpe23>,
+                </Render/Vars/lpe24>,
+                </Render/Vars/lpe25>,
+                </Render/Vars/lpe26>,
+                </Render/Vars/lpe27>,
+                </Render/Vars/lpe28>,
+                </Render/Vars/lpe29>,
+                </Render/Vars/lpe30>,
+                </Render/Vars/lpe31>,
+                </Render/Vars/lpe32>,
+                </Render/Vars/lpe33>,
+                </Render/Vars/lpe34>,
+                </Render/Vars/lpe35>,
+                </Render/Vars/lpe36>,
+                </Render/Vars/occluded>,
+                </Render/Vars/unoccluded>,
+                </Render/Vars/shadow>
+            ]
+        }
+    }
+
+    def Scope "Vars"
+    {
+        def RenderVar "Ci"
+        {
+            uniform string sourceName = "Ci"
+            uniform token sourceType = "raw"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "a"
+        {
+            uniform string sourceName = "a"
+            uniform token sourceType = "raw"
+            uniform token dataType = "float"
+        }
+        def RenderVar "sampleCount"
+        {
+            uniform string sourceName = "sampleCount"
+            uniform token sourceType = "raw"
+            uniform token dataType = "float"
+        }
+        def RenderVar "lpe00"
+        {
+            uniform token ri:displayChannel:statistics = "mse"
+            uniform string sourceName = "C<RD>[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe01"
+        {
+            uniform token ri:displayChannel:statistics = "mse"
+            uniform string sourceName = "C<RS>[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe02"
+        {
+            uniform token ri:displayChannel:statistics = "mse"
+            uniform string sourceName = "C<RD>[DS]+[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe03"
+        {
+            uniform token ri:displayChannel:statistics = "mse"
+            uniform string sourceName = "C<RS>[DS]+[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe04"
+        {
+            uniform token ri:displayChannel:statistics = "mse"
+            uniform string sourceName = "C[DS]*[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe05"
+        {
+            uniform string sourceName = "C<TD>[DS]*[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe06"
+        {
+            uniform string sourceName = "C<TS>.*[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe07"
+        {
+            uniform string sourceName = "CD2[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe08"
+        {
+            uniform string sourceName = "CS2[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe09"
+        {
+            uniform string sourceName = "CS3[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe10"
+        {
+            uniform string sourceName = "C<RD>[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe11"
+        {
+            uniform string sourceName = "C<RS>[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe12"
+        {
+            uniform string sourceName = "C<RD>[DS]+[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe13"
+        {
+            uniform string sourceName = "C<RS>[DS]+[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe14"
+        {
+            uniform string sourceName = "C[DS]*[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe15"
+        {
+            uniform string sourceName = "C<TD>[DS]*[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe16"
+        {
+            uniform string sourceName = "C<TS>.*[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe17"
+        {
+            uniform string sourceName = "CD2[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe18"
+        {
+            uniform string sourceName = "CS2[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe19"
+        {
+            uniform string sourceName = "CS3[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe20"
+        {
+            uniform string sourceName = "C<RD>[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe21"
+        {
+            uniform string sourceName = "C<RS>[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe22"
+        {
+            uniform string sourceName = "C<RD>[DS]+[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe23"
+        {
+            uniform string sourceName = "C<RS>[DS]+[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe24"
+        {
+            uniform string sourceName = "C[DS]*[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe25"
+        {
+            uniform string sourceName = "C<TD>[DS]*[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe26"
+        {
+            uniform string sourceName = "C<TS>.*[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe27"
+        {
+            uniform string sourceName = "CD2[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe28"
+        {
+            uniform string sourceName = "CS2[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe29"
+        {
+            uniform string sourceName = "CS3[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe30"
+        {
+            uniform string sourceName = "C<RD>[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe31"
+        {
+            uniform string sourceName = "C<RS>[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe32"
+        {
+            uniform string sourceName = "C<RD>[DS]+[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe33"
+        {
+            uniform string sourceName = "C<RS>[DS]+[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe34"
+        {
+            uniform string sourceName = "C[DS]*[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe35"
+        {
+            uniform string sourceName = "C<TD>[DS]*[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "lpe36"
+        {
+            uniform string sourceName = "C<TS>.*[<L.>O]"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "occluded"
+        {
+            uniform string sourceName = "holdouts;C[DS]+<L.>"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "unoccluded"
+        {
+            uniform string sourceName = "holdouts;unoccluded;C[DS]+<L.>"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+        def RenderVar "shadow"
+        {
+            uniform string sourceName = "holdouts;shadows;C[DS]+<L.>"
+            uniform token sourceType = "lpe"
+            uniform token dataType = "color3f"
+        }
+    }
+}
