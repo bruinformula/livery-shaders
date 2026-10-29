@@ -1,0 +1,7 @@
+#!/usr/bin/bash 
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+echo "Script directory: $SCRIPT_DIR"
+
+export RMAN_SHADERPATH="$SCRIPT_DIR/shaders:$RMAN_SHADERPATH"
