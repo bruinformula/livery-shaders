@@ -13,9 +13,18 @@ all: $(OBJS)
 	@echo "Compiling: $<"
 	@$(OSLC) $(OSLC_FLAGS) $< -o $@
 
+install-mk12:
+	@echo "Installing shaders to $(MK12_ROOT)/_env/shaders..."
+	@mkdir -p $(MK12_ROOT)/_env/shaders
+	@cp -r shaders/* $(MK12_ROOT)/_env/shaders
+
+houdini-mk12: $(OBJS)
+	@echo "Building RenderMan for Houdini nodes into $(MK12_ROOT)/_env/houdini/otls..."
+	@hython scripts/build_houdini_hda.py $(MK12_ROOT)/_env/houdini/otls/livery-shaders.hda $(sort $(dir $(OBJS)))
+
 clean:
 	@echo "Cleaning all compiled shaders..."
 	@find . -type f -name "*.oso" -delete
 
 # Declare non-file targets
-.PHONY: all clean
+.PHONY: all clean install-mk12 houdini-mk12
