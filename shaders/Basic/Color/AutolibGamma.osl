@@ -1,9 +1,13 @@
 shader AutolibGamma [[
-    string category = "autolib"
+    string label = "Gamma",
+    string help = "Raises the color to 1 / Gamma.",
+    string rfh_classification = "RenderMan/Autolib/Color",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/color"
 ]] (
-    color Input = 0,
-    float Gamma = 2.2,
-    output color Output = 0
+    color Input = 0 [[ string label = "Input" ]],
+    float Gamma = 2.2 [[ string label = "Gamma" ]],
+
+    output color Output = 0 [[ string label = "Output" ]]
 ) {
     Output = pow(max(Input, 0), 1.0 / Gamma);
 }

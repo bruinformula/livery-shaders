@@ -1,11 +1,14 @@
 shader AutolibClamp [[
-    string category = "autolib"
+    string label = "Clamp",
+    string help = "Clamps the input between Min and Max (per component).",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    color Input = 0.5,
-    float Min = 0.0,
-    float Max = 1.0,
+    color Input = 0.5 [[ string label = "Input" ]],
+    float Min = 0.0 [[ string label = "Min" ]],
+    float Max = 1.0 [[ string label = "Max" ]],
 
-    output color Output = 0
+    output color Output = 0 [[ string label = "Output" ]]
 ) {
     Output = clamp(Input, Min, Max);
 }

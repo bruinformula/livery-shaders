@@ -1,28 +1,88 @@
 // AutolibCameraProjector
 
-shader AutolibCameraProjector [[ 
-    string category = "autolib" 
+shader AutolibCameraProjector [[
+    string label = "Camera Projector",
+    string help = "Projects an image onto the surface from a virtual camera (position, target, up / right vectors "
+                  "and field of view), returning the projected UVs, color and alpha.",
+    string rfh_classification = "RenderMan/Autolib/Decal",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/decal"
 ]] (
-    string Filename = "" [[ string page = "Decal" ]],
-    vector Aspect = vector(1, 1, 0) [[ string help = "Aspect ratio (width/height) of the projection" ]],
-    int UseWidthImageAspect = 1 [[ int min = 0, int max = 1 ]],
+    string Filename = "" [[
+        string label = "Image",
+        string help = "Image to project.",
+        string widget = "assetIdInput",
+        string options = "texture",
+        int connectable = 0,
+        string page = "Image",
+        int page_open = 1
+    ]],
+    int UseWidthImageAspect = 1 [[
+        string label = "Use Image Aspect",
+        string help = "Take the aspect ratio from the image resolution instead of Aspect.",
+        string widget = "checkBox",
+        int connectable = 0,
+        string page = "Image"
+    ]],
+    vector Aspect = vector(1, 1, 0) [[
+        string label = "Aspect",
+        string help = "Width and height of the projection (only the ratio matters).",
+        string page = "Image",
+        string conditionalVisOp = "equalTo",
+        string conditionalVisPath = "../UseWidthImageAspect",
+        string conditionalVisValue = "0"
+    ]],
 
-    // Camera parameters
-    point CameraPosition = 0,
-    point TargetPosition = 0,
-    vector RightDirection = vector(0,1,0),
-    vector UpDirection = vector(0,0,1),
+    point CameraPosition = 0 [[
+        string label = "Camera Position",
+        string help = "Projector position (world space, or object space with Object Space on).",
+        string page = "Camera",
+        int page_open = 1
+    ]],
+    point TargetPosition = 0 [[
+        string label = "Target Position",
+        string help = "Point the projector looks at.",
+        string page = "Camera"
+    ]],
+    vector RightDirection = vector(0, 1, 0) [[
+        string label = "Right Direction",
+        string help = "Projector's horizontal axis.",
+        string page = "Camera"
+    ]],
+    vector UpDirection = vector(0, 0, 1) [[
+        string label = "Up Direction",
+        string help = "Projector's vertical axis.",
+        string page = "Camera"
+    ]],
+    float FOV = 1 [[
+        string label = "Field of View",
+        string help = "Horizontal field of view, in radians (values above pi are read as degrees).",
+        float min = 0, float slidermax = 3.14159,
+        string page = "Camera"
+    ]],
+    float OverScan = 0.0 [[
+        string label = "Overscan",
+        string help = "Extra coverage around the frame, in percent.",
+        float min = 0, float slidermax = 50,
+        string page = "Camera"
+    ]],
+    int ObjectSpace = 0 [[
+        string label = "Object Space",
+        string help = "Camera inputs are in object space, so the projection moves with the object.",
+        string widget = "checkBox",
+        int connectable = 0,
+        string page = "Camera"
+    ]],
+    int Backface = 0 [[
+        string label = "Project on Back",
+        string help = "Also project onto surfaces facing away from the projector.",
+        string widget = "checkBox",
+        int connectable = 0,
+        string page = "Camera"
+    ]],
 
-    // Projection controls
-    float FOV = 1 [[ float min = 0 ]],
-    float OverScan = 0.0 [[ float min = 0 ]],
-    int Backface = 0 [[ string label = "Project on Back", int min = 0, int max = 1 ]],
-    int ObjectSpace = 0 [[ int min = 0, int max = 1 ]],
-
-    // Outputs
-    output point UV = 0,
-    output float Alpha = 0,
-    output color Color = 0
+    output point UV = 0 [[ string label = "UV", string help = "Projected coordinates (0-1 inside the frame)." ]],
+    output float Alpha = 0 [[ string label = "Alpha", string help = "Image alpha inside the frame, 0 outside." ]],
+    output color Color = 0 [[ string label = "Color" ]]
 ) {
     point camPos, targetPos, surfacePos;
     vector rightDir, upDir, surfaceNormal;

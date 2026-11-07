@@ -30,13 +30,31 @@ string spaceIntToString(int space) {
 }
 
 shader AutolibTransform [[
-    string category = "autolib"   
+    string label = "Transform",
+    string help = "Transforms a point from one coordinate system to another.",
+    string rfh_classification = "RenderMan/Autolib/Vector",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/vector"
 ]] (
-    point Input = P,
-    int From = COMMON [[ string widget = "mapper", string options = "common|object|shader|world|camera|scren|raster|NDC" ]],
-    int To = OBJECT [[ string widget = "mapper", string options = "common|object|shader|world|camera|scren|raster|NDC" ]],
+    point Input = P [[
+        string label = "Input",
+        string help = "The point to transform. Defaults to the shading position."
+    ]],
+    int From = COMMON [[
+        string label = "From Space",
+        string help = "Coordinate system the input is in. Common is the renderer's shading space (world in RenderMan renders).",
+        string widget = "mapper",
+        string options = "Common:0|Object:1|Shader:2|World:3|Camera:4|Screen:5|Raster:6|NDC:7",
+        int connectable = 0
+    ]],
+    int To = OBJECT [[
+        string label = "To Space",
+        string help = "Coordinate system to transform into.",
+        string widget = "mapper",
+        string options = "Common:0|Object:1|Shader:2|World:3|Camera:4|Screen:5|Raster:6|NDC:7",
+        int connectable = 0
+    ]],
 
-    output point Result = 0
+    output point Result = 0 [[ string label = "Result" ]]
 ) {
     string fromString;
     Result = transform(spaceIntToString(From), spaceIntToString(To), Input);

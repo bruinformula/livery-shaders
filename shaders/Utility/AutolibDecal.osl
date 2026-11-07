@@ -37,36 +37,130 @@ void computeWorldUV(
     Data.WorldPerV = worldPerV;
 }
 
-shader AutolibDecal [[ 
-    string category = "autolib",
-    string help = "The driving UV set used to orient and scale the decal. "
-                  "In 'Sticker Mode', the shader uses this coordinate's "
-                  "world-space derivatives to ensure the decal maintains "
-                  "its physical width regardless of geometry density."
+// The mesh UVs. Arnold's u,v on a mesh are its UVs; RenderMan's are per-face parametric coordinates,
+// so read the st primvar when the renderer exposes it (the default of the UV input).
+point meshUV() {
+    float st[2];
+    if (getattribute("primvar", "st", st))
+        return point(st[0], st[1], 0);
+    return point(u, v, 0);
+}
+
+shader AutolibDecal [[
+    string label = "Decal",
+    string help = "Places an image (MSDF or plain alpha) on the surface by UV: offset, rotated, scaled and sized "
+                  "to a physical width with the image's aspect ratio. Decals chain through Other Data so a stack "
+                  "of logos comes out of the last node as one color / mask. Sticker Mode keeps the decal's world "
+                  "size independent of the UV layout.",
+    string rfh_classification = "RenderMan/Autolib/Decal",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/decal"
 ]] (
-    point UV = point(u,v,0) [[ string help = "If in sticker mode, this is used as a base space in mapping from screenspace to world space." ]],
-    vector Offset = 0 [[ string help = "Offset applied to the decal projection", int interactive = 1, vector min = -1, vector max = 1 ]],
-    float Rotation = 0 [[ string help = "Rotation in degrees around the decal center", int interactive = 1 ]],
-    vector Scale = 1 [[ string help = "Scale multiplier for the decal size", int interactive = 1 ]],
-    int DisableChaining = 0 [[ string help = "Disables chaining inputs", string widget = "boolean", int min = 0, int max = 1, int interactive = 1 ]],
-    string Filename = "" [[ string path = "file" ]],
+    point UV = meshUV() [[
+        string label = "UV",
+        string help = "UVs the decal is placed in. Defaults to the mesh UVs; a chained decal without a UV "
+                      "connection uses the UVs of the decal below it. In Sticker Mode the UV derivatives map "
+                      "screen space to world space."
+    ]],
+    string Filename = "" [[
+        string label = "Image",
+        string help = "Decal image. Use a RenderMan texture written with its source size in the AutolibResolution "
+                      "attribute (power-of-two textures are stretched; the attribute restores the aspect ratio).",
+        string widget = "fileInput",
+        int connectable = 0,
+        string page = "Image",
+        int page_open = 1
+    ]],
+    int IsMSDFTexture = 1 [[
+        string label = "MSDF Image",
+        string help = "The image is a multi-channel signed distance field (crisp edges at any size) rather than a plain alpha image.",
+        string widget = "checkBox",
+        int connectable = 0,
+        string page = "Image"
+    ]],
+    float DistanceRange = 6.0 [[
+        string label = "Distance Range",
+        string help = "Distance range, in texels, that the MSDF encodes (msdfgen -pxrange).",
+        float min = 0, float slidermax = 16,
+        string page = "Image",
+        string conditionalVisOp = "equalTo",
+        string conditionalVisPath = "../IsMSDFTexture",
+        string conditionalVisValue = "1"
+    ]],
+    float SDFBlurAmount = 0 [[
+        string label = "Edge Blur",
+        string help = "Softens the edge read from the distance field.",
+        float min = 0, float max = 1, int slider = 1,
+        string page = "Image",
+        string conditionalVisOp = "equalTo",
+        string conditionalVisPath = "../IsMSDFTexture",
+        string conditionalVisValue = "1"
+    ]],
+    string ColorSpace = "linear" [[
+        string label = "Color Space",
+        string widget = "null",
+        int connectable = 0,
+        string page = "Image"
+    ]],
+    color ColorIn = 1 [[
+        string label = "Color",
+        string help = "Decal color (MSDF and alpha images) or tint.",
+        string page = "Image"
+    ]],
 
-    color ColorIn = 1 [[ string help = "Base color to blend the decal with. Use in alpha mode to tint the decal color." ]],
-    float Width = 0.1 [[ string page = "Texture", string help = "The width of the decal in the specified units. Image maintains aspect ratio", int interactive = 1 ]],
-    //string Units = "m" [[ string page = "Texture", string widget = "units" ]],
-    int StickerMode = 0 [[ string page = "Texture", string widget = "boolean", int min = 0, int max = 1, string help = "UV sizing correction for images to maintain their size in world space" ]],
-    DecalData OtherData = {} [[ string widget = "null" ]], 
+    float Width = 0.1 [[
+        string label = "Width",
+        string help = "Width of the decal in UV units (scene units in Sticker Mode); the height follows the image aspect ratio.",
+        float min = 0, float slidermax = 1,
+        string page = "Placement",
+        int page_open = 1
+    ]],
+    vector Offset = 0 [[
+        string label = "Offset",
+        string help = "Moves the decal centre from the UV origin.",
+        float slidermin = -1, float slidermax = 1,
+        string page = "Placement",
+        int interactive = 1
+    ]],
+    float Rotation = 0 [[
+        string label = "Rotation",
+        string help = "Rotation in degrees about the decal centre.",
+        float slidermin = -180, float slidermax = 180,
+        string page = "Placement",
+        int interactive = 1
+    ]],
+    vector Scale = 1 [[
+        string label = "Scale",
+        string help = "Extra scale on top of Width.",
+        float slidermin = 0, float slidermax = 4,
+        string page = "Placement",
+        int interactive = 1
+    ]],
+    int StickerMode = 0 [[
+        string label = "Sticker Mode",
+        string help = "Size the decal in scene units using the UV derivatives, so it keeps its physical size however the UVs are laid out.",
+        string widget = "checkBox",
+        int connectable = 0,
+        string page = "Placement"
+    ]],
 
-    float DistanceRange = 6.0 [[ string page = "Texture", float min = 0, string help = "The distance range in world units that the MSDF texture encodes" ]],
-    int IsMSDFTexture = 1 [[ string page = "Texture", string widget = "boolean", int min = 0, int max = 1, string help = "Whether the input texture is an MSDF (multi-channel signed distance field) or a regular alpha texture", int interactive = 1 ]],
-    float SDFBlurAmount = 0 [[ string page = "Texture", float min = 0, float max = 1, string help = "Blurs the texture read of the SDF channel", int interactive = 1 ]],
-    string ColorSpace = "linear" [[ string page = "Texture", string widget = "null" ]],
+    DecalData OtherData = {} [[
+        string label = "Other Data",
+        string help = "Connect the Data output of the decal below this one; decals chain bottom to top and the last node holds the combined result.",
+        string page = "Chaining"
+    ]],
+    int DisableChaining = 0 [[
+        string label = "Disable Chaining",
+        string help = "Ignore Other Data and output only this decal.",
+        string widget = "checkBox",
+        int connectable = 0,
+        string page = "Chaining"
+    ]],
 
-    output DecalData Data = {},
-    output float Height = 0 [[ string help = "Accumulation of the decal mask values" ]],
-    output float Mask = 0 [[ string help = "Clean linework computed from the SDF" ]],
-    output float SDFDistance = 0 [[ string help = "Distance from the edge of the decal. Use for wear patterns or whatever." ]],
-    output color Color = 0
+    output DecalData Data = {} [[ string label = "Data", string help = "The decal stack so far, for the next decal's Other Data." ]],
+    output float Height = 0 [[ string label = "Height", string help = "Accumulated decal mask, for a bump." ]],
+    output float Mask = 0 [[ string label = "Mask", string help = "Coverage of the decal stack." ]],
+    output float SDFDistance = 0 [[ string label = "Edge Distance", string help = "Distance from the decal edge, for wear or outlines." ]],
+    output color Color = 0 [[ string label = "Color", string help = "Color of the decal stack." ]]
 ) {
     if (DisableChaining && isconnected(OtherData)) {
         Data = OtherData;
@@ -85,8 +179,11 @@ shader AutolibDecal [[
     if (!textureExists)
         return;
     
+    // RenderMan only reads power-of-two textures, so non-pow2 decals are stretched on conversion
+    // and carry their source size in an AutolibResolution attribute.
     int resolution[2];
-    if (!gettextureinfo(Filename, "resolution", resolution))
+    if (!gettextureinfo(Filename, "AutolibResolution", resolution) &&
+        !gettextureinfo(Filename, "resolution", resolution))
         return;
 
     float aspectRatio = (float)resolution[1] / (float)resolution[0];
@@ -102,7 +199,7 @@ shader AutolibDecal [[
     if (isConnectedUV) {
         Data.UV = UV;
     } else {
-        Data.UV = OtherData.UV;
+        Data.UV = isconnected(OtherData) ? OtherData.UV : UV;  // the first decal of a chain falls back to the mesh UVs
     }
 
     if (!isconnected(OtherData) || isConnectedUV) {
@@ -120,7 +217,10 @@ shader AutolibDecal [[
         U = (Data.UV.x - 0.5) / uvSpanU + 0.5;
         V = (Data.UV.y - 0.5) / uvSpanV + 0.5;
     } else {
-        point UVw = transform("world", Data.UV);
+        // Data.UV is a texture coordinate, not a position: no space transform. (In Arnold and in
+        // RenderMan renders "common" is world so a transform was a no-op, but RenderMan's pattern
+        // bake shades in another common space and it rotated V into Z.)
+        point UVw = Data.UV;
 
         float centerU = 0.5;
         float centerV = 0.5;
@@ -161,7 +261,7 @@ shader AutolibDecal [[
     point texCoord = point(U, 1-V, 0);
 
     if (!IsMSDFTexture) {
-        color dummy = texture(Filename, texCoord.x, texCoord.y, "firstchannel", 3, "colorspace", ColorSpace, "alpha", Mask);
+        color dummy = texture(Filename, texCoord.x, texCoord.y, "firstchannel", 3, "alpha", Mask);
         Data.Mask = max(OtherData.Mask, Mask);
         Data.Height = OtherData.Height + Mask;
         Data.SDFDistance = OtherData.SDFDistance;
@@ -176,14 +276,12 @@ shader AutolibDecal [[
 
     color texel = texture(
         Filename, texCoord.x, texCoord.y,
-        "colorspace", ColorSpace,
         "swrap", "clamp",
         "twrap", "clamp"
     );
     float dist = median(texel.r, texel.g, texel.b);
 
-    int res[2] = {1, 1};
-    gettextureinfo(Filename, "resolution", res); 
+    int res[2] = {resolution[0], resolution[1]};
     
     float unitRangeX = DistanceRange / (float)res[0];
     float unitRangeY = DistanceRange / (float)res[1];

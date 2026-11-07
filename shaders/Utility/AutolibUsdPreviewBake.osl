@@ -1,0 +1,60 @@
+// UsdPreviewSurface (specular workflow) values from a PxrLayer / PxrLayerMixer result, for baking
+// Storm textures. Connect the pxrMaterialOut_* outputs of the node that feeds PxrLayerSurface.
+
+shader AutolibUsdPreviewBake [[
+    string label = "UsdPreviewSurface Bake",
+    string help = "Converts a PxrLayer / PxrLayerMixer result into UsdPreviewSurface (specular workflow) inputs, "
+                  "for baking Storm textures. Connect the pxrMaterialOut_* outputs of the node that feeds the "
+                  "PxrLayerSurface.",
+    string rfh_classification = "RenderMan/Autolib/Utility",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/utility"
+]] (
+    color DiffuseColor = 0 [[ string label = "Diffuse Color", string help = "pxrMaterialOut_diffuseColor (already scaled by its gain)." ]],
+    color SpecularFaceColor = 0 [[ string label = "Specular Face Color", string page = "Specular" ]],
+    color SpecularEdgeColor = 0 [[ string label = "Specular Edge Color", string page = "Specular" ]],
+    float SpecularRoughness = 0.2 [[ string label = "Specular Roughness", string page = "Specular" ]],
+    color RoughSpecularFaceColor = 0 [[ string label = "Rough Specular Face Color", string page = "Rough Specular" ]],
+    color RoughSpecularEdgeColor = 0 [[ string label = "Rough Specular Edge Color", string page = "Rough Specular" ]],
+    float RoughSpecularRoughness = 0.6 [[ string label = "Rough Specular Roughness", string page = "Rough Specular" ]],
+    color ClearcoatEdgeColor = 0 [[ string label = "Clearcoat Edge Color", string page = "Clearcoat" ]],
+    float ClearcoatRoughness = 0 [[ string label = "Clearcoat Roughness", string page = "Clearcoat" ]],
+    normal BumpNormal = N [[ string label = "Bump Normal", string help = "pxrMaterialOut_bumpNormal." ]],
+
+    output color Albedo = 0 [[ string label = "Albedo" ]],
+    output color Specular = 0 [[ string label = "Specular" ]],
+    output float Roughness = 0 [[ string label = "Roughness", string help = "The two specular roughnesses weighted by their edge strength." ]],
+    output float Clearcoat = 0 [[ string label = "Clearcoat" ]],
+    output float ClearcoatRoughnessOut = 0 [[ string label = "Clearcoat Roughness" ]],
+    output color Normal = color(0.5, 0.5, 1) [[ string label = "Normal", string help = "Tangent space normal in Storm's frame, encoded 0-1." ]]
+) {
+    Albedo = DiffuseColor;
+    Specular = SpecularFaceColor + RoughSpecularFaceColor;
+
+    // UsdPreviewSurface has one specular lobe: weight the two by their strength at grazing angles.
+    float w1 = luminance(SpecularEdgeColor);
+    float w2 = luminance(RoughSpecularEdgeColor);
+    Roughness = (w1 + w2 > 1e-6) ? (w1 * SpecularRoughness + w2 * RoughSpecularRoughness) / (w1 + w2) : SpecularRoughness;
+
+    Clearcoat = clamp(luminance(ClearcoatEdgeColor), 0.0, 1.0);
+    ClearcoatRoughnessOut = ClearcoatRoughness;
+
+    // hdSt ComputeTBNMatrix: T = dP/ds on the tangent plane, B = +-N x T following dP/dt.
+    float st[2];
+    if (!getattribute("primvar", "st", st))
+        return;
+    point uv = point(st[0], st[1], 0);
+    vector dPdx = Dx(P), dPdy = Dy(P);
+    vector dUVdx = Dx(uv), dUVdy = Dy(uv);
+    float det = dUVdx[0] * dUVdy[1] - dUVdx[1] * dUVdy[0];
+    if (abs(det) < 1e-20)
+        return;
+    vector dPds = (dUVdy[1] * dPdx - dUVdx[1] * dPdy) / det;
+    vector dPdt = (-dUVdy[0] * dPdx + dUVdx[0] * dPdy) / det;
+    vector Nn = normalize(N);
+    vector T = normalize(dPds - dot(dPds, Nn) * Nn);
+    vector B = cross(Nn, T);
+    if (dot(B, dPdt) < 0)
+        B = -B;
+    vector n = normalize(BumpNormal);
+    Normal = color(dot(n, T), dot(n, B), dot(n, Nn)) * 0.5 + 0.5;
+}

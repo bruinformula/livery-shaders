@@ -1,12 +1,35 @@
-shader AutolibCurvatureField (
-    float SampleDist = 0.01 [[ float min = 0, string help = "Tangent-plane step size for the curvature probes." ]],
-    float ProbeHeight = 0.02 [[ float min = 0, string help = "How far above the tangent plane the probe rays start." ]],
-    float MaxDist = 1.0 [[ float min = 0, string help = "Max trace distance for the probe rays." ]],
-    int NumSamples = 3 [[ int min = 3, string help = "Number of equally spaced tangent directions sampled over a half turn (>=3)." ]],
+shader AutolibCurvature [[
+    string label = "Curvature",
+    string help = "Measures surface curvature by tracing short probe rays around the shading point: a principal "
+                  "direction field for hatching and the Gaussian curvature.",
+    string rfh_classification = "RenderMan/Autolib/Geometry",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/geometry"
+]] (
+    float SampleDist = 0.01 [[
+        string label = "Sample Distance",
+        string help = "Tangent-plane step size of the curvature probes, in scene units.",
+        float min = 0, float slidermax = 0.1
+    ]],
+    float ProbeHeight = 0.02 [[
+        string label = "Probe Height",
+        string help = "How far above the tangent plane the probe rays start.",
+        float min = 0, float slidermax = 0.1
+    ]],
+    float MaxDist = 1.0 [[
+        string label = "Max Distance",
+        string help = "Maximum trace distance of the probe rays.",
+        float min = 0, float slidermax = 2
+    ]],
+    int NumSamples = 3 [[
+        string label = "Samples",
+        string help = "Number of equally spaced tangent directions sampled over a half turn (at least 3).",
+        int min = 3, int slidermax = 16,
+        int connectable = 0
+    ]],
 
-    output vector Field = 0,
-    output float GaussianCurvature = 0 [[ string help = "Positive = elliptic (dome/bowl), negative = hyperbolic (saddle), ~0 = flat." ]],
-    output float Confidence = 0
+    output vector Field = 0 [[ string label = "Field", string help = "Principal direction field, for Curvature Basic Hatch." ]],
+    output float GaussianCurvature = 0 [[ string label = "Gaussian Curvature", string help = "Positive on domes and bowls, negative on saddles, about 0 when flat." ]],
+    output float Confidence = 0 [[ string label = "Confidence", string help = "Fraction of probes that hit." ]]
 ) {
     normal Nn = normalize(N);
 

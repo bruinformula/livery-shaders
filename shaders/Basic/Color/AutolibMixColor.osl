@@ -1,12 +1,15 @@
 shader AutolibMixColor [[
-    string category = "autolib"
+    string label = "Mix Color",
+    string help = "Linear blend from Color A (Mixer 0) to Color B (Mixer 1).",
+    string rfh_classification = "RenderMan/Autolib/Color",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/color"
 ]] (
-    float Mixer = 0 [[ float min = 0, float max = 1 ]],
-    color ColorA = 0,
-    color ColorB = 1,
-    int Clamp = 0 [[ string widget = "boolean", int min = 0, int max = 1 ]],
+    float Mixer = 0 [[ string label = "Mixer", float min = 0, float max = 1 ]],
+    color ColorA = 0 [[ string label = "Color A" ]],
+    color ColorB = 1 [[ string label = "Color B" ]],
+    int Clamp = 0 [[ string label = "Clamp", string widget = "checkBox" ]],
 
-    output color RGB = 0
+    output color RGB = 0 [[ string label = "Result" ]]
 ) {
     float clampedMixer = Mixer;
     if (Clamp == 1) {

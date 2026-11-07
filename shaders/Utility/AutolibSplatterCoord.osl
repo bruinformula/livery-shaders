@@ -35,26 +35,79 @@ float ellipseSDF(vector p, vector axisA, float majorRadius, float minorRadius) {
     return (k - 1.0) * min(majorRadius, minorRadius);
 }
 
+// The mesh UVs. Arnold's u,v on a mesh are its UVs; RenderMan's are per-face parametric coordinates,
+// so read the st primvar when the renderer exposes it (the default of the UV input).
+point meshUV() {
+    float st[2];
+    if (getattribute("primvar", "st", st))
+        return point(st[0], st[1], 0);
+    return point(u, v, 0);
+}
+
 shader AutolibSplatterCoord [[
-    string category = "autolib"
+    string label = "Splatter Coord",
+    string help = "Local coordinates inside jittered splatter drops (cone shaped, tilted along each drop's "
+                  "direction), for texturing drops with images or other patterns.",
+    string rfh_classification = "RenderMan/Autolib/Manifold",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/manifold"
 ]] (
-    point UV = point(u,v,0),
-    float SplatterScale = 20 [[ string page = "Pattern", int interactive = 1 ]],
-    int Seed = 433 [[ string page = "Pattern", int interactive = 0 ]],
-    float Jitter = 2.0 [[ string page = "Pattern" ]],
-    float MinRadius = 0.005 [[ string page = "Pattern" ]],
-    float MaxRadius = 0.3 [[ string page = "Pattern" ]],
-    float PerimeterSmoothness = 0.15 [[ string page = "Pattern", float min = 0.0, float max = 1.0 ]],
-    float UnionSmoothness = 8.0 [[ string page = "Pattern" ]],
+    point UV = meshUV() [[
+        string label = "UV",
+        string help = "Texture coordinates. Defaults to the mesh UVs (st); connect a Manifold to transform or replace them."
+    ]],
+    float SplatterScale = 20 [[
+        string label = "Scale",
+        string help = "Number of drop cells per UV unit.",
+        float min = 0, float slidermax = 200,
+        string page = "Pattern",
+        int page_open = 1
+    ]],
+    int Seed = 433 [[ string label = "Seed", string page = "Pattern" ]],
+    float Jitter = 2.0 [[
+        string label = "Position Jitter",
+        string help = "How far drops move from their cell centres, in cells.",
+        float min = 0, float slidermax = 4,
+        string page = "Pattern"
+    ]],
+    float MinRadius = 0.005 [[ string label = "Min Radius", float min = 0, float slidermax = 1, string page = "Pattern" ]],
+    float MaxRadius = 0.3 [[ string label = "Max Radius", float min = 0, float slidermax = 1, string page = "Pattern" ]],
+    float PerimeterSmoothness = 0.15 [[
+        string label = "Edge Smoothness",
+        string help = "Softness of the drop outlines.",
+        float min = 0.0, float max = 1.0, int slider = 1,
+        string page = "Pattern"
+    ]],
+    float UnionSmoothness = 8.0 [[
+        string label = "Union Smoothness",
+        string help = "Smooth-minimum sharpness where drops overlap.",
+        float min = 0, float slidermax = 32,
+        string page = "Pattern"
+    ]],
+    int MarchBound = 1 [[
+        string label = "Search Radius",
+        string help = "Neighbouring cells searched for drops.",
+        int min = 0, int slidermax = 4,
+        int connectable = 0,
+        string page = "Pattern"
+    ]],
 
-    int MarchBound = 1 [[ string help = "Sizes a grid for combining drops" ]],
+    float ConeHeight = 0.5 [[
+        string label = "Cone Height",
+        string help = "Height of the cone the local coordinates are projected from.",
+        float min = 0.001, float slidermax = 2,
+        string page = "Cone",
+        int page_open = 1
+    ]],
+    float ConeTilt = 0.3 [[
+        string label = "Cone Tilt",
+        string help = "Tilt of each drop's cone along its splatter direction.",
+        float min = 0.0, float max = 2.0, int slider = 1,
+        string page = "Cone"
+    ]],
 
-    float ConeHeight = 0.5 [[ string page = "Cone", float min = 0.001 ]],
-    float ConeTilt = 0.3 [[ string page = "Cone", float min = 0.0, float max = 2.0 ]],
-    
-    output float Mask = 0,
-    output point LocalUV = 0,
-    output vector SplatterDirection = 0,
+    output float Mask = 0 [[ string label = "Mask" ]],
+    output point LocalUV = 0 [[ string label = "Local UV", string help = "Coordinates inside the drop, 0-1." ]],
+    output vector SplatterDirection = 0 [[ string label = "Direction", string help = "Direction of the drop, for a Splatter's Direction." ]]
 ) {
     point scaledPos = SplatterScale * UV;
 

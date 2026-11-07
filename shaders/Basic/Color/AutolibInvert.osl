@@ -1,9 +1,13 @@
 shader AutolibInvert [[
-    string category = "autolib"
+    string label = "Invert",
+    string help = "Blends the color toward 1 - color by Strength.",
+    string rfh_classification = "RenderMan/Autolib/Color",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/color"
 ]] (
-    color Input = 0,
-    float Strength = 1,
-    output color Output = 0
+    color Input = 0 [[ string label = "Input" ]],
+    float Strength = 1 [[ string label = "Strength" ]],
+
+    output color Output = 0 [[ string label = "Output" ]]
 ) {
     Output = mix(Input, 1 - Input, Strength);
 }

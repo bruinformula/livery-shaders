@@ -1,10 +1,13 @@
 shader AutolibTangent [[
-    string category = "autolib"
+    string label = "Tangent",
+    string help = "tan(Opposite / Adjacent) (per component).",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    vector Opposite = 0,
-    vector Adjacent = 1,
+    vector Opposite = 0 [[ string label = "Opposite" ]],
+    vector Adjacent = 1 [[ string label = "Adjacent" ]],
 
-    output vector Output = 0
+    output vector Output = 0 [[ string label = "Output" ]]
 ) {
     Output = tan(Opposite / Adjacent);
 }

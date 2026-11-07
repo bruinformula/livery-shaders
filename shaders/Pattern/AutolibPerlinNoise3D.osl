@@ -1,0 +1,16 @@
+// Same result as MaterialX ND_noise3d_float.
+shader AutolibPerlinNoise3D [[
+    string label = "Perlin Noise 3D",
+    string help = "Signed 3D perlin noise (-1..1) at a position, scaled and offset (same result as MaterialX "
+                  "ND_noise3d_float).",
+    string rfh_classification = "RenderMan/Autolib/Noise",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/noise"
+]] (
+    vector Position = P [[ string label = "Position", string help = "Where the noise is evaluated. Defaults to the shading position; scale it (or connect object space position) to set the frequency." ]],
+    float Amplitude = 1.0 [[ string label = "Amplitude", string help = "Multiplies the noise.", float slidermin = 0, float slidermax = 2 ]],
+    float Pivot = 0.0 [[ string label = "Pivot", string help = "Added after the amplitude (0.5 with amplitude 0.5 maps to 0-1).", float slidermin = -1, float slidermax = 1 ]],
+
+    output float Result = 0 [[ string label = "Result" ]]
+) {
+    Result = noise("snoise", point(Position)) * Amplitude + Pivot;
+}

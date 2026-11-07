@@ -1,11 +1,14 @@
 shader AutolibDot [[
-    string category = "autolib"
+    string label = "Dot",
+    string help = "Dot product of A and B.",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    vector VectorA = N,
-    vector VectorB = I,
-    int NormalizeInputs = 1,
+    vector VectorA = N [[ string label = "Vector A" ]],
+    vector VectorB = I [[ string label = "Vector B" ]],
+    int NormalizeInputs = 1 [[ string label = "Normalize Inputs", string widget = "checkBox" ]],
 
-    output float Result = 0
+    output float Result = 0 [[ string label = "Result" ]]
 ) {
     vector a = VectorA;
     vector b = VectorB;

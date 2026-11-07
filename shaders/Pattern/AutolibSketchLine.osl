@@ -1,6 +1,11 @@
-shader AutolibSketchLine(
-    float Scale = 1 [[ float min = 0 ]],
-    output float Value = 0
+shader AutolibSketchLine [[
+    string label = "Sketch Line",
+    string help = "Placeholder for a single sketched line; currently outputs 0.",
+    string rfh_classification = "RenderMan/Autolib/Stylized",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/stylized"
+]] (
+    float Scale = 1 [[ string label = "Scale", float min = 0, float slidermax = 10 ]],
+    output float Value = 0 [[ string label = "Value" ]]
 ) {
 
     

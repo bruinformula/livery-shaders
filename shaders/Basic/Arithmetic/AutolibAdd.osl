@@ -1,10 +1,13 @@
 shader AutolibAdd [[
-    string category = "autolib"
+    string label = "Add",
+    string help = "A + B (per component).",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    color InputA = 0.0,
-    color InputB = 0.0,
+    color InputA = 0.0 [[ string label = "Input A" ]],
+    color InputB = 0.0 [[ string label = "Input B" ]],
 
-    output color Output = 0
+    output color Output = 0 [[ string label = "Output" ]]
 ) {
     Output = InputA + InputB;
 }

@@ -90,27 +90,92 @@ float mapRangeScalar(
 }
 
 shader AutolibMapRange [[
-    string category = "autolib"
+    string label = "Map Range",
+    string help = "Remaps each component of a vector from an input range to an output range, with optional stepped, "
+                  "smoothstep or smootherstep interpolation and bias / gain shaping in between.",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    vector Value = 1 [[ string label = "Value" ]],
+    vector Value = 1 [[
+        string label = "Value",
+        string help = "The value to remap."
+    ]],
 
-    // Input Range
-    vector InputMin = 0 [[ string page = "Input Range", vector min = -1, vector max = 1 ]],
-    vector InputMax = 1 [[ string page = "Input Range", vector min = -1, vector max = 1 ]],
-    int ClampInput = 1 [[ string page = "Input Range", string widget = "boolean" ]],
+    vector InputMin = 0 [[
+        string label = "Input Min",
+        string help = "Input value that maps to Output Min.",
+        float slidermin = -1, float slidermax = 1,
+        string page = "Input Range",
+        int page_open = 1
+    ]],
+    vector InputMax = 1 [[
+        string label = "Input Max",
+        string help = "Input value that maps to Output Max. Swapping Min and Max inverts the mapping.",
+        float slidermin = -1, float slidermax = 1,
+        string page = "Input Range"
+    ]],
+    int ClampInput = 1 [[
+        string label = "Clamp Input",
+        string help = "Clamp the normalized position in the input range to 0-1 before shaping.",
+        string widget = "checkBox",
+        int connectable = 0,
+        string page = "Input Range"
+    ]],
 
-    // Shaping Controls
-    int RangeType = LINEAR [[ string page = "Remap", string widget = "mapper", string options = "linear|stepped|smoothstep|smootherstep" ]],
-    float Steps = 4.0 [[ string page = "Remap", string help = "Only used for Stepped mode." ]],
-    float Bias = 0.5 [[ string page = "Remap", float min = 0.01, float max = 0.99 ]],
-    float Gain = 0.5 [[ string page = "Remap", float min = 0.01, float max = 0.99 ]],
+    int RangeType = LINEAR [[
+        string label = "Interpolation",
+        string help = "How the normalized input is shaped: Linear, Stepped (quantized into Steps "
+                      "levels), Smoothstep or Smootherstep.",
+        string widget = "mapper",
+        string options = "Linear:0|Stepped:1|Smoothstep:2|Smootherstep:3",
+        int connectable = 0,
+        string page = "Remap",
+        int page_open = 1
+    ]],
+    float Steps = 4.0 [[
+        string label = "Steps",
+        string help = "Number of steps in Stepped mode.",
+        float min = 0, float slidermax = 16,
+        string page = "Remap",
+        string conditionalVisOp = "equalTo",
+        string conditionalVisPath = "../RangeType",
+        string conditionalVisValue = "1"
+    ]],
+    float Bias = 0.5 [[
+        string label = "Bias",
+        string help = "Perlin bias of the normalized value; 0.5 leaves it unchanged, lower values push it toward 0.",
+        float min = 0.01, float max = 0.99, int slider = 1,
+        string page = "Remap"
+    ]],
+    float Gain = 0.5 [[
+        string label = "Gain",
+        string help = "Perlin gain (S-curve) of the normalized value; 0.5 leaves it unchanged, higher values steepen the middle.",
+        float min = 0.01, float max = 0.99, int slider = 1,
+        string page = "Remap"
+    ]],
 
-    // Output Range
-    vector OutputMin = 0 [[ string page = "Output Range", vector min = -1, vector max = 1 ]],
-    vector OutputMax = 1 [[ string page = "Output Range", vector min = -1, vector max = 1 ]],
-    int ClampOutput = 1 [[ string page = "Output Range", string widget = "boolean"]],
+    vector OutputMin = 0 [[
+        string label = "Output Min",
+        string help = "Result for an input at Input Min.",
+        float slidermin = -1, float slidermax = 1,
+        string page = "Output Range",
+        int page_open = 1
+    ]],
+    vector OutputMax = 1 [[
+        string label = "Output Max",
+        string help = "Result for an input at Input Max.",
+        float slidermin = -1, float slidermax = 1,
+        string page = "Output Range"
+    ]],
+    int ClampOutput = 1 [[
+        string label = "Clamp Output",
+        string help = "Clamp the result between Output Min and Output Max.",
+        string widget = "checkBox",
+        int connectable = 0,
+        string page = "Output Range"
+    ]],
 
-    output vector Result = 0
+    output vector Result = 0 [[ string label = "Result" ]]
 ) {
     Result = vector(
         mapRangeScalar(Value[0], InputMin[0], InputMax[0], ClampInput, RangeType, Steps, Bias, Gain, OutputMin[0], OutputMax[0], ClampOutput),

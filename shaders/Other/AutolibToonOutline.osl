@@ -23,15 +23,31 @@ int probeForOutline(
 
 }
 
-shader AutolibToonOutline [[ 
-    string category = "autolib" 
+shader AutolibToonOutline [[
+    string label = "Toon Outline",
+    string help = "Silhouette and crease outlines found by tracing a probe ray just off the surface and comparing "
+                  "what it hits by distance and normal. Alpha is 1 on outlines.",
+    string rfh_classification = "RenderMan/Autolib/Stylized",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/stylized"
 ]] (
-    float width = 0.01 [[ string help = "Defines offset of the trace probe ray from the surface normal" ]],
-    float DistanceThreshold = 1.1 [[ string help = "Defines a distance based comparison threshold for the probe and hit point" ]],
-    float NormalThreshold = 0.1 [[ string help = "Defines a normal comparison threshold for the probe and hit point" ]],
-    float NoiseScale = 0,
-    float NoiseAmount = 0,
-    output float Alpha = 0
+    float width = 0.01 [[
+        string label = "Width",
+        string help = "Offset of the probe ray from the surface, which sets the outline width (scene units).",
+        float min = 0, float slidermax = 0.1
+    ]],
+    float DistanceThreshold = 1.1 [[
+        string label = "Distance Threshold",
+        string help = "Depth difference between the probe hit and the shading point that counts as an outline.",
+        float min = 0, float slidermax = 4
+    ]],
+    float NormalThreshold = 0.1 [[
+        string label = "Normal Threshold",
+        string help = "Normal difference that counts as a crease outline.",
+        float min = 0, float max = 1, int slider = 1
+    ]],
+    float NoiseScale = 0 [[ string label = "Noise Scale", string help = "Frequency of the wobble along the outline.", float min = 0, float slidermax = 100, string page = "Noise" ]],
+    float NoiseAmount = 0 [[ string label = "Noise Amount", string help = "Amount of wobble.", float min = 0, float slidermax = 1, string page = "Noise" ]],
+    output float Alpha = 0 [[ string label = "Alpha" ]]
 ) {
 
     for (int i = -1; i <= 1; i++) {

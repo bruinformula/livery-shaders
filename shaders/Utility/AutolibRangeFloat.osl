@@ -1,0 +1,28 @@
+// Same result as MaterialX ND_range_float (and ND_remap_float with Gamma = 1, Clamp = 0).
+shader AutolibRangeFloat [[
+    string label = "Range Float",
+    string help = "Remaps a float from an input range to an output range with a gamma in between and optional "
+                  "clamping (same result as MaterialX ND_range_float).",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
+]] (
+    float Value = 0 [[ string label = "Value" ]],
+    float InputLow = 0 [[ string label = "Input Low", float slidermin = -1, float slidermax = 1 ]],
+    float InputHigh = 1 [[ string label = "Input High", float slidermin = -1, float slidermax = 1 ]],
+    float Gamma = 1.0 [[ string label = "Gamma", string help = "Applied to the normalized value (sign preserving).", float min = 0, float slidermax = 4 ]],
+    float OutputLow = 0 [[ string label = "Output Low", float slidermin = -1, float slidermax = 1 ]],
+    float OutputHigh = 1 [[ string label = "Output High", float slidermin = -1, float slidermax = 1 ]],
+    int Clamp = 0 [[
+        string label = "Clamp",
+        string help = "Clamp the result to the output range.",
+        string widget = "checkBox",
+        int connectable = 0
+    ]],
+
+    output float Result = 0 [[ string label = "Result" ]]
+) {
+    float t = (Value - InputLow) / (InputHigh - InputLow);
+    t = pow(abs(t), 1.0 / Gamma) * sign(t);
+    float r = OutputLow + (OutputHigh - OutputLow) * t;
+    Result = Clamp ? clamp(r, OutputLow, OutputHigh) : r;
+}

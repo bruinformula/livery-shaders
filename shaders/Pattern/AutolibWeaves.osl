@@ -80,40 +80,125 @@ WeaveData computeWeaveData(
 }
 
 
-shader AutolibWeaves [[ 
-    string category = "autolib"
+// The mesh UVs. Arnold's u,v on a mesh are its UVs; RenderMan's are per-face parametric coordinates,
+// so read the st primvar when the renderer exposes it (the default of the UV input).
+point meshUV() {
+    float st[2];
+    if (getattribute("primvar", "st", st))
+        return point(st[0], st[1], 0);
+    return point(u, v, 0);
+}
+
+shader AutolibWeaves [[
+    string label = "Weaves",
+    string help = "Procedural woven fabric: two thread colors with rounded, frizzy, bending threads, plus bump, "
+                  "opacity and anisotropy outputs for cloth and sheen.",
+    string rfh_classification = "RenderMan/Autolib/Pattern",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/pattern"
 ]] (
-    point UV = point(u,v,0),
+    point UV = meshUV() [[
+        string label = "UV",
+        string help = "Texture coordinates. Defaults to the mesh UVs (st); connect a Manifold to transform or replace them."
+    ]],
+    float Scale = 0.2 [[
+        string label = "Scale",
+        string help = "Size of one weave repeat in UV units.",
+        float min = 0.001, float max = 10, float slidermax = 1,
+        string page = "Weave",
+        int page_open = 1
+    ]],
+    color UColor = 0.2 [[
+        string label = "U Thread Color",
+        string help = "Color of the threads running along U.",
+        string page = "Weave"
+    ]],
+    color VColor = 0.5 [[
+        string label = "V Thread Color",
+        string help = "Color of the threads running along V.",
+        string page = "Weave"
+    ]],
+    float Width = 0.5 [[
+        string label = "Thread Width",
+        string help = "Width of each thread as a fraction of the repeat; gaps between threads become transparent.",
+        float min = 0.0, float max = 1.0, int slider = 1,
+        string page = "Weave"
+    ]],
 
-    float Scale = 0.2 [[ string help = "Pattern scale", float min = 0.001, float max = 10 ]],
+    float Roundness = 1.0 [[
+        string label = "Roundness",
+        string help = "How round the thread cross-section is (0 flat, 1 round).",
+        float min = 0.0, float max = 1.0, int slider = 1,
+        string page = "Shape",
+        int page_open = 1
+    ]],
+    float RoundnessBump = 1.0 [[
+        string label = "Roundness Bump",
+        string help = "Bump contributed by the round cross-section.",
+        float min = 0.0, float max = 2.0, int slider = 1,
+        string page = "Shape"
+    ]],
+    float RoundShadow = 0.5 [[
+        string label = "Roundness Shadow",
+        string help = "Darkens thread edges to fake self shadowing across the cross-section.",
+        float min = 0.0, float max = 1.0, int slider = 1,
+        string page = "Shape"
+    ]],
+    float WeaveBump = 0.5 [[
+        string label = "Weave Bump",
+        string help = "Bump from threads passing over and under each other.",
+        float min = 0.0, float max = 2.0, int slider = 1,
+        string page = "Shape"
+    ]],
+    float WeaveShadow = 0.4 [[
+        string label = "Weave Shadow",
+        string help = "Darkens threads where they pass under their neighbours.",
+        float min = 0.0, float max = 1.0, int slider = 1,
+        string page = "Shape"
+    ]],
 
-    color UColor = 0.2 [[ string help = "Color of U thread" ]],
-    color VColor = 0.5 [[ string help = "Color of V thread" ]],
+    float Frizz = 0.0 [[
+        string label = "Frizz",
+        string help = "Amount of loose fibers breaking up the thread edges.",
+        float min = 0.0, float max = 1.0, int slider = 1,
+        string page = "Frizz and Bend"
+    ]],
+    float FrizzBump = 0.0 [[
+        string label = "Frizz Bump",
+        string help = "Bump from the frizz fibers.",
+        float min = 0.0, float max = 2.0, int slider = 1,
+        string page = "Frizz and Bend"
+    ]],
+    float FrizzScale = 0.1 [[
+        string label = "Frizz Scale",
+        string help = "Size of the frizz noise relative to the repeat.",
+        float min = 0.0, float max = 10.0, float slidermax = 1,
+        string page = "Frizz and Bend"
+    ]],
+    float Bendyness = 0.2 [[
+        string label = "Bendiness",
+        string help = "Random waviness of the threads.",
+        float min = 0.0, float max = 1.0, int slider = 1,
+        string page = "Frizz and Bend"
+    ]],
+    float BendynessScale = 3.0 [[
+        string label = "Bendiness Scale",
+        string help = "Frequency of the waviness noise.",
+        float min = 0.0, float max = 10.0, int slider = 1,
+        string page = "Frizz and Bend"
+    ]],
+    float OpacityFade = 0.0 [[
+        string label = "Opacity Fade",
+        string help = "Softens the Opacity output toward the thread edges.",
+        float min = 0.0, float max = 1.0, int slider = 1,
+        string page = "Frizz and Bend"
+    ]],
 
-    float Width = 0.5 [[ string help = "Thread width", float min = 0.0, float max = 1.0 ]],
-    float Roundness = 1.0 [[ string help = "Thread roundness", float min = 0.0, float max = 1.0 ]],
-
-    float RoundnessBump = 1.0 [[ string help = "Roundness outBumpiness strength", float min = 0.0, float max = 2.0 ]],
-    float RoundShadow = 0.5 [[ string help = "Round shading strength", float min = 0.0, float max = 1.0 ]],
-
-    float WeaveBump = 0.5 [[ string help = "Weave outBumpiness intensity", float min = 0.0, float max = 2.0 ]],
-    float WeaveShadow = 0.4 [[ string help = "Weave shadow strength", float min = 0.0, float max = 1.0 ]],
-
-    float Frizz = 0.0 [[ string help = "Fiber frizz amount", float min = 0.0, float max = 1.0 ]],
-    float FrizzBump = 0.0 [[ string help = "Frizz outBumpiness intensity", float min = 0.0, float max = 2.0 ]],
-    float FrizzScale = 0.1 [[ string help = "Frizz noise scale", float min = 0.0, float max = 10.0 ]],
-
-    float Bendyness = 0.2 [[ string help = "Thread bending randomness", float min = 0.0, float max = 1.0 ]],
-    float BendynessScale = 3.0 [[ string help = "Bending noise scale", float min = 0.0, float max = 10.0 ]],
-
-    float OpacityFade = 0.0 [[ string help = "Thread edge opacity fade", float min = 0.0, float max = 1.0 ]],
-
-    output color Color = 0,
-    output float Bump = 0,
-    output float ThreadId = 0,
-    output float Opacity = 0,
-    output vector AnisotropicDirection = 0,
-    output float AnisotropyAmount = 0
+    output color Color = 0 [[ string label = "Color" ]],
+    output float Bump = 0 [[ string label = "Bump", string help = "Height for a bump node." ]],
+    output float ThreadId = 0 [[ string label = "Thread ID", string help = "0 on U threads, 1 on V threads." ]],
+    output float Opacity = 0 [[ string label = "Opacity", string help = "1 on threads, 0 in the gaps." ]],
+    output vector AnisotropicDirection = 0 [[ string label = "Anisotropy Direction", string help = "Thread direction, for anisotropic specular." ]],
+    output float AnisotropyAmount = 0 [[ string label = "Anisotropy Amount" ]]
 ) {
     vector uvw = UV / Scale;
 

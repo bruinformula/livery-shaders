@@ -1,9 +1,31 @@
-shader AutolibCurvatureBasicHatch(
-    vector Field = 0 [[ string widget = "null" ]],  // baked (R cos N*theta, R sin N*theta, 0)
-    int NumberRotations = 4 [[ int min = 0 ]],
-    float LineFreq  = 40 [[ int slider = 1, float max = 100, float min = 0 ]],
-    float LineWidth = 0.15,
-    output float Hatch = 1
+shader AutolibCurvatureBasicHatch [[
+    string label = "Curvature Basic Hatch",
+    string help = "Hatching lines that follow a curvature direction field (from the Curvature node), for "
+                  "illustrated / technical drawing looks.",
+    string rfh_classification = "RenderMan/Autolib/Stylized",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/stylized"
+]] (
+    vector Field = 0 [[
+        string label = "Field",
+        string help = "Direction field, encoded as (R cos N theta, R sin N theta, 0); connect the Curvature node's Field."
+    ]],
+    int NumberRotations = 4 [[
+        string label = "Field Symmetry",
+        string help = "N of the N-direction field (4 for a cross field).",
+        int min = 1, int slidermax = 8,
+        int connectable = 0
+    ]],
+    float LineFreq = 40 [[
+        string label = "Line Frequency",
+        string help = "Hatch lines per object space unit.",
+        float min = 0, float max = 100, int slider = 1
+    ]],
+    float LineWidth = 0.15 [[
+        string label = "Line Width",
+        string help = "Width of the hatch lines (0-1 of the spacing).",
+        float min = 0, float max = 1, int slider = 1
+    ]],
+    output float Hatch = 1 [[ string label = "Hatch", string help = "0 on lines, 1 between." ]]
 ) {
     
     float theta = atan2(Field.y, Field.x) / NumberRotations; // one of N member directions

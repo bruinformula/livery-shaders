@@ -1,12 +1,15 @@
 shader AutolibMixFloat [[
-    string category = "autolib"
+    string label = "Mix Float",
+    string help = "Linear blend from A (Mixer 0) to B (Mixer 1).",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    float Mixer = 0 [[ float min = 0, float max = 1 ]],
-    float FloatA = 0,
-    float FloatB = 1,
-    int Clamp = 0 [[ string widget = "boolean", int min = 0, int max = 1 ]],
+    float Mixer = 0 [[ string label = "Mixer", float min = 0, float max = 1 ]],
+    float FloatA = 0 [[ string label = "Float A" ]],
+    float FloatB = 1 [[ string label = "Float B" ]],
+    int Clamp = 0 [[ string label = "Clamp", string widget = "checkBox" ]],
 
-    output float X = 0
+    output float X = 0 [[ string label = "Result" ]]
 ) {
     float clampedMixer = Mixer;
     if (Clamp == 1) {

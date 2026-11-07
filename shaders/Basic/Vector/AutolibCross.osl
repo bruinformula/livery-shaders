@@ -1,9 +1,13 @@
 shader AutolibCross [[
-    string category = "autolib"
+    string label = "Cross",
+    string help = "Cross product A x B.",
+    string rfh_classification = "RenderMan/Autolib/Vector",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/vector"
 ]] (
-    vector A = 0,
-    vector B = 0,
-    output vector Output = 0
+    vector A = 0 [[ string label = "A" ]],
+    vector B = 0 [[ string label = "B" ]],
+
+    output vector Output = 0 [[ string label = "Output" ]]
 ) {
     Output = cross(A, B);
 }

@@ -1,9 +1,13 @@
 shader AutolibMaxFloat [[
-    string category = "autolib"
+    string label = "Max Float",
+    string help = "The larger of A and B.",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    float A = 0,
-    float B = 1,
-    output float Output = 0
+    float A = 0 [[ string label = "A" ]],
+    float B = 1 [[ string label = "B" ]],
+
+    output float Output = 0 [[ string label = "Output" ]]
 ) {
     Output = max(A, B);
 }

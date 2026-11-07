@@ -1,9 +1,13 @@
 shader AutolibStep [[
-    string category = "autolib"
+    string label = "Step",
+    string help = "0 below Edge, 1 at or above it (per component).",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    vector Edge = 0.5,
-    vector Input = 0,
-    output vector Output = 0
+    vector Edge = 0.5 [[ string label = "Edge" ]],
+    vector Input = 0 [[ string label = "Input" ]],
+
+    output vector Output = 0 [[ string label = "Output" ]]
 ) {
     Output = step(Edge, Input);
 }

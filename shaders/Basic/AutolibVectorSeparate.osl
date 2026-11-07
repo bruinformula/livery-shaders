@@ -1,11 +1,14 @@
-shader AutolibSeparateVector [[
-    string category = "autolib"
+shader AutolibVectorSeparate [[
+    string label = "Vector Separate",
+    string help = "Splits a vector into X, Y and Z.",
+    string rfh_classification = "RenderMan/Autolib/Convert",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/convert"
 ]] (
-    vector Input = 0,
+    vector Input = 0 [[ string label = "Input" ]],
 
-    output float X = 0,
-    output float Y = 0,
-    output float Z = 0
+    output float X = 0 [[ string label = "Result" ]],
+    output float Y = 0 [[ string label = "Y" ]],
+    output float Z = 0 [[ string label = "Z" ]]
 ) {
     X = Input[0];
     Y = Input[1];

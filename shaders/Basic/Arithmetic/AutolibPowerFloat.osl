@@ -1,9 +1,13 @@
 shader AutolibPowerFloat [[
-    string category = "autolib"
+    string label = "Power Float",
+    string help = "Base raised to Exponent.",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    float Base = 0,
-    float Exponent = 1,
-    output float Output = 0
+    float Base = 0 [[ string label = "Base" ]],
+    float Exponent = 1 [[ string label = "Exponent" ]],
+
+    output float Output = 0 [[ string label = "Output" ]]
 ) {
     Output = pow(Base, Exponent);
 }

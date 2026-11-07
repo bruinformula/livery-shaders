@@ -1,19 +1,28 @@
 #include "Decal.h"
 
 shader AutolibDecalTerminal [[
-    string category = "autolib"
+    string label = "Decal Terminal",
+    string help = "Ends or edits a decal chain: overrides (or max-combines) its height, mask, edge distance and "
+                  "color with the connected values.",
+    string rfh_classification = "RenderMan/Autolib/Decal",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/decal"
 ]] (
-    DecalData OtherData = {},
-    float HeightIn = 0,
-    float MaskIn = 0,
-    float SDFDistanceIn = 0,
-    color ColorIn = 1,
-    int Override = 1 [[ string widget = "boolean", int min = 0, int max = 1, string help = "If true, this terminal will override all previous data" ]],
-    output DecalData Data = {},
-    output float Height = 0,
-    output float Mask = 0,
-    output float SDFDistance = 0,
-    output color Color = 0
+    DecalData OtherData = {} [[ string label = "Other Data", string help = "Connect the Data output of the decal below this one; decals chain bottom to top and the last node holds the combined result." ]],
+    float HeightIn = 0 [[ string label = "Height" ]],
+    float MaskIn = 0 [[ string label = "Mask" ]],
+    float SDFDistanceIn = 0 [[ string label = "Edge Distance" ]],
+    color ColorIn = 1 [[ string label = "Color" ]],
+    int Override = 1 [[
+        string label = "Override",
+        string help = "Replace the chain's values with the connected inputs; off combines them (max of masks, color over).",
+        string widget = "checkBox",
+        int connectable = 0
+    ]],
+    output DecalData Data = {} [[ string label = "Data" ]],
+    output float Height = 0 [[ string label = "Height" ]],
+    output float Mask = 0 [[ string label = "Mask" ]],
+    output float SDFDistance = 0 [[ string label = "Edge Distance" ]],
+    output color Color = 0 [[ string label = "Color" ]]
 ) {
     if (!isconnected(OtherData)) return;
 

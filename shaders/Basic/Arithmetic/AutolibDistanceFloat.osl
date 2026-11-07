@@ -1,10 +1,13 @@
 shader AutolibDistanceFloat [[
-    string category = "autolib"
+    string label = "Distance Float",
+    string help = "Distance between A and B.",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    float ValueA = 0,
-    float ValueB = 0,
+    float ValueA = 0 [[ string label = "Value A" ]],
+    float ValueB = 0 [[ string label = "Value B" ]],
 
-    output float Result = 0
+    output float Result = 0 [[ string label = "Result" ]]
 ) {
     Result = abs(ValueA - ValueB);
 }

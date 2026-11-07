@@ -9,15 +9,18 @@ float cubicInterpolate(float t, float A, float B) {
 #define GOSSETT 1
 
 shader AutolibRYB [[
-    string nodegroup = "autolib",
-    string help = "https://bahamas10.github.io/ryb/assets/ryb.pdf"
+    string label = "RYB Color",
+    string help = "Mixes a color in the painter's red-yellow-blue model (Gossett and Chen), with extra white and "
+                  "black, for intuitive paint-like color choices.",
+    string rfh_classification = "RenderMan/Autolib/Color",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/color"
 ]] (
-    float Red = 0.5 [[ float min = 0, float max = 1, int interactive = 1 ]],
-    float Yellow = 0.5 [[ float min = 0, float max = 1, int interactive = 1 ]],
-    float Blue = 0.5 [[ float min = 0, float max = 1, int interactive = 1 ]],
-    float White = 0.0 [[ float min = 0, float max = 1 , int interactive = 1 ]],
-    float Black = 0.0 [[ float min = 0, float max = 1, int interactive = 1 ]],
-    output color Color = 1 [[ int interactive = 1 ]]
+    float Red = 0.5 [[ string label = "Red", float min = 0, float max = 1, int slider = 1 ]],
+    float Yellow = 0.5 [[ string label = "Yellow", float min = 0, float max = 1, int slider = 1 ]],
+    float Blue = 0.5 [[ string label = "Blue", float min = 0, float max = 1, int slider = 1 ]],
+    float White = 0.0 [[ string label = "White", string help = "Tints the result toward white.", float min = 0, float max = 1, int slider = 1 ]],
+    float Black = 0.0 [[ string label = "Black", string help = "Shades the result toward black.", float min = 0, float max = 1, int slider = 1 ]],
+    output color Color = 1 [[ string label = "Color" ]]
 ) {
 
     vector corners[8] = {

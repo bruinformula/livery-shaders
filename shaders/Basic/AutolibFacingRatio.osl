@@ -1,12 +1,31 @@
 shader AutolibFacingRatio [[
-    string category = "autolib"
+    string label = "Facing Ratio",
+    string help = "0 where the surface faces the viewer, rising to 1 at grazing angles (a Fresnel-like edge mask), "
+                  "shaped by a gain curve.",
+    string rfh_classification = "RenderMan/Autolib/Geometry",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/geometry"
 ]] (
-    vector Normal = N,
-    vector View = I,
-    int Invert = 0 [[ string widget = "boolean" ]],
-    float Gain = 0.5,
+    vector Normal = N [[
+        string label = "Normal",
+        string help = "Surface normal. Defaults to the shading normal; connect a bumped normal to follow the bump."
+    ]],
+    vector View = I [[
+        string label = "View",
+        string help = "View direction. Defaults to the incident ray direction."
+    ]],
+    int Invert = 0 [[
+        string label = "Invert",
+        string help = "1 facing the viewer, 0 at grazing angles instead.",
+        string widget = "checkBox",
+        int connectable = 0
+    ]],
+    float Gain = 0.5 [[
+        string label = "Gain",
+        string help = "Shapes the falloff; 0.5 is linear in the angle's cosine, lower values tighten the edge.",
+        float min = 0.001, float max = 1, int slider = 1
+    ]],
 
-    output float Result = 0
+    output float Result = 0 [[ string label = "Result" ]]
 ) {
     vector n = normalize(Normal);
     vector i = normalize(View);

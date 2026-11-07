@@ -1,8 +1,12 @@
 shader AutolibCeilFloat [[
-    string category = "autolib"
+    string label = "Ceil Float",
+    string help = "Rounds up to the next integer.",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    float Input = 0,
-    output float Output = 0
+    float Input = 0 [[ string label = "Input" ]],
+
+    output float Output = 0 [[ string label = "Output" ]]
 ) {
     Output = ceil(Input);
 }

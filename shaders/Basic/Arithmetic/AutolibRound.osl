@@ -1,8 +1,12 @@
 shader AutolibRound [[
-    string category = "autolib"
+    string label = "Round",
+    string help = "Rounds to the nearest integer (per component).",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    vector Input = 0,
-    output vector Output = 0
+    vector Input = 0 [[ string label = "Input" ]],
+
+    output vector Output = 0 [[ string label = "Output" ]]
 ) {
     Output = round(Input);
 }

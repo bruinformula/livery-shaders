@@ -1,10 +1,14 @@
 shader AutolibSwitchFloat [[
-    string category = "autolib"
+    string label = "Switch Float",
+    string help = "If True when Mask is on, otherwise If False.",
+    string rfh_classification = "RenderMan/Autolib/Logic",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/logic"
 ]] (
-    int Mask = 0 [[ string widget = "boolean" ]],
-    float IfTrue = 0,
-    float IfFalse = 0,
-    output float Output = 0
+    int Mask = 0 [[ string label = "Mask", string widget = "checkBox" ]],
+    float IfTrue = 0 [[ string label = "If True" ]],
+    float IfFalse = 0 [[ string label = "If False" ]],
+
+    output float Output = 0 [[ string label = "Output" ]]
 ) {
     Output = Mask ? IfTrue : IfFalse;
 }

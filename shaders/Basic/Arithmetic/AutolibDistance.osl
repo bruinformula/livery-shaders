@@ -1,10 +1,13 @@
 shader AutolibDistance [[
-    string category = "autolib"
+    string label = "Distance",
+    string help = "Distance between A and B.",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    vector VectorA = vector(1, 0, 0),
-    vector VectorB = vector(0, 1, 0),
+    vector VectorA = vector(1, 0, 0) [[ string label = "Vector A" ]],
+    vector VectorB = vector(0, 1, 0) [[ string label = "Vector B" ]],
 
-    output vector Result = 0
+    output vector Result = 0 [[ string label = "Result" ]]
 ) {
     Result = distance(VectorA, VectorB);
 }

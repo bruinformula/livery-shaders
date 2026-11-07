@@ -1,8 +1,12 @@
 shader AutolibColorToVector [[
-    string category = "autolib",
+    string label = "Color To Vector",
+    string help = "Reinterprets a color as a vector.",
+    string rfh_classification = "RenderMan/Autolib/Convert",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/convert"
 ]] (
-    color Input = 0.0,
-    output vector XYZ = 0
+    color Input = 0.0 [[ string label = "Input" ]],
+
+    output vector XYZ = 0 [[ string label = "Result" ]]
 ) {
     XYZ = (vector)Input;
 }

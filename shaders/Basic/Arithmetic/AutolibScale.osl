@@ -1,10 +1,13 @@
 shader AutolibScale [[
-    string category = "autolib"
+    string label = "Scale",
+    string help = "Multiplies a vector by a float factor.",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    vector Vector = 1,
-    float Factor = 0,
+    vector Vector = 1 [[ string label = "Vector" ]],
+    float Factor = 0 [[ string label = "Factor" ]],
 
-    output vector Output = 0
+    output vector Output = 0 [[ string label = "Output" ]]
 ) {
     Output = Vector * Factor;
 }

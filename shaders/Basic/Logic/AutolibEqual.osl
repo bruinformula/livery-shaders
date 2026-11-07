@@ -1,10 +1,14 @@
 shader AutolibEqual [[
-    string category = "autolib"
+    string label = "Equal",
+    string help = "1 when A and B differ by at most Threshold, otherwise 0.",
+    string rfh_classification = "RenderMan/Autolib/Logic",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/logic"
 ]] (
-    float A = 0,
-    float B = 0,
-    float Threshold = 0.0001,
-    output float Output = 0
+    float A = 0 [[ string label = "A" ]],
+    float B = 0 [[ string label = "B" ]],
+    float Threshold = 0.0001 [[ string label = "Threshold" ]],
+
+    output float Output = 0 [[ string label = "Output" ]]
 ) {
     Output = (abs(A - B) <= Threshold) ? 1.0 : 0.0;
 }

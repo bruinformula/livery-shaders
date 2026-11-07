@@ -1,25 +1,97 @@
-shader AutolibTooledSteel [[ 
-    string category = "autolib"
+// The mesh UVs. Arnold's u,v on a mesh are its UVs; RenderMan's are per-face parametric coordinates,
+// so read the st primvar when the renderer exposes it (the default of the UV input).
+point meshUV() {
+    float st[2];
+    if (getattribute("primvar", "st", st))
+        return point(st[0], st[1], 0);
+    return point(u, v, 0);
+}
+
+shader AutolibTooledSteel [[
+    string label = "Tooled Steel",
+    string help = "Machined metal (spot facing / engine turning): a spiral tool path with overlapping circular "
+                  "tool marks, giving a mask and an anisotropy amount for brushed-metal speculars.",
+    string rfh_classification = "RenderMan/Autolib/Pattern",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/pattern"
 ]] (
-    point UV = point(u,v,0) [[ string widget = "null" ]],
-    vector Offset = 0.5 [[ int interactive = 1 ]],
-    float Scale = 0.1 [[ float min = 0, int interactive = 1 ]],
-    float Strength = 1 [[ string page = "Spiral Path", float min = 0, int interactive = 1 ]],
-    float Width = 4 [[ string page = "Spiral Path", float min = 0, int interactive = 1 ]],
-    float Gradient = 3 [[ string page = "Spiral Path", float min = 0, int interactive = 1 ]],
-    
-    float NoiseScaleU = 0.05 [[ string page = "Circles", float min = 0, int interactive = 1 ]],
-    float NoiseScaleV = 200 [[ string page = "Circles", float min = 0, int interactive = 1 ]],
-    int NumCircles = 100  [[ string page = "Circles", string help = "Controls number of circles in a span", int min = 1, int interactive = 1 ]],
-    float CircleAspect = 2 [[ string page = "Circles", string help = "Shapes the rings to be more or less elliptical", float min = 0, int interactive = 1 ]],
-    float CircleRingWidth = 0.01 [[ string page = "Circles", string help = "Perimeter width of the circle rings", float min = 0, int interactive = 1 ]],
-    float CircleSoftness = 0.0  [[ string page = "Circles", string help = "Perimeter softness of the circle rings", float min = 0, float max = 1, int interactive = 1 ]],
-    
-    output point SpiralCoord = 0,
-    output float Spiral = 0,
-    output float CircleNoise = 0,
-    output float CircleMask = 0,
-    output float CircleAnisotropy = 0
+    point UV = meshUV() [[
+        string label = "UV",
+        string help = "Texture coordinates. Defaults to the mesh UVs (st); connect a Manifold to transform or replace them."
+    ]],
+    vector Offset = 0.5 [[
+        string label = "Center",
+        string help = "Centre of the spiral in UV space.",
+        float slidermin = 0, float slidermax = 1
+    ]],
+    float Scale = 0.1 [[
+        string label = "Scale",
+        string help = "Size of the pattern in UV units.",
+        float min = 0, float slidermax = 1
+    ]],
+
+    float Strength = 1 [[
+        string label = "Strength",
+        string help = "Contribution of the spiral path.",
+        float min = 0, float slidermax = 2,
+        string page = "Spiral Path",
+        int page_open = 1
+    ]],
+    float Width = 4 [[
+        string label = "Width",
+        string help = "Width of the spiral path.",
+        float min = 0, float slidermax = 10,
+        string page = "Spiral Path"
+    ]],
+    float Gradient = 3 [[
+        string label = "Gradient",
+        string help = "Falloff across the spiral path.",
+        float min = 0, float slidermax = 10,
+        string page = "Spiral Path"
+    ]],
+
+    float NoiseScaleU = 0.05 [[
+        string label = "Noise Scale U",
+        string help = "Noise frequency along the path.",
+        float min = 0, float slidermax = 1,
+        string page = "Circles",
+        int page_open = 1
+    ]],
+    float NoiseScaleV = 200 [[
+        string label = "Noise Scale V",
+        string help = "Noise frequency across the path.",
+        float min = 0, float slidermax = 500,
+        string page = "Circles"
+    ]],
+    int NumCircles = 100 [[
+        string label = "Circles",
+        string help = "Number of tool circles in one span of the path.",
+        int min = 1, int slidermax = 400,
+        string page = "Circles"
+    ]],
+    float CircleAspect = 2 [[
+        string label = "Circle Aspect",
+        string help = "Makes the rings more or less elliptical.",
+        float min = 0, float slidermax = 4,
+        string page = "Circles"
+    ]],
+    float CircleRingWidth = 0.01 [[
+        string label = "Ring Width",
+        string help = "Width of each ring's perimeter.",
+        float min = 0, float slidermax = 0.1,
+        string page = "Circles"
+    ]],
+    float CircleSoftness = 0.0 [[
+        string label = "Ring Softness",
+        string help = "Softness of the ring perimeters.",
+        float min = 0, float max = 1, int slider = 1,
+        string page = "Circles"
+    ]],
+
+    output point SpiralCoord = 0 [[ string label = "Spiral Coord", string help = "Coordinates along / across the spiral path." ]],
+    output float Spiral = 0 [[ string label = "Spiral" ]],
+    output float CircleNoise = 0 [[ string label = "Circle Noise" ]],
+    output float CircleMask = 0 [[ string label = "Circle Mask" ]],
+    output float CircleAnisotropy = 0 [[ string label = "Anisotropy", string help = "Anisotropy amount for the tool marks." ]]
 ) {
     point q = (UV - Offset);
     q.z = 0;

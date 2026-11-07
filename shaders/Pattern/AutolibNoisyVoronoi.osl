@@ -15,33 +15,115 @@ point fract(point p) {
 #define HASH 1
 #define SIMPLEX 2
 
-shader AutolibNoisyVoronoi [[ 
-    string category = "autolib" 
+shader AutolibNoisyVoronoi [[
+    string label = "Noisy Voronoi",
+    string help = "Voronoi cells with noise-distorted borders, filled with two colors or random colors per cell; "
+                  "optional metaball blending between cells.",
+    string rfh_classification = "RenderMan/Autolib/Pattern",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/pattern"
 ]] (
-    // Input Mapping
-    point UVW = transform("world", P) [[ string help = "World Space UVW" ]],
-    int ObjectUVW = 1 [[ string help = "Use Object Space UVW instead of World Space UVW", int min = 0, int max = 1 ]],
+    point UVW = transform("world", P) [[
+        string label = "Position",
+        string help = "Where the cells are evaluated. Defaults to world position (see Object Space)."
+    ]],
+    int ObjectUVW = 1 [[
+        string label = "Object Space",
+        string help = "Use object space position instead of world space, so cells stick to moving objects.",
+        string widget = "checkBox",
+        int connectable = 0
+    ]],
 
-    // Color 
-    color Color1 = 1,
-    color Color2 = 0,
-    int Multicolored = 0 [[ string help = "Output random colors. Color 1 and Color 2 are ignored.", int min = 0, int max = 1 ]],
+    color Color1 = 1 [[
+        string label = "Cell Color",
+        string page = "Color",
+        int page_open = 1,
+        string conditionalVisOp = "equalTo",
+        string conditionalVisPath = "../Multicolored",
+        string conditionalVisValue = "0"
+    ]],
+    color Color2 = 0 [[
+        string label = "Border Color",
+        string page = "Color",
+        string conditionalVisOp = "equalTo",
+        string conditionalVisPath = "../Multicolored",
+        string conditionalVisValue = "0"
+    ]],
+    int Multicolored = 0 [[
+        string label = "Random Colors",
+        string help = "Give every cell a random color instead of Cell / Border Color.",
+        string widget = "checkBox",
+        int connectable = 0,
+        string page = "Color"
+    ]],
 
-    float Scale = 1 [[ string help = "Size of the cell pattern", float min = 0.001, float max = 10 ]],
-    float scaleMultiplier = 1 [[ string help = "Multiplier for finer control of pattern size", float min = 0.001, float max = 10 ]],
+    float Scale = 1 [[
+        string label = "Scale",
+        string help = "Size of the cells.",
+        float min = 0.001, float max = 10, int slider = 1,
+        string page = "Cells",
+        int page_open = 1
+    ]],
+    float scaleMultiplier = 1 [[
+        string label = "Scale Multiplier",
+        string help = "Extra multiplier on Scale for fine control.",
+        float min = 0.001, float max = 10, int slider = 1,
+        string page = "Cells"
+    ]],
+    int seed = 0 [[
+        string label = "Seed",
+        string help = "Random seed for the cell pattern.",
+        int min = 0, int max = 32767,
+        string page = "Cells"
+    ]],
+    float cellExpansion = 1.5 [[
+        string label = "Cell Fill",
+        string help = "How much of each cell is filled; lower values open up the borders.",
+        float min = -2, float max = 2, int slider = 1,
+        string page = "Cells"
+    ]],
+    int blobby = 0 [[
+        string label = "Blobby",
+        string help = "Blend neighbouring cells like metaballs.",
+        string widget = "checkBox",
+        int connectable = 0,
+        string page = "Cells"
+    ]],
+    float offsetMultiplier = 6 [[
+        string label = "Offset Multiplier",
+        string help = "Offset between the noise lookups of each octave, for pattern variations.",
+        float min = 0.01, float max = 10, int slider = 1,
+        string page = "Cells"
+    ]],
 
-    int seed = 0 [[ string help = "Seed for random cell pattern", int min = 1, int max = 32767 ]],
-    float offsetMultiplier = 6 [[ string help = "Multiplier for the offset for pattern variations", string page = "Extra control", float min = 0.01, float max = 10 ]],
-    int blobby = 0 [[ string help = "Turns on or off metaball behavior", int min = 0, int max = 1 ]],
-    float cellExpansion = 1.5 [[ string help = "Fill of each cell", float min = -2, float max = 2 ]],
+    int noiseType = SIMPLEX [[
+        string label = "Noise Type",
+        string help = "Noise that distorts the cell borders.",
+        string widget = "mapper",
+        string options = "Cell:0|Hash:1|Simplex:2",
+        int connectable = 0,
+        string page = "Border Noise",
+        int page_open = 1
+    ]],
+    float noiseScale = 1 [[
+        string label = "Noise Scale",
+        string help = "Frequency of the border noise.",
+        float min = 0, float max = 10, int slider = 1,
+        string page = "Border Noise"
+    ]],
+    float noiseAmount = 0.15 [[
+        string label = "Noise Amount",
+        string help = "How far the noise pushes the borders.",
+        float min = 0, float max = 10, float slidermax = 1,
+        string page = "Border Noise"
+    ]],
+    int octaves = 1 [[
+        string label = "Octaves",
+        string help = "Number of noise octaves.",
+        int min = 1, int max = 20, int slidermax = 8,
+        string page = "Border Noise"
+    ]],
 
-    // Noise 
-    float noiseScale = 1 [[ string help = "Edge noise size", float min = 0, float max = 10  ]],
-    float noiseAmount = 0.15 [[ string help = "Multiplier for the edge noise size", float min = 0, float max = 10  ]],
-    int octaves = 1 [[ string help = "Number of noise iterations", int min = 1, int max = 20 ]],
-    int noiseType = SIMPLEX [[ string help = "Noise type", string widget = "mapper", string options = "cell|hash|simplex" ]],
-
-    output color Color = 0
+    output color Color = 0 [[ string label = "Color" ]]
 ) {
     point uvw = point(0);
 

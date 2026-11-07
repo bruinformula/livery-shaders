@@ -1,10 +1,13 @@
 shader AutolibSubtract [[
-    string category = "autolib"
+    string label = "Subtract",
+    string help = "A - B (per component).",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    vector InputA = 0.0,
-    vector InputB = 0.0,
+    vector InputA = 0.0 [[ string label = "Input A" ]],
+    vector InputB = 0.0 [[ string label = "Input B" ]],
 
-    output vector Output = 0
+    output vector Output = 0 [[ string label = "Output" ]]
 ) {
     Output = InputA - InputB;
 }

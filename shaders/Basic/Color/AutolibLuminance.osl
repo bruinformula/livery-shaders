@@ -1,8 +1,12 @@
 shader AutolibLuminance [[
-    string category = "autolib"
+    string label = "Luminance",
+    string help = "Luminance of the color.",
+    string rfh_classification = "RenderMan/Autolib/Color",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/color"
 ]] (
-    color Input = 0,
-    output float Output = 0
+    color Input = 0 [[ string label = "Input" ]],
+
+    output float Output = 0 [[ string label = "Output" ]]
 ) {
     Output = luminance(Input);
 }

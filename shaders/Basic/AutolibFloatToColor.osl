@@ -1,12 +1,15 @@
 shader AutolibFloatToColor [[
-    string category = "autolib",
+    string label = "Float To Color",
+    string help = "Builds a color from one float (all channels) or three, whichever are connected.",
+    string rfh_classification = "RenderMan/Autolib/Convert",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/convert"
 ]] (
-    float Input = 0.0 [[ string label = "Input", string help = "The float to convert to a triple (copied to all channels)."  ]],
-    float InputR = 0.0 [[ string label = "Input R", string help = "The float to place in the R component."  ]],
-    float InputG = 0.0 [[ string label = "Input G", string help = "The float to place in the G component."  ]],
-    float InputB = 0.0 [[ string label = "Input B", string help = "The float to place in the B component."  ]],
+    float Input = 0.0 [[ string label = "Input", string help = "The float to convert to a triple (copied to all channels)." ]],
+    float InputR = 0.0 [[ string label = "Input R", string help = "The float to place in the R component." ]],
+    float InputG = 0.0 [[ string label = "Input G", string help = "The float to place in the G component." ]],
+    float InputB = 0.0 [[ string label = "Input B", string help = "The float to place in the B component." ]],
 
-    output color RGB = 0
+    output color RGB = 0 [[ string label = "Result" ]]
 ) {
     // Check if the primary 'Input' or the individual channels are connected
     int inputConnected = isconnected(Input);

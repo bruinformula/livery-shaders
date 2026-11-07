@@ -2,16 +2,35 @@
 #define POLYGONS 1
 #define PATCHES 2
 
-shader AutolibWireframe [[ 
-    string category = "autolib" 
+shader AutolibWireframe [[
+    string label = "Wireframe",
+    string help = "1 along the mesh edges (triangles, polygons or patches), with the line width in pixels or "
+                  "scene units.",
+    string rfh_classification = "RenderMan/Autolib/Stylized",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/stylized"
 ]] (
-    int EdgeType = POLYGONS [[ string widget = "popup", string options = "triangles|polygons|patches" ]], 
-    float LineWidth = 1  [[ float min = 0.0, int interactive = 1 ]], 
-    int Raster = 1  [[ string widget = "boolean", int min = 0, int max = 1 ]],
-    output float Value = 0
+    int EdgeType = POLYGONS [[
+        string label = "Edge Type",
+        string help = "Which edges to draw.",
+        string widget = "mapper",
+        string options = "Triangles:0|Polygons:1|Patches:2",
+        int connectable = 0
+    ]],
+    float LineWidth = 1 [[
+        string label = "Line Width",
+        string help = "Width of the lines, in pixels with Raster on, otherwise in scene units.",
+        float min = 0.0, float slidermax = 5
+    ]],
+    int Raster = 1 [[
+        string label = "Raster Width",
+        string help = "Measure Line Width in screen pixels.",
+        string widget = "checkBox",
+        int connectable = 0
+    ]],
+    output float Value = 0 [[ string label = "Value" ]]
 ) {
     // ray differentials are so big in diffuse context that this function would always return "wire"
-    if (raytype("path:diffuse")) {
+    if (raytype("diffuse")) {
         Value = 0.0;
         exit();
     }

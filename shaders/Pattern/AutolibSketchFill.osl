@@ -101,39 +101,123 @@ int clipHatchEdge(
 }
 
 
-shader AutolibSketchFill (
-    point Position = P [[ string widget = "null", int interpolated = 1 ]],
-    float Skew = 45 [[ string help = "This rotates the base space by degrees", float min = 0 ]],
-    float LineSpacing = 0.05 [[ string help = "Distance between the lines as a fraction of the larger image dimension", float min = 0 ]],
-    float LineWidth = 0.005 [[ string help = "Width of the lines as a fraction of the larger image dimension, independent of the spacing, the resolution and the aspect ratio", float min = 0 ]], 
-    
-    string TerminationType = "Square" [[ string page = "Termination", string help = "Specifies the type of termination for the lines", string widget = "mapper", string options = "Round|Square|Butt" ]],
-    float TerminationTaperWidth = 0 [[ string page = "Termination", string help = "Adds a thinned termination of hatches", float min = 0 ]],
-    float TerminationTaperSlope = 1 [[ string page = "Termination", string help = "Specifies the slope of the start and endpoints of the lines", float min = 0 ]],
+shader AutolibSketchFill [[
+    string label = "Sketch Fill",
+    string help = "Hand-drawn hatching in screen space: parallel strokes with squiggle, pressure and tapered "
+                  "terminations, plus a boundary line along the mesh edges (CAD boundary distance primvars or "
+                  "the triangle / polygon edges).",
+    string rfh_classification = "RenderMan/Autolib/Stylized",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/stylized"
+]] (
+    point Position = P [[
+        string label = "Position",
+        string help = "Shading position the screen space lines are computed from."
+    ]],
+    float Skew = 45 [[
+        string label = "Angle",
+        string help = "Direction of the hatch lines on screen, in degrees.",
+        float min = 0, float slidermax = 180,
+        string page = "Lines",
+        int page_open = 1
+    ]],
+    float LineSpacing = 0.05 [[
+        string label = "Line Spacing",
+        string help = "Distance between lines as a fraction of the larger image dimension.",
+        float min = 0, float slidermax = 0.2,
+        string page = "Lines"
+    ]],
+    float LineWidth = 0.005 [[
+        string label = "Line Width",
+        string help = "Line width as a fraction of the larger image dimension, independent of spacing, resolution and aspect ratio.",
+        float min = 0, float slidermax = 0.05,
+        string page = "Lines"
+    ]],
 
-    float SquiggleAmount = 0 [[ string page = "Noise", string help = "Moves the line sideways as it is drawn, similar to lines drawn by hand. 0 is a straight line and 1 lets the line wander through all the room between it and its neighbors", float min = 0, float max = 1 ]],
-    float SquiggleScale = 0.5 [[ string page = "Noise", string help = "Defines the XAxis scale of squiggle", float min = 0, float max = 1 ]],
-    float PressureAmount = 0 [[ string page = "Noise", string help = "Varys the thickness of the line", float min = 0 ]],
-    float PressureFrequency = 0.5 [[ string page = "Noise", string help = "Defines the frequency at which the thickness varys", float min = 0, float max = 1 ]],
-   
-    float BoundaryWidth = 0.005 [[ string page = "Boundary", string help = "Width of the boundary. With constant width it is a fraction of the larger image dimension and stays the same on screen. Without constant width it is in world units and scales with the camera", float min = 0 ]],
-    // Cad tesselations can have an irregular distrobution of vertices 
-    // These distances are Candidate distances for the boundary edges.
-    // They are compared and the closest one is used to determine the 
-    // boundary proximity.
-    float BoundaryEdgeDistance0 = 0 [[ string page = "Boundary", string help = "Plug in the boundaryEdgeDistance0 faceVarying float primvar. Distance from this face corner to triangle edge 0, or 0 if that edge is not a boundary. When none of the three are connected, uses primedges as a default.", string widget = "null", int interpolated = 1 ]],
-    float BoundaryEdgeDistance1 = 0 [[ string page = "Boundary", string help = "Plug in the boundaryEdgeDistance1 faceVarying float primvar.", string widget = "null", int interpolated = 1 ]],
-    float BoundaryEdgeDistance2 = 0 [[ string page = "Boundary", string help = "Plug in the boundaryEdgeDistance2 faceVarying float primvar.", string widget = "null", int interpolated = 1 ]],
-    float BoundaryEdgeDistance3 = 0 [[ string page = "Boundary", string help = "Plug in the boundaryEdgeDistance3 faceVarying float primvar.", string widget = "null", int interpolated = 1 ]],
-    float BoundaryEdgeDistance4 = 0 [[ string page = "Boundary", string help = "Plug in the boundaryEdgeDistance4 faceVarying float primvar.", string widget = "null", int interpolated = 1 ]],
-    float BoundaryEdgeDistance5 = 0 [[ string page = "Boundary", string help = "Plug in the boundaryEdgeDistance5 faceVarying float primvar.", string widget = "null", int interpolated = 1 ]],
+    string TerminationType = "Square" [[
+        string label = "Termination",
+        string help = "Shape of the stroke ends.",
+        string widget = "mapper",
+        string options = "Round:Round|Square:Square|Butt:Butt",
+        int connectable = 0,
+        string page = "Termination"
+    ]],
+    float TerminationTaperWidth = 0 [[
+        string label = "Taper Width",
+        string help = "Length of the thinning at the stroke ends.",
+        float min = 0, float slidermax = 1,
+        string page = "Termination"
+    ]],
+    float TerminationTaperSlope = 1 [[
+        string label = "Taper Slope",
+        string help = "Steepness of the taper at the start and end of each stroke.",
+        float min = 0, float slidermax = 4,
+        string page = "Termination"
+    ]],
 
-    string BoundaryEdgeType = "Triangles" [[ string page = "Boundary", string help = "Specifies the type of edge for the boundary when the distance primvars are not connected", string widget = "mapper", string options = "Triangles|Polygons|Patches" ]],    
-    int BoundaryEnableConstantWidth = 1 [[ string page = "Boundary", string help = "Renders the boundary as a constant screen space size", string widget = "checkBox" ]],
+    float SquiggleAmount = 0 [[
+        string label = "Squiggle Amount",
+        string help = "Sideways wander of each line, as if drawn by hand: 0 straight, 1 uses all the room up to its neighbours.",
+        float min = 0, float max = 1, int slider = 1,
+        string page = "Noise"
+    ]],
+    float SquiggleScale = 0.5 [[
+        string label = "Squiggle Scale",
+        string help = "Length scale of the squiggle along the line.",
+        float min = 0, float max = 1, int slider = 1,
+        string page = "Noise"
+    ]],
+    float PressureAmount = 0 [[
+        string label = "Pressure Amount",
+        string help = "Variation of the line thickness along its length.",
+        float min = 0, float slidermax = 1,
+        string page = "Noise"
+    ]],
+    float PressureFrequency = 0.5 [[
+        string label = "Pressure Frequency",
+        string help = "How quickly the thickness varies.",
+        float min = 0, float max = 1, int slider = 1,
+        string page = "Noise"
+    ]],
 
-    output float Value = 0,
-    output float DistanceToClosestEdge = 0,
-    output float BoundaryMask = 0
+    float BoundaryWidth = 0.005 [[
+        string label = "Boundary Width",
+        string help = "Width of the boundary line. With Constant Width a fraction of the larger image dimension (fixed on "
+                      "screen), otherwise in world units.",
+        float min = 0, float slidermax = 0.05,
+        string page = "Boundary"
+    ]],
+    int BoundaryEnableConstantWidth = 1 [[
+        string label = "Constant Width",
+        string help = "Keep the boundary line a constant width on screen.",
+        string widget = "checkBox",
+        int connectable = 0,
+        string page = "Boundary"
+    ]],
+    string BoundaryEdgeType = "Triangles" [[
+        string label = "Edge Type",
+        string help = "Which mesh edges count as boundaries when the distance primvars are not connected.",
+        string widget = "mapper",
+        string options = "Triangles:Triangles|Polygons:Polygons|Patches:Patches",
+        int connectable = 0,
+        string page = "Boundary"
+    ]],
+    // CAD tessellations can have an irregular distribution of vertices. These are candidate distances to
+    // the boundary edges; the closest one determines the boundary proximity.
+    float BoundaryEdgeDistance0 = 0 [[
+        string label = "Edge Distance 0",
+        string help = "Connect the boundaryEdgeDistance0 faceVarying primvar: distance from this face corner to triangle "
+                      "edge 0, or 0 if it is not a boundary. When none are connected the mesh edges are used.",
+        string page = "Boundary.Edge Distance Primvars"
+    ]],
+    float BoundaryEdgeDistance1 = 0 [[ string label = "Edge Distance 1", string help = "Connect the boundaryEdgeDistance1 faceVarying primvar.", string page = "Boundary.Edge Distance Primvars" ]],
+    float BoundaryEdgeDistance2 = 0 [[ string label = "Edge Distance 2", string help = "Connect the boundaryEdgeDistance2 faceVarying primvar.", string page = "Boundary.Edge Distance Primvars" ]],
+    float BoundaryEdgeDistance3 = 0 [[ string label = "Edge Distance 3", string help = "Connect the boundaryEdgeDistance3 faceVarying primvar.", string page = "Boundary.Edge Distance Primvars" ]],
+    float BoundaryEdgeDistance4 = 0 [[ string label = "Edge Distance 4", string help = "Connect the boundaryEdgeDistance4 faceVarying primvar.", string page = "Boundary.Edge Distance Primvars" ]],
+    float BoundaryEdgeDistance5 = 0 [[ string label = "Edge Distance 5", string help = "Connect the boundaryEdgeDistance5 faceVarying primvar.", string page = "Boundary.Edge Distance Primvars" ]],
+
+    output float Value = 0 [[ string label = "Value", string help = "1 on hatch lines." ]],
+    output float DistanceToClosestEdge = 0 [[ string label = "Distance To Edge" ]],
+    output float BoundaryMask = 0 [[ string label = "Boundary Mask", string help = "1 on the boundary line." ]]
 ) {
     // First step is to establish the diagonial lines acoss the screen 
     // this could be done either using like a trig then a step function 

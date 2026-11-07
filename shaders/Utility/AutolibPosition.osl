@@ -1,0 +1,18 @@
+shader AutolibPosition [[
+    string label = "Position",
+    string help = "The shading position in object, world or camera space.",
+    string rfh_classification = "RenderMan/Autolib/Geometry",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/geometry"
+]] (
+    string Space = "object" [[
+        string label = "Space",
+        string help = "Coordinate system of the result.",
+        string widget = "mapper",
+        string options = "Object:object|World:world|Camera:camera",
+        int connectable = 0
+    ]],
+
+    output vector Position = 0 [[ string label = "Position" ]]
+) {
+    Position = transform(Space, P);
+}

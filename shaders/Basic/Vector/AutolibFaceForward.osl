@@ -1,9 +1,13 @@
 shader AutolibFaceForward [[
-    string category = "autolib"
+    string label = "Face Forward",
+    string help = "Flips Normal to face against Incident.",
+    string rfh_classification = "RenderMan/Autolib/Vector",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/vector"
 ]] (
-    vector Normal = N,
-    vector Incident = I,
-    output vector Output = 0
+    vector Normal = N [[ string label = "Normal" ]],
+    vector Incident = I [[ string label = "Incident" ]],
+
+    output vector Output = 0 [[ string label = "Output" ]]
 ) {
     Output = faceforward(Normal, Incident); // Ng is implied
 }

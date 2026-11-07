@@ -1,0 +1,27 @@
+// Same result as MaterialX ND_fractal3d_vector3.
+shader AutolibFractal3D [[
+    string label = "Fractal 3D",
+    string help = "Fractal (fBm) sum of signed 3D perlin noise, one value per channel (same result as MaterialX "
+                  "ND_fractal3d_vector3).",
+    string rfh_classification = "RenderMan/Autolib/Noise",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/noise"
+]] (
+    vector Position = P [[ string label = "Position", string help = "Where the noise is evaluated. Defaults to the shading position; scale it (or connect object space position) to set the frequency." ]],
+    int Octaves = 3 [[ string label = "Octaves", string help = "Number of noise octaves summed.", int min = 1, int max = 16, int slider = 1 ]],
+    float Lacunarity = 2.0 [[ string label = "Lacunarity", string help = "Frequency multiplier between octaves.", float min = 1, float slidermax = 4 ]],
+    float Diminish = 0.5 [[ string label = "Diminish", string help = "Amplitude multiplier between octaves.", float min = 0, float max = 1, int slider = 1 ]],
+    vector Amplitude = 1.0 [[ string label = "Amplitude", string help = "Multiplies the result per channel.", float slidermin = 0, float slidermax = 2 ]],
+
+    output vector Result = 0 [[ string label = "Result" ]]
+) {
+    color sum = 0;
+    float amp = 1.0;
+    point p = point(Position);
+
+    for (int i = 0; i < Octaves; i++) {
+        sum += amp * (color)noise("snoise", p);
+        amp *= Diminish;
+        p *= Lacunarity;
+    }
+    Result = vector(sum) * Amplitude;
+}

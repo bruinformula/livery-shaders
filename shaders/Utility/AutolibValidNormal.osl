@@ -1,0 +1,53 @@
+// AutolibValidNormal
+
+// Tilts a bumped normal back toward the geometric normal just enough that its mirror reflection of
+// the view direction stays above the surface Arnold and Cycles can do this to every bump normal,
+// but RenderMan does not. A strong bump without a similar gurad will cause the reflected rays to go
+// into the surface and bring back whatever is behind it, and the part looks see-through.
+shader AutolibValidNormal [[
+    string label = "Valid Normal",
+    string help = "Tilts a bumped normal back toward the geometric normal 
+                  "just enough that its mirror reflection stays above the surface",
+    string rfh_classification = "RenderMan/Autolib/Geometry",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/geometry"
+]] (
+    normal In = N [[ string label = "Normal In" ]],
+    output normal Out = N [[ string label = "Normal Out" ]]
+) {
+    // An unset normal parameter on a Houdini HDA exports as (0, 0, 0): treat it as the shading normal
+    normal inN = dot(In, In) > 1e-12 ? In : N;
+    vector V = -normalize(I);
+    vector n = normalize(inN);
+
+    // Work on the viewer's side, hand the normal back on its own side for double sided lobes
+    float side = dot(normalize(N), V) < 0 ? -1.0 : 1.0;
+    n *= side;
+    vector ng = normalize(Ng);
+    if (dot(ng, V) < 0)
+        ng = -ng;
+
+    Out = inN;
+    float Iz = dot(V, ng);
+    if (Iz <= 0)
+        return;
+
+    // Reflections may always be at least as shallow as the incoming ray
+    float threshold = min(0.9 * Iz, 0.01);
+    vector R = 2 * dot(n, V) * n - V;
+    if (dot(ng, R) >= threshold)
+        return;
+
+    // Frame with ng as Z and n in the X-Z plane; solve for the n' whose reflection sits at the threshold
+    vector X = n - dot(n, ng) * ng;
+    float lengthX = length(X);
+    X = lengthX > 1e-8 ? X / lengthX : n;
+    float Ix = dot(V, X);
+    float a = Ix * Ix + Iz * Iz;
+    float b = 2 * (a + Iz * threshold);
+    float c = (threshold + Iz) * (threshold + Iz);
+    float root = sqrt(max(b * b - 4 * a * c, 0.0));
+    float Nz2 = 0.25 * (Ix < 0 ? b + root : b - root) / a;
+    float Nx = sqrt(max(1 - Nz2, 0.0));
+    float Nz = sqrt(max(Nz2, 0.0));
+    Out = normal(side * normalize(Nx * X + Nz * ng));
+}

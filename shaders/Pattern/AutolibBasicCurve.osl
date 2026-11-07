@@ -55,31 +55,115 @@ float calculateTrim(
 
     return mix(1.0, biased, transitionWeight);
 }
-shader AutolibBasicCurve [[ 
-    string category = "autolib" 
+// The mesh UVs. Arnold's u,v on a mesh are its UVs; RenderMan's are per-face parametric coordinates,
+// so read the st primvar when the renderer exposes it (the default of the UV input).
+point meshUV() {
+    float st[2];
+    if (getattribute("primvar", "st", st))
+        return point(st[0], st[1], 0);
+    return point(u, v, 0);
+}
+
+shader AutolibBasicCurve [[
+    string label = "Basic Curve",
+    string help = "A stroke along a curve's (or ribbon's) UV: a noisy band across the width with tapered, trimmed "
+                  "ends along the length. U is the length and V the width unless swapped.",
+    string rfh_classification = "RenderMan/Autolib/Pattern",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/pattern"
 ]] (
-    point UV = point(u, v, 0), 
-    int SwapUAndV = 0 [[ string widget = "boolean", string help = "By default, the primary axis (length) is U. Turn this on to use V as the length." ]], 
+    point UV = meshUV() [[
+        string label = "UV",
+        string help = "Curve coordinates: U along the length, V across the width (0-1)."
+    ]],
+    int SwapUAndV = 0 [[
+        string label = "Swap U and V",
+        string help = "Use V as the length axis and U as the width.",
+        string widget = "checkBox",
+        int connectable = 0
+    ]],
+    int UniformNoiseScale = 1 [[
+        string label = "Uniform Noise Scale",
+        string help = "Scale the noise by the curve's world space length so long and short curves get the same "
+                      "noise size (World Length Factor output).",
+        string widget = "checkBox",
+        int connectable = 0
+    ]],
 
-    float NoiseScale = 1 [[ string page = "Noise", float min = 0.1, float max = 10, int interactive = 1 ]],
-    int Octaves = 1 [[ string page = "Noise", int min = 1, int max = 8 ]],
-    float Lacunarity = 2.0 [[ string page = "Noise", float min = 1, int interactive = 1 ]],
-    float Gain = 0.5 [[ string page = "Noise", float min = 0, float max = 1, int interactive = 1 ]],
+    float NoiseScale = 1 [[
+        string label = "Noise Scale",
+        string help = "Frequency of the edge noise along the curve.",
+        float min = 0.1, float max = 10, int slider = 1,
+        string page = "Noise",
+        int page_open = 1
+    ]],
+    int Octaves = 1 [[
+        string label = "Octaves",
+        string help = "Number of noise octaves.",
+        int min = 1, int max = 8, int slider = 1,
+        string page = "Noise"
+    ]],
+    float Lacunarity = 2.0 [[
+        string label = "Lacunarity",
+        string help = "Frequency multiplier between octaves.",
+        float min = 1, float slidermax = 4,
+        string page = "Noise"
+    ]],
+    float Gain = 0.5 [[
+        string label = "Gain",
+        string help = "Amplitude multiplier between octaves.",
+        float min = 0, float max = 1, int slider = 1,
+        string page = "Noise"
+    ]],
 
-    float BorderSmoothness = 0 [[ string page = "Border", float min = 0, float max = 1 ]],
-    float BandWidth = 0.3 [[ string page = "Border", float min = 0, float max = 1 ]],
-    float BandCenter = 0.5 [[ string page = "Border", float min = 0, float max = 1 ]],
+    float BandWidth = 0.3 [[
+        string label = "Band Width",
+        string help = "Width of the stroke across V (0-1).",
+        float min = 0, float max = 1, int slider = 1,
+        string page = "Border",
+        int page_open = 1
+    ]],
+    float BandCenter = 0.5 [[
+        string label = "Band Center",
+        string help = "Position of the stroke across V.",
+        float min = 0, float max = 1, int slider = 1,
+        string page = "Border"
+    ]],
+    float BorderSmoothness = 0 [[
+        string label = "Border Smoothness",
+        string help = "Softness of the stroke edges (In Region Smooth output).",
+        float min = 0, float max = 1, int slider = 1,
+        string page = "Border"
+    ]],
 
-    float TrimWidth = 0.1 [[ string page = "Trim", float min = 0, float max = 1 ]], 
-    float TrimLowerBound = 0.10 [[ string page = "Trim", float min = 0, float max = 1 ]],
-    float TrimTransitionWidth = 0.05 [[ string page = "Trim", float min = 0, float max = 1 ]],
-    float TrimExponent = 0.25 [[ string page = "Trim", float min = 0, float max = 1, int interactive = 1 ]],
+    float TrimWidth = 0.1 [[
+        string label = "Trim Width",
+        string help = "Length of the tapered zone at each end of the curve, as a fraction of its length.",
+        float min = 0, float max = 1, int slider = 1,
+        string page = "Trim",
+        int page_open = 1
+    ]],
+    float TrimLowerBound = 0.10 [[
+        string label = "Trim Lower Bound",
+        string help = "Stroke width left at the very tip, as a fraction of the full width.",
+        float min = 0, float max = 1, int slider = 1,
+        string page = "Trim"
+    ]],
+    float TrimTransitionWidth = 0.05 [[
+        string label = "Trim Transition",
+        string help = "Length over which the taper blends into the full width.",
+        float min = 0, float max = 1, int slider = 1,
+        string page = "Trim"
+    ]],
+    float TrimExponent = 0.25 [[
+        string label = "Trim Bias",
+        string help = "Shape of the taper: 0.5 linear, lower values keep the stroke wide until close to the tip.",
+        float min = 0, float max = 1, int slider = 1,
+        string page = "Trim"
+    ]],
 
-    int UniformNoiseScale = 1 [[ string widget = "boolean", string help = "If enabled, the noise will scale uniformly based on world space size." ]],
-
-    output float WorldLengthFactor = 1,
-    output float InRegion = 0,
-    output float InRegionSmooth = 0
+    output float WorldLengthFactor = 1 [[ string label = "World Length Factor", string help = "World length of the curve per U unit." ]],
+    output float InRegion = 0 [[ string label = "In Region", string help = "1 inside the stroke." ]],
+    output float InRegionSmooth = 0 [[ string label = "In Region Smooth", string help = "The stroke with soft borders." ]]
 ) {
     float coordU = SwapUAndV ? UV.y : UV.x;
     float coordV = SwapUAndV ? UV.x : UV.y;

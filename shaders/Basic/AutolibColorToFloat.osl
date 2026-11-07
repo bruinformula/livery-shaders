@@ -6,12 +6,21 @@
 #define AVERAGE 4
 
 shader AutolibColorToFloat [[
-    string category = "autolib"
+    string label = "Color To Float",
+    string help = "Reduces a color (or vector) to a float: one channel, the luminance or the channel average.",
+    string rfh_classification = "RenderMan/Autolib/Convert",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/convert"
 ]] (
     color Input = 0.0 [[ string label = "Input", string help = "The color or vector to extract a float from." ]],
-    int Mode = AVERAGE [[ string widget = "mapper",  string options = "ChannelR|ChannelG|ChannelB|Luminance|Average" ]],
+    int Mode = AVERAGE [[
+        string label = "Mode",
+        string help = "Which float to produce.",
+        string widget = "mapper",
+        string options = "Red:0|Green:1|Blue:2|Luminance:3|Average:4",
+        int connectable = 0
+    ]],
 
-    output float ResultF = 0
+    output float ResultF = 0 [[ string label = "Result" ]]
 ) {
     if (Mode == CHANNEL_R) {
         ResultF = Input.r;

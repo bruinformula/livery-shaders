@@ -1,12 +1,15 @@
 shader AutolibCondition [[
-    string category = "autolib"
+    string label = "Condition",
+    string help = "If Greater when Value is at least Threshold, otherwise If Less.",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    float Value = 0.0,
-    float Threshold = 0.5,
-    color IfGreater = 1.0,
-    color IfLess = 0.0,
+    float Value = 0.0 [[ string label = "Value" ]],
+    float Threshold = 0.5 [[ string label = "Threshold" ]],
+    color IfGreater = 1.0 [[ string label = "If Greater" ]],
+    color IfLess = 0.0 [[ string label = "If Less" ]],
 
-    output color Result = 0
+    output color Result = 0 [[ string label = "Result" ]]
 ) {
     Result = (Value >= Threshold) ? IfGreater : IfLess;
 }

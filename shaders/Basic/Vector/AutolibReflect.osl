@@ -1,10 +1,13 @@
-shader AutolibRefract [[
-    string category = "autolib"
+shader AutolibReflect [[
+    string label = "Reflect",
+    string help = "Reflects Incident about Normal.",
+    string rfh_classification = "RenderMan/Autolib/Vector",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/vector"
 ]] (
-    vector Incident = 0,
-    vector Normal = vector(0, 1, 0),
-    float IOR = 1.5,
-    output vector Output = 0
+    vector Incident = 0 [[ string label = "Incident" ]],
+    vector Normal = vector(0, 1, 0) [[ string label = "Normal" ]],
+
+    output vector Output = 0 [[ string label = "Output" ]]
 ) {
-    Output = refract(Incident, Normal, IOR);
+    Output = reflect(Incident, Normal);
 }

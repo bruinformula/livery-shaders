@@ -1,8 +1,12 @@
 shader AutolibLogarithm [[
-    string category = "autolib"
+    string label = "Logarithm",
+    string help = "Natural logarithm (per component) (inputs below zero are clamped to a small positive value).",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    vector Input = 1,
-    output vector Output = 0
+    vector Input = 1 [[ string label = "Input" ]],
+
+    output vector Output = 0 [[ string label = "Output" ]]
 ) {
     Output = log(max(Input, 0.000001));
 }

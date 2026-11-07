@@ -1,9 +1,12 @@
 shader AutolibLength [[
-    string category = "autolib"
+    string label = "Length",
+    string help = "Length (magnitude) of the input.",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    vector Input = vector(0, 0, 0),
+    vector Input = vector(0, 0, 0) [[ string label = "Input" ]],
 
-    output float Length = 0
+    output float Length = 0 [[ string label = "Length" ]]
 ) {
     Length = length(Input);
 }

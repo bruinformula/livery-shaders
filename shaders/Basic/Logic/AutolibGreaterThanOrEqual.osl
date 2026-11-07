@@ -1,9 +1,13 @@
 shader AutolibGreaterThanOrEqual [[
-    string category = "autolib"
+    string label = "Greater Than Or Equal",
+    string help = "1 when A >= B, otherwise 0.",
+    string rfh_classification = "RenderMan/Autolib/Logic",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/logic"
 ]] (
-    float A = 0,
-    float B = 0,
-    output int Output = 0 [[ string widget = "boolean" ]]
+    float A = 0 [[ string label = "A" ]],
+    float B = 0 [[ string label = "B" ]],
+
+    output int Output = 0 [[ string label = "Output" ]]
 ) {
     Output = (A >= B);
 }

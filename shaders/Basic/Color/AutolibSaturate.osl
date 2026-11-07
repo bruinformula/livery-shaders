@@ -1,9 +1,13 @@
 shader AutolibSaturate [[
-    string category = "autolib"
+    string label = "Saturate",
+    string help = "Saturation: 0 grey (luminance), 1 unchanged, above 1 more saturated.",
+    string rfh_classification = "RenderMan/Autolib/Color",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/color"
 ]] (
-    color Input = 0,
-    float Amount = 1,
-    output color Output = 0
+    color Input = 0 [[ string label = "Input" ]],
+    float Amount = 1 [[ string label = "Amount" ]],
+
+    output color Output = 0 [[ string label = "Output" ]]
 ) {
     float lum = luminance(Input);
     Output = mix(color(lum), Input, Amount);

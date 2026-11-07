@@ -1,9 +1,13 @@
 shader AutolibModulo [[
-    string category = "autolib"
+    string label = "Modulo",
+    string help = "A modulo B (per component).",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    vector A = 0,
-    vector B = 1,
-    output vector Output = 0
+    vector A = 0 [[ string label = "A" ]],
+    vector B = 1 [[ string label = "B" ]],
+
+    output vector Output = 0 [[ string label = "Output" ]]
 ) {
     Output = fmod(A, B);
 }

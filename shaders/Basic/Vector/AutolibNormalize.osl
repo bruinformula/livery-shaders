@@ -1,8 +1,12 @@
 shader AutolibNormalize [[
-    string category = "autolib"
+    string label = "Normalize",
+    string help = "Scales the vector to unit length.",
+    string rfh_classification = "RenderMan/Autolib/Vector",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/vector"
 ]] (
-    vector Input = 0,
-    output vector Output = 0
+    vector Input = 0 [[ string label = "Input" ]],
+
+    output vector Output = 0 [[ string label = "Output" ]]
 ) {
     Output = normalize(Input);
 }

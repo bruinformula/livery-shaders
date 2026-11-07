@@ -1,19 +1,61 @@
 // AutolibHalftoneDots
 
-shader AutolibHalftoneDots [[ 
-	string category = "autolib" 
+// The mesh UVs. Arnold's u,v on a mesh are its UVs; RenderMan's are per-face parametric coordinates,
+// so read the st primvar when the renderer exposes it (the default of the UV input).
+point meshUV() {
+    float st[2];
+    if (getattribute("primvar", "st", st))
+        return point(st[0], st[1], 0);
+    return point(u, v, 0);
+}
+
+shader AutolibHalftoneDots [[
+    string label = "Halftone Dots",
+    string help = "Print-style halftone: a rotated grid of dots whose size follows Input Value. By default the "
+                  "grid is in screen pixels.",
+    string rfh_classification = "RenderMan/Autolib/Stylized",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/stylized"
 ]] (
-	vector UVW = 0  [[ string help = "The input coordinate. If not connected, uses screen pixel space" ]],
-	color InputValue = 0.25  [[ string help = "The input value defining the size of the dots to yield the right halftone density." ]],	
-	vector Scale = vector(8.0, 8.0, 8.0)  [[ string help = "This size of the dots. In the default screen space mapping, this is in pixels." ]],
-	float Angle = 45.0  [[ string help = "angle of the Halftoning" ]],	
-	float Fuzz = 0.1  [[ float min = 0.0, float max = 2.0 ]],
-	color DotsColor = 0.0  [[ string help = "The color of the dots" ]],		
-	color BackgroundColor = 1.0  [[ string help = "The color of the space between the dots" ]],
+    vector UVW = 0 [[
+        string label = "Coordinates",
+        string help = "Grid coordinates. When unconnected the grid is in raster (pixel) space, or mesh UVs with Use UV."
+    ]],
+    int UseUV = 0 [[
+        string label = "Use UV",
+        string help = "Lay the grid out in the mesh UVs instead of screen space.",
+        string widget = "checkBox",
+        int connectable = 0
+    ]],
+    color InputValue = 0.25 [[
+        string label = "Input Value",
+        string help = "Tone to reproduce; darker values give bigger dots. Connect a shading or texture result."
+    ]],
+    vector Scale = vector(8.0, 8.0, 8.0) [[
+        string label = "Cell Size",
+        string help = "Spacing of the dots, in pixels for the default screen space grid.",
+        float min = 0, float slidermax = 64
+    ]],
+    float Angle = 45.0 [[
+        string label = "Angle",
+        string help = "Rotation of the dot grid in degrees.",
+        float slidermin = 0, float slidermax = 90
+    ]],
+    float Fuzz = 0.1 [[
+        string label = "Fuzz",
+        string help = "Softness of the dot edges.",
+        float min = 0.0, float max = 2.0, int slider = 1
+    ]],
+    color DotsColor = 0.0 [[
+        string label = "Dot Color",
+        string page = "Colors",
+        int page_open = 1
+    ]],
+    color BackgroundColor = 1.0 [[
+        string label = "Background Color",
+        string page = "Colors"
+    ]],
 
-	int UseUV = 0 [[ string widget = "boolean", int min = 0, int max = 1 ]],
-
-	output color Dots = color(1,2,3)
+    output color Dots = color(1, 2, 3) [[ string label = "Dots" ]]
 ) {
 	point pos = UVW;
 	if (!isconnected(UVW)) {
@@ -21,7 +63,7 @@ shader AutolibHalftoneDots [[
 	}
 
 	if (UseUV == 1) {
-		pos = vector(u, v, 0);
+		pos = meshUV();
 	}
 
 	pos = rotate(pos, radians(Angle), 0.0, vector(0.0,0.0,1.0));

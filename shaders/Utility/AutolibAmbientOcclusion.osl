@@ -1,53 +1,58 @@
 // AutolibAmbientOcclusion
 
-shader AutolibAmbientOcclusion [[ 
-    string category = "autolib" 
+shader AutolibAmbientOcclusion [[
+    string label = "Ambient Occlusion",
+    string help = "Traces one jittered occlusion ray around the normal per sample: Occlusion is 1 in the open and "
+                  "falls toward 0 as nearby geometry gets closer, and Color blends from Hit Color to Input Color "
+                  "with it. Indirect diffuse rays get Input Color unoccluded, which keeps GI cheap.",
+    string rfh_classification = "RenderMan/Autolib/Geometry",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/geometry"
 ]] (
-    color InputColor = 1,
-    color HitColor = 0,
-    closure color InputClosure = 0,
-    closure color ClosureHit = 0,
-    float AOAngle = 0.95,
-    float MaxDistance = 25.0,
-    vector BumpNormal = 0,
-    output color Color = color(1, 0, 0),
-    output closure color Closure = 0
+    color InputColor = 1 [[
+        string label = "Unoccluded Color",
+        string help = "Color in the open."
+    ]],
+    color HitColor = 0 [[
+        string label = "Occluded Color",
+        string help = "Color where geometry is right next to the surface."
+    ]],
+    float AOAngle = 0.95 [[
+        string label = "Spread",
+        string help = "How far the occlusion rays scatter around the normal (0 straight along it).",
+        float min = 0, float max = 2, int slider = 1
+    ]],
+    float MaxDistance = 25.0 [[
+        string label = "Max Distance",
+        string help = "Occluders further than this, in scene units, do not count; hits closer than it darken in proportion.",
+        float min = 0, float slidermax = 50
+    ]],
+    vector BumpNormal = 0 [[
+        string label = "Normal Offset",
+        string help = "Added to the shading normal before tracing; connect a bump's offset to follow it."
+    ]],
+
+    output color Color = color(1, 0, 0) [[ string label = "Color" ]],
+    output float Occlusion = 1 [[ string label = "Occlusion", string help = "1 unoccluded, 0 fully occluded." ]]
 ) {
-    int isRayTypeDiffuse = raytype("diffuse");
-    
-    if (isRayTypeDiffuse) {
-        Color = InputColor;
-        Closure = InputClosure;
-    } else {
-        // compute  vector to trace Ray = random * N
-        vector bruitvector = vector ( 0.0 , 0.0 , 0.0 );
-        vector VectorAO = N + BumpNormal + (0.001 * noise("perlin", P*10000.0 ));
+    Color = InputColor;
+    Occlusion = 1;
+    if (raytype("diffuse"))
+        return;
 
-        if ( AOAngle != 0.0 ){
-            bruitvector = AOAngle * ( 1.0- 2.0 * noise("cell", VectorAO*10000.0 ) );
-            VectorAO +=  bruitvector;
-        }
+    // Jitter the trace direction around the normal with a hash of the shading position, so every
+    // pixel sample gets its own direction and the pixel filter averages them (hashing the direction
+    // itself repeats the same ray across a flat surface and shows as a grid).
+    vector Nn = normalize(N + BumpNormal);
+    vector jitter = 2 * (vector)noise("hash", P) - 1;
+    vector DirTrace = normalize(Nn + AOAngle * jitter);
+    if (dot(DirTrace, Nn) < 0)
+        DirTrace = reflect(DirTrace, Nn);
 
-        // trace Ray for AO
-        float hitDistance = 1.0;
-        float mixage = 1.0;
-        vector DirTrace = normalize(VectorAO);
-        
-        int traceHit = trace(P, DirTrace, "maxdist" , MaxDistance );
-
-        if (traceHit) {
-            int hitTrace = getmessage("trace", "hitdist", hitDistance);
-
-            mixage = clamp((hitDistance / MaxDistance), 0.0, 1.0);
-
-            // make a gradient between the 2 colors to have smoother (and better quality) AO.
-            Color = mix(HitColor, InputColor, mixage );
-            Closure = (InputClosure * mixage)  + ClosureHit * (1.0 - mixage );
-           
-        } else {
-            // else, return black
-            Color = InputColor;
-            Closure = InputClosure;
-        }
+    if (trace(P, DirTrace, "maxdist", MaxDistance)) {
+        float hitDistance = MaxDistance;
+        getmessage("trace", "hitdist", hitDistance);
+        // a gradient between the two colors gives smoother AO than a hard hit / miss
+        Occlusion = clamp(hitDistance / MaxDistance, 0.0, 1.0);
+        Color = mix(HitColor, InputColor, Occlusion);
     }
 }

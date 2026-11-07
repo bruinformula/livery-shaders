@@ -1,8 +1,12 @@
 shader AutolibAbsolute [[
-    string category = "autolib"
+    string label = "Absolute",
+    string help = "Absolute value (per component).",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    vector Input = 0,
-    output vector Output = 0
+    vector Input = 0 [[ string label = "Input" ]],
+
+    output vector Output = 0 [[ string label = "Output" ]]
 ) {
     Output = abs(Input);
 }

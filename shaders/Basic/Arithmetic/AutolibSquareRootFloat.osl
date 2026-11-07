@@ -1,8 +1,12 @@
 shader AutolibSquareRootFloat [[
-    string category = "autolib"
+    string label = "Square Root Float",
+    string help = "Square root.",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    float Input = 0,
-    output float Output = 0
+    float Input = 0 [[ string label = "Input" ]],
+
+    output float Output = 0 [[ string label = "Output" ]]
 ) {
     Output = sqrt(max(Input, 0));
 }

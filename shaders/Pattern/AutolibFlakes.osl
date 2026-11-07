@@ -35,19 +35,45 @@ normal combineNormals(normal base, normal detail) {
 }
 
 shader AutolibFlakes [[
-    string category = "autolib"
+    string label = "Flakes",
+    string help = "Metallic paint flakes: random cellular flakes, each with its own tilted normal, for a sparkle "
+                  "lobe or a flake layer.",
+    string rfh_classification = "RenderMan/Autolib/Pattern",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/pattern"
 ]] (
-    point Position = P  [[ string widget = "null", int interpolated = 1 ]],
-    normal BaseNormal = N  [[ string widget = "null", string help = "The base normal used for the flakes" ]],
-    float Scale = 0.1  [[ string help = "The density of the flakes", int interactive = 1 ]],
-    float Density = 0.1  [[ string help = "Ratio of flakes to non-flakes. 1.0 is 100% flake", float min = 0.0, float max = 1.0, int interactive = 1 ]],
-    float NormalStrength = 1.0  [[ string help = "How strongly the flake normals affect the final normal. 0 = no effect, 1 = full flake normal", float min = 0.0, float max = 1.0, int interactive = 1 ]],
-    int Seed = 0,
+    point Position = P [[
+        string label = "Position",
+        string help = "Where the flake cells are evaluated. Defaults to the shading position; connect object space "
+                      "position so flakes stick to moving objects."
+    ]],
+    normal BaseNormal = N [[
+        string label = "Base Normal",
+        string help = "Normal the flake normals are tilted from. Connect a bumped normal to keep the bump."
+    ]],
+    float Scale = 0.1 [[
+        string label = "Scale",
+        string help = "Flake cells per scene unit (higher is smaller flakes).",
+        float min = 0, float slidermax = 5000
+    ]],
+    float Density = 0.1 [[
+        string label = "Density",
+        string help = "Fraction of cells that hold a flake (1 = every cell).",
+        float min = 0.0, float max = 1.0, int slider = 1
+    ]],
+    float NormalStrength = 1.0 [[
+        string label = "Normal Strength",
+        string help = "How far the flake normals tilt away from Base Normal (0 none, 1 fully random).",
+        float min = 0.0, float max = 1.0, int slider = 1
+    ]],
+    int Seed = 0 [[
+        string label = "Seed",
+        string help = "Random seed for the flake pattern."
+    ]],
 
-    output float Alpha = 1,
-    output float Mask = 0,
-    output normal Normal = N,
-    output float Rehash = 0
+    output float Alpha = 1 [[ string label = "Alpha", string help = "1 on a flake, 0 between flakes." ]],
+    output float Mask = 0 [[ string label = "Mask" ]],
+    output normal Normal = N [[ string label = "Normal", string help = "Flake normal, or Base Normal between flakes." ]],
+    output float Rehash = 0 [[ string label = "Random", string help = "Random value per flake, 0-1." ]]
 ) {
     point scaledPosition = Scale * Position;
     vector k = ID(scaledPosition, Seed);

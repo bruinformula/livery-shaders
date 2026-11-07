@@ -1,10 +1,13 @@
 shader AutolibSineFloat [[
-    string category = "autolib"
+    string label = "Sine Float",
+    string help = "sin(Opposite / Hypotenuse).",
+    string rfh_classification = "RenderMan/Autolib/Math",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/math"
 ]] (
-    float Opposite = 1,
-    float Hypotenuse = 0,
+    float Opposite = 1 [[ string label = "Opposite" ]],
+    float Hypotenuse = 0 [[ string label = "Hypotenuse" ]],
 
-    output float Output = 0
+    output float Output = 0 [[ string label = "Output" ]]
 ) {
     Output = sin(Opposite / Hypotenuse);
 }

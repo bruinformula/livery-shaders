@@ -1,34 +1,41 @@
-surface AutolibRaySwitch [[
-    string category = "autolib"   
-]] (
-    closure color CameraClosure = 0,
-    closure color ShadowClosure = 0,
-    closure color DiffuseTransmitClosure = 0,
-    closure color SpecularTransmitClosure = 0,
-    closure color VolumeScatterClosure = 0,
-    closure color DiffuseReflectClosure = 0,
-    closure color SpecularReflectClosure = 0,
-    closure color SubsurfaceClosure = 0,
+// AutolibRaySwitch
 
-    output closure color BSDF = 0
+// RenderMan patterns cannot pass closures, so this switches colors (connect the result to any bxdf
+// input). RIS answers raytype() for "diffuse", "glossy" and "shadow"; XPU answers no ray types, so
+// there every ray gets the Camera color.
+shader AutolibRaySwitch [[
+    string label = "Ray Switch",
+    string help = "A different color for camera, indirect diffuse, indirect specular and shadow rays, e.g. to "
+                  "hide a texture from GI or tint reflections only. Connect the result to a bxdf input. RIS "
+                  "only: XPU reports no ray types to OSL, so there every ray gets the Camera color.",
+    string rfh_classification = "RenderMan/Autolib/Utility",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/utility"
+]] (
+    color CameraColor = 1 [[
+        string label = "Camera",
+        string help = "Seen directly by the camera, and the fallback for any other ray."
+    ]],
+    color DiffuseColor = 1 [[
+        string label = "Indirect Diffuse",
+        string help = "Seen by indirect diffuse (GI) rays."
+    ]],
+    color SpecularColor = 1 [[
+        string label = "Indirect Specular",
+        string help = "Seen in reflections and refractions (glossy rays)."
+    ]],
+    color ShadowColor = 1 [[
+        string label = "Shadow",
+        string help = "Seen by shadow (transmission) rays, e.g. for presence or opacity."
+    ]],
+
+    output color Result = 0 [[ string label = "Result" ]]
 ) {
-    if (raytype("camera")) {
-        BSDF = CameraClosure;
-    } else if (raytype("shadow")) {
-        BSDF = ShadowClosure;
-    } else if (raytype("diffuse_transmit")) {
-        BSDF = DiffuseTransmitClosure;
-    } else if (raytype("specular_transmit")) {
-        BSDF = SpecularTransmitClosure;
-    } else if (raytype("volume_scatter")) {
-        BSDF = VolumeScatterClosure;
-    } else if (raytype("diffuse_reflect")) {
-        BSDF = DiffuseReflectClosure;
-    } else if (raytype("specular_reflect")) {
-        BSDF = SpecularReflectClosure;
-    } else if (raytype("subsurface")) {
-        BSDF = SubsurfaceClosure;
-    } else {
-        BSDF = CameraClosure; // fallback
-    }
+    if (raytype("diffuse"))
+        Result = DiffuseColor;
+    else if (raytype("glossy"))
+        Result = SpecularColor;
+    else if (raytype("shadow"))
+        Result = ShadowColor;
+    else
+        Result = CameraColor;
 }

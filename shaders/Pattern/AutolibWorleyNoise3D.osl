@@ -1,0 +1,47 @@
+// Same result as MaterialX ND_worleynoise3d_float (euclidean distance to the nearest feature point).
+vector cellPosition(int x, int y, int z, int X, int Y, int Z, float jitter) {
+    vector offset = cellnoise(vector(x + X, y + Y, z + Z));
+    offset = (offset - 0.5) * jitter + 0.5;
+    return vector(x, y, z) + offset;
+}
+
+shader AutolibWorleyNoise3D [[
+    string label = "Worley Noise 3D",
+    string help = "3D worley (cellular) noise: the distance to the nearest feature point, or a random value per "
+                  "cell (same result as MaterialX ND_worleynoise3d_float).",
+    string rfh_classification = "RenderMan/Autolib/Noise",
+    string rfm_classification = "rendernode/RenderMan/pattern/autolib/noise"
+]] (
+    vector Position = P [[ string label = "Position", string help = "Where the noise is evaluated. Defaults to the shading position; scale it (or connect object space position) to set the frequency." ]],
+    float Jitter = 1.0 [[ string label = "Jitter", string help = "Randomness of the feature points (0 a regular grid).", float min = 0, float max = 1, int slider = 1 ]],
+    int Style = 0 [[
+        string label = "Style",
+        string help = "Distance: euclidean distance to the nearest feature point. Solid: a random value per cell.",
+        string widget = "mapper",
+        string options = "Distance:0|Solid:1",
+        int connectable = 0
+    ]],
+
+    output float Result = 0 [[ string label = "Result" ]]
+) {
+    int X = (int)floor(Position[0]);
+    int Y = (int)floor(Position[1]);
+    int Z = (int)floor(Position[2]);
+    vector localPos = Position - vector(X, Y, Z);
+
+    float sqDist = 1e6;
+    vector minPos = 0;
+    for (int x = -1; x <= 1; ++x) {
+        for (int y = -1; y <= 1; ++y) {
+            for (int z = -1; z <= 1; ++z) {
+                vector cellPos = cellPosition(x, y, z, X, Y, Z, Jitter) - localPos;
+                float dist = dot(cellPos, cellPos);
+                if (dist < sqDist) {
+                    sqDist = dist;
+                    minPos = cellPos;
+                }
+            }
+        }
+    }
+    Result = Style == 1 ? (float)cellnoise(minPos + Position) : sqrt(sqDist);
+}
