@@ -35,6 +35,7 @@ const char* svgtxArgOptions =
     "    --pxrange       <float>      SDF pixel range (optional, default: 4)\n"
     "    --angle         <float>      Corner angle threshold in radians (optional, default: 3)\n"
     "    --seed          <uint>       Edge-coloring seed (optional, default: 0)\n"
+    "    --prman                      Write PRMan .tex textures\n"
     "    --verbose, -v                Verbose output\n"
     "    --help, -h                   Print this message\n";
 
@@ -49,6 +50,10 @@ struct Args {
     double pxRange = 4.0;
     double angleThreshold = 3.0;
     unsigned long long seed = 0;
+    bool prman = false;
+
+    // PRMan expects .tex; everything else keeps .tx
+    const char* textureExt() const { return prman ? "tex" : "tx"; }
 
     enum ParseResult { OK, OK_CONSUME, FAIL, EXIT };
 
@@ -97,6 +102,9 @@ struct Args {
                 return FAIL;
             }
             return OK_CONSUME;
+        } else if (token == "--prman") {
+            prman = true;
+            return OK;
         } else if (token == "-f" || token == "--flatten") {
             flatten = true;
             return OK;
@@ -514,7 +522,8 @@ static void autoFrame(
     range = Range(pxRange/s);
 }
 
-// Build shape, generate MTSDF, write .tx
+// Build shape, generate MTSDF, write texture
+// This is heavly based on code from the original msdf repo
 static bool bakeShape(
     const tx2::XMLElement* svgRoot,
     const std::string& targetLayerId,
@@ -525,7 +534,8 @@ static bool bakeShape(
     int width,
     double pxRange,
     double angleThreshold,
-    unsigned long long seed
+    unsigned long long seed,
+    bool prman
 ) {
     Shape shape;
     shape.setYAxisOrientation(Y_UPWARD);
@@ -557,10 +567,10 @@ static bool bakeShape(
         std::cout << "  " << width << "x" << height
                   << "  edges=" << shape.edgeCount() << "\n";
 
-    // Edge colouring
+    // Edge coloring
     edgeColoringSimple(shape, angleThreshold, seed);
 
-    // Auto-frame: always fit the actual shape bounds
+    // Auto-frameing 
     Vector2 sc, tr;
     Range rng;
     docFrame(vbX, vbY, vbW, vbH, width, height, pxRange, sc, tr, rng);
@@ -575,7 +585,8 @@ static bool bakeShape(
         generateMTSDF(mtsdf, shape, xform, genCfg);
     }
  
-    // Rasterises the shape with even-odd fill rule and flips any pixel whose sign disagrees with the raster fill.
+    // Rasterizes the shape with even-odd fill rule 
+    // and flips any pixel whose sign disagrees with the raster fill.
     distanceSignCorrection(mtsdf, shape, xform, 0.5f, FILL_ODD);
 
     {
@@ -608,8 +619,17 @@ static bool bakeShape(
     cfg.attribute("maketx:updatemode",        0);
     cfg.attribute("maketx:monochrome_detect", 0);
     cfg.attribute("maketx:fixnan",            "box3");
-    cfg.attribute("compression",              "dwaa");
+    // dwaa is an OpenEXR codec; PRMan .tex files are TIFF, so use zip there
+    cfg.attribute("compression",              prman ? "zip" : "dwaa");
     cfg.attribute("oiio:ColorSpace",          "Linear");
+
+    if (prman) {
+        // Same as maketx --prman: PRMan-safe tile size (32x32 for half/float),
+        // planarconfig=separate, sint16 instead of uint16, and PRMan metadata.
+        cfg.attribute("maketx:prman_options",  1);
+        // The TIFF writer doesn't claim the .tex extension, so name the format.
+        cfg.attribute("maketx:fileformatname", "tiff");
+    }
 
     bool ok = OIIO::ImageBufAlgo::make_texture(
         OIIO::ImageBufAlgo::MakeTxTexture, buf, outPath, cfg);
@@ -671,11 +691,11 @@ int main(int argc, char* const argv[]) {
     }
 
     if (args.flatten) {
-        fs::path out = fs::path(base).replace_extension("tx");
+        fs::path out = fs::path(base).replace_extension(args.textureExt());
         if (verbose) std::cout << "Baking (flat): " << out << "\n";
         return bakeShape(svgRoot, {}, true, out.string(),
                  vbX, vbY, vbW, vbH, snapRange, width,
-                 args.pxRange, args.angleThreshold, args.seed) ? 0 : 1;
+                 args.pxRange, args.angleThreshold, args.seed, args.prman) ? 0 : 1;
     }
 
     // Layer stuff
@@ -684,16 +704,16 @@ int main(int argc, char* const argv[]) {
 
     if (layers.empty()) {
         if (verbose) std::cout << "No Inkscape layers found – flat bake.\n";
-        fs::path out = fs::path(base).replace_extension("tx");
-        return bakeShape(svgRoot, {}, true, out.string(),
+        fs::path out = fs::path(base).replace_extension(args.textureExt());
+        bool bakeShape(svgRoot, {}, true, out.string(),
                  vbX, vbY, vbW, vbH, snapRange, width,
-                 args.pxRange, args.angleThreshold, args.seed) ? 0 : 1;
+                 args.pxRange, args.angleThreshold, args.seed, args.prman);
     }
 
     // Per-layer parallel bake
     std::mutex logMu;
     std::atomic<int> nextJob{0};
-    int total    = (int)layers.size();
+    int total = (int)layers.size();
     int nThreads = std::max(1, std::min((int)std::thread::hardware_concurrency(), total));
 
     std::vector<bool> results(total, true);
@@ -709,7 +729,7 @@ int main(int argc, char* const argv[]) {
                 std::string safe = L.label.empty() ? L.id : L.label;
                 std::replace(safe.begin(), safe.end(), ' ', '_');
 
-                fs::path out = fs::path(base + "_" + safe).replace_extension("tx");
+                fs::path out = fs::path(base + "_" + safe).replace_extension(args.textureExt());
 
                 if (verbose) {
                     std::lock_guard<std::mutex> lk(logMu);
@@ -718,7 +738,7 @@ int main(int argc, char* const argv[]) {
 
                 bool ok = bakeShape(svgRoot, L.id, false, out.string(),
                     vbX, vbY, vbW, vbH, snapRange, width,
-                    args.pxRange, args.angleThreshold, args.seed);
+                    args.pxRange, args.angleThreshold, args.seed, args.prman);
                 results[idx] = ok;
                 if (!ok) {
                     std::lock_guard<std::mutex> lk(logMu);
