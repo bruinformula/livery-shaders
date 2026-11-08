@@ -1,12 +1,12 @@
 // AutolibValidNormal
-
+//
 // Tilts a bumped normal back toward the geometric normal just enough that its mirror reflection of
 // the view direction stays above the surface Arnold and Cycles can do this to every bump normal,
 // but RenderMan does not. A strong bump without a similar gurad will cause the reflected rays to go
 // into the surface and bring back whatever is behind it, and the part looks see-through.
 shader AutolibValidNormal [[
     string label = "Valid Normal",
-    string help = "Tilts a bumped normal back toward the geometric normal 
+    string help = "Tilts a bumped normal back toward the geometric normal" 
                   "just enough that its mirror reflection stays above the surface",
     string rfh_classification = "RenderMan/Autolib/Geometry",
     string rfm_classification = "rendernode/RenderMan/pattern/autolib/geometry"

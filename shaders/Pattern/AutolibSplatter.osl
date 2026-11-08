@@ -1,5 +1,3 @@
-// AutolibSplatter
-
 // Bump the smooth shading normal N by a height field in world units (the surface gradient,
 // Mikkelsen 2010). Building the normal from cross(Dx(P'), Dy(P')) instead gives the flat normal of
 // each triangle, facing whichever way the triangle is wound, so faces wound against the mesh
@@ -15,6 +13,14 @@ normal bumpShadingNormal(float height) {
 
 float safeLength(vector vec) {
     return sqrt(max(dot(vec, vec), 1e-12));
+}
+
+// The linear map used to stretch drops along SplatterDirection. Also applied to the pixel
+// footprint so the LOD sees the footprint in the same  stretched space as the distances.
+vector stretchDiff(vector d, vector flowDir, float dirLen) {
+    float along = dot(d, flowDir);
+    vector perp = d - along * flowDir;
+    return (perp / (1 + dirLen * 5.0)) + flowDir * along;
 }
 
 point randomCellPosition(int x, int y, float Jitter, int Seed) {
@@ -41,18 +47,16 @@ float smoothMin(float a, float b, float k) {
     return mix(b, a, h) - polyK * h * (1 - h);
 }
 
-color randomCellAlbedo(int x, int y, color BaseAlbedo, float JitterAmount, int Seed) {
-    if (JitterAmount <= 0) return BaseAlbedo;
+// Per-cell color variation. The base color is passed in as HSV so the conversion is done once per
+// layer instead of once per cell.
+color randomCellAlbedoHSV(int x, int y, color baseHSV, float JitterAmount, int Seed) {
     float rS = noise("hash", vector(x, y, Seed + 100));
     float rV = noise("hash", vector(x, y, Seed + 101));
 
-    color safeAlbedo = max(BaseAlbedo, 0);
-    color hsv = transformc("rgb", "hsv", safeAlbedo);
-    
-    float newS = clamp(hsv[1] * (1 + (rS - 0.5) * JitterAmount * 0.4), 0, 1);
-    float newV = clamp(hsv[2] * (1 + (rV - 0.5) * JitterAmount * 0.4), 0, 1);
+    float newS = clamp(baseHSV[1] * (1 + (rS - 0.5) * JitterAmount * 0.4), 0, 1);
+    float newV = clamp(baseHSV[2] * (1 + (rV - 0.5) * JitterAmount * 0.4), 0, 1);
 
-    return transformc("hsv", "rgb", color(hsv[0], newS, newV));
+    return transformc("hsv", "rgb", color(baseHSV[0], newS, newV));
 }
 
 struct SplatterLayerParams {
@@ -137,7 +141,7 @@ point meshUV() {
     return point(u, v, 0);
 }
 
-shader AutolibSplatter [[
+shader AutolibSplatterNew [[
     string label = "Splatter",
     string help = "Paint splatter: jittered drops with spiky rims and a raised basin, smoothly unioned, giving a "
                   "mask, height, bumped normal and albedo. Chain several through Other Data to layer splatters "
@@ -204,7 +208,8 @@ shader AutolibSplatter [[
     ]],
     int MarchBound = 1 [[
         string label = "Search Radius",
-        string help = "Neighbouring cells searched for drops. Raise it if large or jittered drops get cut off at cell borders (slower).",
+        string help = "Neighbouring cells searched for drops. Raise it if large or jittered drops get cut off at cell borders (slower). "
+                      "With Auto Search Radius on, this is only an upper limit.",
         int min = 0, int slidermax = 4,
         int connectable = 0,
         string page = "Pattern"
@@ -275,6 +280,23 @@ shader AutolibSplatter [[
         string page = "Basin"
     ]],
 
+    float LODBias = 1.0 [[
+        string label = "Detail Filtering",
+        string help = "Scales the pixel footprint used to fade out detail smaller than a pixel. "
+                      "0 turns pixel-size filtering off (full detail everywhere, slowest). "
+                      "Higher values are faster and softer; lower values are sharper but can alias.",
+        float min = 0, float slidermax = 4,
+        string page = "Performance",
+    ]], 
+
+    int AutoSearchRadius = 1 [[
+        string label = "Auto Search Radius",
+        string help = "Shrink the neighbour search to what the current jitter and drop size actually need.",
+        string widget = "checkBox",
+        int connectable = 0,
+        string page = "Performance"
+    ]],
+
     SplatterData OtherData = {} [[
         string label = "Other Data",
         string help = "Connect the Data output of another Splatter to layer this one over it.",
@@ -299,6 +321,32 @@ shader AutolibSplatter [[
     int cellX = (int)floor(ScaledPos[0]);
     int cellY = (int)floor(ScaledPos[1]);
 
+    //Drop stretching
+    float dirLen = safeLength(SplatterDirection);
+    int stretched = dirLen > 1e-6;
+    vector flowDir = vector(1, 0, 0);
+    float stretch = 1;
+    if (stretched) {
+        flowDir = normalize(SplatterDirection);
+        stretch = 1 + dirLen * 5.0;
+    }
+
+    // Pixel footprint, in cell units
+    vector footDx = Dx(ScaledPos);
+    vector footDy = Dy(ScaledPos);
+    if (stretched) {
+        footDx = stretchDiff(footDx, flowDir, dirLen);
+        footDy = stretchDiff(footDy, flowDir, dirLen);
+    }
+    float fullWidth = LODBias * max(length(footDx), length(footDy));
+    if (!isfinite(fullWidth)) fullWidth = 0;
+
+    // Footprint in cells over which we cross-fade from "resolve the drops" to "return the
+    // statistical average". Above lodEnd several drops overlap every pixel.
+    float lodStart = 1.0;
+    float lodEnd = 2.0;
+    float lodWidth = smoothstep(lodStart, lodEnd, fullWidth);   // 0 = full detail, 1 = average only
+
     SplatterLayerParams baseParams = {
         SplatterScale, LayerAlbedo, Seed, Jitter, MinRadius, MaxRadius, UnionSmoothness,
         SpikeAmount, SpikePeak, SpikeFrequency, SpikePerimeterSmoothness, SpikeTrimWidth,
@@ -307,7 +355,7 @@ shader AutolibSplatter [[
 
     SplatterLayerParams jitteredParams = baseParams;
 
-    int bound = MarchBound + (int)ceil(Jitter);
+    int fullBound = MarchBound + (int)ceil(Jitter);
 
     float finalHeight = 0;
     float finalMask = 0;
@@ -317,73 +365,157 @@ shader AutolibSplatter [[
     for (int layerIdx = 0; layerIdx < NumLayers; layerIdx++) {
         jitteredParams = jitterSplatterParams(jitteredParams, layerIdx, Jitter * 0.2, ColorJitter);
 
-        float layerNoisedDist = 1e6;
-        float layerSmoothDist = 1e6;
+        // Per-layer constants
+        float jSmooth = jitteredParams.UnionSmoothness;
+        float polyK = 1 / max(jSmooth, 1e-5);
 
-        color layerAlbedoAccum = 0;
-        float layerAlbedoWeight = 0;
+        float spikeW = jitteredParams.SpikeAmount;
+        float peak = max(jitteredParams.SpikePeak, 1e-5);
+        float peakHi = max(peak, 1 / peak);
+        // Upper bound of the radius multiplier the spikes can produce (snoise is within [-1,1];
+        // the 1.05 is margin).
+        float spikeMaxScale = 1.05 * (1 + spikeW * (peakHi - 1));
 
-        for (int x = -bound; x <= bound; x++) {
-            for (int y = -bound; y <= bound; y++) {
-                int cx = cellX + x;
-                int cy = cellY + y;
+        // Edge softness: at least the user's value, at least one pixel. The ramp is shifted so the
+        // widened edge is centred on the rim instead of eating into the drop. 
+        float perimSmooth = jitteredParams.SpikePerimeterSmoothness;
+        float edgeWidth = max(perimSmooth, fullWidth);
+        float edgeShift = 0.5 * (edgeWidth - perimSmooth);
+        float minDotRadius = 0.5 * fullWidth;                  // drops thinner than a pixel render as a pixel-sized dot
 
-                point cellCenter = randomCellPosition(cx, cy, jitteredParams.Jitter, jitteredParams.Seed);
-                vector diff = ScaledPos - cellCenter;
+        float m = 0;
+        float h = 0;
+        color layerAlbedo = jitteredParams.Albedo;
 
-                float dirLen = safeLength(SplatterDirection);
-                if (dirLen > 1e-6) {
-                    vector flowDir = normalize(SplatterDirection);
-                    float along = dot(diff, flowDir);
-                    vector perp = diff - along * flowDir;
-                    diff = (perp / (1 + dirLen * 5.0)) + flowDir * along;
-                }
+        // Expensive evaluation
+        if (lodWidth < 1) {
+            float layerMask = 0;
+            float layerSmoothDist = 1e6;
 
-                // unconditionally push diff.x slightly away from absolute zero for atan2
-                diff.x += (diff.x == 0 && diff.y == 0) ? 1e-8 : 0;
+            color layerAlbedoAccum = 0;
+            float layerAlbedoWeight = 0;
 
-                // Use safeLength() to prevent zero-length distance tracking
-                float dist = safeLength(diff);
-                float angle = (atan2(diff.y, diff.x) / (M_PI * 2.0)) + 0.5;
+            color baseHSV = 0;
+            if (ColorJitter > 0)
+                baseHSV = transformc("rgb", "hsv", max(jitteredParams.Albedo, 0));
 
-                float circleSeed = noise("hash", vector(cx, cy, jitteredParams.Seed)) * 100;
-                float addNoise = noise("snoise", (angle * jitteredParams.SpikeFrequency) + circleSeed);
-                
-                addNoise = pow(max(jitteredParams.SpikePeak, 1e-5), addNoise);
+            // Largest distance at which any drop of this layer can still affect the mask.
+            float rMaxCull = max(max(jitteredParams.MinRadius, jitteredParams.MaxRadius) * spikeMaxScale,
+                                 minDotRadius) + edgeShift;
 
-                if (jitteredParams.SpikeTrimWidth > 0) {
-                    float edge = min(angle, 1 - angle);
-                    addNoise *= smoothstep(0, jitteredParams.SpikeTrimWidth, edge);
-                }
-
-                addNoise = mix(1, addNoise, 1 - jitteredParams.SpikeAmount);
-
-                float rad = randomRadius(cx, cy, jitteredParams.MinRadius, jitteredParams.MaxRadius, jitteredParams.Seed);
-
-                float dNoised = dist - (rad * addNoise);
-                layerNoisedDist = min(layerNoisedDist, dNoised);
-
-                if (x == -bound && y == -bound) layerSmoothDist = dist;
-                else layerSmoothDist = smoothMin(layerSmoothDist, dist, jitteredParams.UnionSmoothness);
-
-                color cellAlbedo = randomCellAlbedo(cx, cy, jitteredParams.Albedo, ColorJitter, jitteredParams.Seed);
-                
-                // Clamped exponent to prevent infinity logic errors
-                float cellExp = clamp(-jitteredParams.UnionSmoothness * dist, -80, 80);
-                float cellWeight = exp(cellExp);
-                
-                layerAlbedoAccum += cellWeight * cellAlbedo;
-                layerAlbedoWeight += cellWeight;
+            // A cell k steps away has its centre at k + 0.5 +/- Jitter/2,
+            // so it can only reach us if k <= R + 0.5 + Jitter/2. R is scaled by the stretch since
+            // distances are measured after the stretch.
+            int bound = fullBound;
+            if (AutoSearchRadius) {
+                int tight = (int)floor(rMaxCull * stretch + 0.5 + 0.5 * jitteredParams.Jitter + 1e-4);
+                if (tight < bound) 
+                    bound = tight;
             }
+
+            for (int x = -bound; x <= bound; x++) {
+                for (int y = -bound; y <= bound; y++) {
+                    int cx = cellX + x;
+                    int cy = cellY + y;
+
+                    point cellCenter = randomCellPosition(cx, cy, jitteredParams.Jitter, jitteredParams.Seed);
+                    vector diff = ScaledPos - cellCenter;
+                    if (stretched)
+                        diff = stretchDiff(diff, flowDir, dirLen);
+
+                    // unconditionally push diff.x slightly away from absolute zero for atan2
+                    diff.x += (diff.x == 0 && diff.y == 0) ? 1e-8 : 0;
+
+                    // Use safeLength() to prevent zero-length distance tracking
+                    float dist = safeLength(diff);
+
+                    float rad = randomRadius(cx, cy, jitteredParams.MinRadius, jitteredParams.MaxRadius, jitteredParams.Seed);
+
+                    // Smooth union of distances. smoothMin(a, b, k) returns exactly a once
+                    // b >= a + polyK, so skipping those cells does not change the result.
+                    if (dist < layerSmoothDist + polyK)
+                        layerSmoothDist = smoothMin(layerSmoothDist, dist, jSmooth);
+
+                    // Albedo weights fall off as exp(-k * dist); beyond ~16 they are negligible.
+                    // Without color jitter every cell has the same color, so none of this is needed.
+                    if (ColorJitter > 0) {
+                        float cellExp = clamp(-jSmooth * dist, -80, 80);
+                        if (cellExp > -16) {
+                            float cellWeight = exp(cellExp);
+                            layerAlbedoAccum += cellWeight * randomCellAlbedoHSV(cx, cy, baseHSV, ColorJitter, jitteredParams.Seed);
+                            layerAlbedoWeight += cellWeight;
+                        }
+                    }
+
+                    // This cell's drop cannot reach the shading point: no mask contribution.
+                    if (dist >= rMaxCull)
+                        continue;
+
+                    // Spikes. Fade them out when their wavelength along the rim is below the
+                    // footprint; skip the atan2 / snoise / hash entirely when the weight is ~0.
+                    float spikeMul = 1;
+                    float wSpike = spikeW;
+                    if (fullWidth > 0) {
+                        float wavelength = M_2PI * rad / max(jitteredParams.SpikeFrequency, 1e-3);
+                        wSpike *= smoothstep(1.0, 3.0, wavelength / fullWidth);
+                    }
+                    if (wSpike > 1e-4) {
+                        float angle = (atan2(diff.y, diff.x) / M_2PI) + 0.5;
+
+                        float circleSeed = noise("hash", vector(cx, cy, jitteredParams.Seed)) * 100;
+                        float addNoise = noise("snoise", (angle * jitteredParams.SpikeFrequency) + circleSeed);
+
+                        addNoise = pow(peak, addNoise);
+
+                        if (jitteredParams.SpikeTrimWidth > 0) {
+                            float edge = min(angle, 1 - angle);
+                            addNoise *= smoothstep(0, jitteredParams.SpikeTrimWidth, edge);
+                        }
+
+                        spikeMul = mix(1, addNoise, wSpike);
+                    }
+
+                    // Per-cell mask, combined with max(). Because the mask is a decreasing function
+                    // of distance, max over cells equals the old single smoothstep on the minimum
+                    // distance when fullWidth = 0.
+                    float rN = rad * spikeMul;
+                    float rE = max(rN, minDotRadius);
+                    float cov = (rE > rN) ? (rN / rE) * (rN / rE) : 1.0;   // area ratio for sub-pixel drops
+                    float mi = (1 - smoothstep(-edgeWidth, 0, dist - rE - edgeShift)) * cov;
+                    layerMask = max(layerMask, mi);
+                }
+            }
+
+            m = layerMask;
+
+            // Blur the basin ramp to at least one pixel as well.
+            float basinSharp = max(jitteredParams.BasinSmoothness, fullWidth);
+            h = sigmoidMask(layerSmoothDist, jitteredParams.BasinHeight, jitteredParams.BasinCenter, basinSharp) * 1.4 * m;
+
+            if (ColorJitter > 0 && layerAlbedoWeight > 1e-6)
+                layerAlbedo = layerAlbedoAccum / layerAlbedoWeight;
         }
 
-        float m = 1 - smoothstep(-jitteredParams.SpikePerimeterSmoothness, 0, layerNoisedDist);
-        float h = sigmoidMask(layerSmoothDist, jitteredParams.BasinHeight, jitteredParams.BasinCenter, jitteredParams.BasinSmoothness) * 1.4 * m;
+        // Statistical average, for when a pixel covers many drops
+        // Boolean-model coverage with one drop per cell: 1 - exp(-density * mean drop area).
+        // Spikes are ignored as their mean effect is small and they are filtered out at this scale.
+        if (lodWidth > 0) {
+            float rA = jitteredParams.MinRadius;
+            float rB = jitteredParams.MaxRadius;
+            float meanR2 = (rA * rA + rA * rB + rB * rB) / 3;
+            float covAvg = 1 - exp(-M_PI * meanR2 * stretch);
+            float basinSharpAvg = max(jitteredParams.BasinSmoothness, fullWidth);
+            float hAvg = covAvg * 1.4 *
+                         sigmoidMask(0.667 * sqrt(meanR2), jitteredParams.BasinHeight,
+                                     jitteredParams.BasinCenter, basinSharpAvg);
+
+            m = mix(m, covAvg, lodWidth);
+            h = mix(h, hAvg, lodWidth);
+            layerAlbedo = mix(layerAlbedo, jitteredParams.Albedo, lodWidth);
+        }
 
         finalHeight = max(finalHeight, h);
         finalMask = max(finalMask, m);
-
-        color layerAlbedo = (layerAlbedoWeight > 1e-6) ? layerAlbedoAccum / layerAlbedoWeight : jitteredParams.Albedo;
 
         finalAlbedo += layerAlbedo * m;
         finalAlbedoWeight += m;
@@ -392,8 +524,14 @@ shader AutolibSplatter [[
     color thisAlbedo = (finalAlbedoWeight > 1e-6) ? finalAlbedo / finalAlbedoWeight : 0;
     thisAlbedo = thisAlbedo * finalMask;
 
-    normal finalNormal = bumpShadingNormal(finalHeight * jitteredParams.BumpStrength);
-
+    // Bump only when it can matter.
+    // Allowing osl to fold the results if the BasinBumpStrength is 0 
+    normal finalNormal;
+    if (BasinBumpStrength > 0 && lodWidth < 1) {
+        finalNormal = bumpShadingNormal(finalHeight * jitteredParams.BumpStrength);
+    } else {
+        finalNormal = N;
+    }
     int thisLayerIdx = 0;
 
     color compositeAlbedo = finalHeight * thisAlbedo;
