@@ -600,6 +600,11 @@ static bool bakeShape(
     spec.attribute("oiio:ColorSpace", "Linear");
     spec.channelnames = {"R","G","B","A"};
     spec.alpha_channel = 3;
+    const int srcRes[2] = { width, height };
+    const OIIO::TypeDesc int2(OIIO::TypeDesc::INT, 2);
+
+    spec.attribute("AutolibResolution", int2, srcRes);
+
 
     OIIO::ImageBuf buf(spec);
     for (int y=0; y<height; ++y) {
@@ -622,6 +627,7 @@ static bool bakeShape(
     // dwaa is an OpenEXR codec; PRMan .tex files are TIFF, so use zip there
     cfg.attribute("compression",              prman ? "zip" : "dwaa");
     cfg.attribute("oiio:ColorSpace",          "Linear");
+    cfg.attribute("AutolibResolution", int2, srcRes);
 
     if (prman) {
         // Same as maketx --prman: PRMan-safe tile size (32x32 for half/float),
@@ -629,6 +635,7 @@ static bool bakeShape(
         cfg.attribute("maketx:prman_options",  1);
         // The TIFF writer doesn't claim the .tex extension, so name the format.
         cfg.attribute("maketx:fileformatname", "tiff");
+        cfg.attribute("maketx:resize", 1);
     }
 
     bool ok = OIIO::ImageBufAlgo::make_texture(
@@ -705,9 +712,9 @@ int main(int argc, char* const argv[]) {
     if (layers.empty()) {
         if (verbose) std::cout << "No Inkscape layers found – flat bake.\n";
         fs::path out = fs::path(base).replace_extension(args.textureExt());
-        bool bakeShape(svgRoot, {}, true, out.string(),
+        return bakeShape(svgRoot, {}, true, out.string(),
                  vbX, vbY, vbW, vbH, snapRange, width,
-                 args.pxRange, args.angleThreshold, args.seed, args.prman);
+                 args.pxRange, args.angleThreshold, args.seed, args.prman) ? 0 : 1;
     }
 
     // Per-layer parallel bake
